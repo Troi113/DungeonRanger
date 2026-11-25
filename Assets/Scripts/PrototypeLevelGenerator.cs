@@ -76,6 +76,7 @@ public sealed class PrototypeLevelGenerator
     public sealed class Layout
     {
         public Vector3 PlayerSpawn;
+        public Vector3 ExitSpawn;
         public readonly List<Vector3> EnemySpawns = new();
         public readonly List<Vector2Int> WalkableCells = new();
     }
@@ -114,10 +115,21 @@ public sealed class PrototypeLevelGenerator
         BuildWalls(wallRoot, occupied, connectedDoors, wallMaterial);
         BuildDoors(doorRoot, connectedDoors, doorMaterial);
         BuildTraps(root, occupied);
+        BuildItemsAndChests(root, rooms);
+
+        var entranceCell = rooms[0].Center;
+        var exitCell = rooms[rooms.Count - 1].Center;
+        if (!ValidateConnectivity(occupied, entranceCell, exitCell))
+        {
+            Debug.LogError($"Level seed {Seed} produced an invalid disconnected layout.");
+        }
+
+        BuildExitMarker(root, exitCell);
 
         var layout = new Layout
         {
-            PlayerSpawn = GridToWorld(rooms[0].Center, 1f)
+            PlayerSpawn = GridToWorld(entranceCell, 1f),
+            ExitSpawn = GridToWorld(exitCell, 0f)
         };
 
         for (var i = 1; i < rooms.Count; i++)
@@ -644,6 +656,149 @@ public sealed class PrototypeLevelGenerator
             var trap = trapObject.AddComponent<PrototypeTrap>();
             trap.Initialize(trapType, hidden, color, visualRoot);
         }
+    }
+
+    private static void BuildItemsAndChests(Transform root, List<Room> rooms)
+    {
+        if (rooms.Count < 2)
+        {
+            return;
+        }
+
+        var itemRoot = CreateChild(root, "Level_Items");
+        var keyCell = OffsetRoomCell(rooms[1], -1, -1);
+        PrototypeItemPickup.CreateRuntime(
+            itemRoot,
+            GridToWorld(keyCell, 0f),
+            "Item_Key",
+            "key",
+            "Key",
+            PrototypeEquipmentSlot.None,
+            new Color(1f, 0.82f, 0.1f));
+
+        if (rooms.Count >= 3)
+        {
+            var chestCell = OffsetRoomCell(rooms[2], 1, 1);
+            var chestObject = new GameObject("Chest_Locked_01");
+            chestObject.transform.SetParent(itemRoot, false);
+            chestObject.transform.position = GridToWorld(chestCell, 0f);
+            chestObject.transform.rotation = Quaternion.LookRotation(Vector3.forward);
+
+            var chestMaterial = CreateMaterial("Locked Chest Material", new Color(0.42f, 0.2f, 0.08f));
+            var chestVisual = CreateCube(
+                "Chest_Visual",
+                chestObject.transform,
+                new Vector3(0f, 0.55f, 0f),
+                new Vector3(1.8f, 1.1f, 1.3f),
+                chestMaterial);
+            DisableCollider(chestVisual);
+
+            var chest = chestObject.AddComponent<PrototypeChest>();
+            chest.Initialize(
+                chestVisual.GetComponent<Renderer>(),
+                "health_potion",
+                "Health Potion",
+                PrototypeEquipmentSlot.None,
+                new Color(0.9f, 0.15f, 0.2f));
+        }
+
+        if (rooms.Count >= 4)
+        {
+            var potionCell = OffsetRoomCell(rooms[3], -1, 1);
+            PrototypeItemPickup.CreateRuntime(
+                itemRoot,
+                GridToWorld(potionCell, 0f),
+                "Item_HealthPotion",
+                "health_potion",
+                "Health Potion",
+                PrototypeEquipmentSlot.None,
+                new Color(0.9f, 0.15f, 0.2f));
+
+            var foodCell = OffsetRoomCell(rooms[3], 1, -1);
+            PrototypeItemPickup.CreateRuntime(
+                itemRoot,
+                GridToWorld(foodCell, 0f),
+                "Item_Food",
+                "food",
+                "Food Ration",
+                PrototypeEquipmentSlot.None,
+                new Color(0.72f, 0.48f, 0.2f));
+        }
+
+        if (rooms.Count >= 5)
+        {
+            var bowCell = OffsetRoomCell(rooms[4], 1, -1);
+            PrototypeItemPickup.CreateRuntime(
+                itemRoot,
+                GridToWorld(bowCell, 0f),
+                "Item_RangerBow",
+                "ranger_bow",
+                "Ranger Bow",
+                PrototypeEquipmentSlot.Weapon,
+                new Color(0.78f, 0.5f, 0.18f));
+        }
+    }
+
+    private static Vector2Int OffsetRoomCell(Room room, int xOffset, int yOffset)
+    {
+        return new Vector2Int(
+            Mathf.Clamp(room.Center.x + xOffset, room.Bounds.xMin, room.Bounds.xMax - 1),
+            Mathf.Clamp(room.Center.y + yOffset, room.Bounds.yMin, room.Bounds.yMax - 1));
+    }
+
+    private static void BuildExitMarker(Transform root, Vector2Int cell)
+    {
+        var exitRoot = new GameObject("Level_Exit");
+        exitRoot.transform.SetParent(root, false);
+        exitRoot.transform.position = GridToWorld(cell, 0f);
+
+        var exitMaterial = CreateMaterial("Exit Marker Material", new Color(0.2f, 0.95f, 0.35f));
+        var marker = CreateCube(
+            "Exit_Marker",
+            exitRoot.transform,
+            new Vector3(0f, 0.18f, 0f),
+            new Vector3(1.6f, 0.35f, 1.6f),
+            exitMaterial);
+        DisableCollider(marker);
+    }
+
+    private static bool ValidateConnectivity(bool[,] occupied, Vector2Int start, Vector2Int target)
+    {
+        if (!IsOccupied(occupied, start.x, start.y) || !IsOccupied(occupied, target.x, target.y))
+        {
+            return false;
+        }
+
+        var visited = new HashSet<Vector2Int> { start };
+        var frontier = new Queue<Vector2Int>();
+        frontier.Enqueue(start);
+        var directions = new[]
+        {
+            new Vector2Int(1, 0),
+            new Vector2Int(-1, 0),
+            new Vector2Int(0, 1),
+            new Vector2Int(0, -1)
+        };
+
+        while (frontier.Count > 0)
+        {
+            var current = frontier.Dequeue();
+            if (current == target)
+            {
+                return true;
+            }
+
+            foreach (var direction in directions)
+            {
+                var next = current + direction;
+                if (IsOccupied(occupied, next.x, next.y) && visited.Add(next))
+                {
+                    frontier.Enqueue(next);
+                }
+            }
+        }
+
+        return false;
     }
 
     private static Color TrapColor(PrototypeTrapType trapType)

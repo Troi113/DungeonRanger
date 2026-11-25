@@ -35,6 +35,7 @@ public sealed class PrototypeInventory : MonoBehaviour
     private PrototypeInventoryItem[] slots;
 
     public int Capacity => SlotCount;
+    public event Action InventoryChanged;
 
     private void Awake()
     {
@@ -58,6 +59,7 @@ public sealed class PrototypeInventory : MonoBehaviour
             if (slots[index] == null)
             {
                 slots[index] = item;
+                InventoryChanged?.Invoke();
                 return true;
             }
         }
@@ -89,6 +91,7 @@ public sealed class PrototypeInventory : MonoBehaviour
 
         slots[targetIndex] = item;
         slots[inventoryIndex] = null;
+        InventoryChanged?.Invoke();
         return true;
     }
 
@@ -101,7 +104,53 @@ public sealed class PrototypeInventory : MonoBehaviour
 
         var item = slots[index];
         slots[index] = null;
+        if (item != null)
+        {
+            InventoryChanged?.Invoke();
+        }
+
         return item;
+    }
+
+    public bool HasItem(string itemId)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return false;
+        }
+
+        foreach (var item in slots)
+        {
+            if (item != null && string.Equals(item.ItemId, itemId, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool TryConsume(string itemId)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return false;
+        }
+
+        for (var index = 0; index < slots.Length; index++)
+        {
+            var item = slots[index];
+            if (item == null || !string.Equals(item.ItemId, itemId, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            slots[index] = null;
+            InventoryChanged?.Invoke();
+            return true;
+        }
+
+        return false;
     }
 
     private static bool IsValidIndex(int index)

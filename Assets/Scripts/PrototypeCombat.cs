@@ -34,6 +34,17 @@ public sealed class PrototypeCombat : MonoBehaviour
             return;
         }
 
+        if (PrototypeGameUI.IsInventoryOpen)
+        {
+            return;
+        }
+
+        var stats = GetComponent<PrototypePlayerStats>();
+        if (stats != null && stats.IsDead)
+        {
+            return;
+        }
+
         if (Keyboard.current.jKey.wasPressedThisFrame && Time.time >= nextBowTime)
         {
             FireBow();

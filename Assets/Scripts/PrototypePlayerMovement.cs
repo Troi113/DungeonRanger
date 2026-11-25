@@ -38,6 +38,19 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
             return;
         }
 
+        if (PrototypeGameUI.IsInventoryOpen)
+        {
+            IsMoving = false;
+            return;
+        }
+
+        var stats = GetComponent<PrototypePlayerStats>();
+        if (stats != null && stats.IsDead)
+        {
+            IsMoving = false;
+            return;
+        }
+
         if (!IsTumbling && Time.time >= nextTumbleTime && IsShiftPressedThisFrame())
         {
             BeginTumble();

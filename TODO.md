@@ -2,7 +2,7 @@
 
 ## Project status
 
-The current project contains two runtime-generated prototypes: `TrapsSleep` is a 32×32 room with four doorways, while `LevelTest` is a seeded 32×32 room-and-corridor floor. Both include a player capsule, sleeping enemies, WASD movement, straight bow projectiles, and a facing-direction melee slash. `LevelTest` now also contains functional one-use traps, player health, inventory data, status effects, and hunger logic. Sleeping enemies wake one at a time and patrol the generated floor.
+The current project contains two runtime-generated prototypes: `TrapsSleep` is a 32×32 room with four doorways, while `LevelTest` is a seeded 32×32 room-and-corridor floor. Both include a player capsule, sleeping enemies, WASD movement, straight bow projectiles, a facing-direction melee slash, and a health HUD. `LevelTest` also contains functional one-use traps, player health, inventory data, status effects, hunger logic, pickups, and a locked chest. Sleeping enemies wake one at a time and patrol the generated floor.
 
 The goal is to make the game playable first, then improve visuals, content, balance, and presentation.
 
@@ -16,8 +16,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Melee attack has a simple temporary slash animation.
 - [x] Basic enemy targets can receive damage and be destroyed.
 - [ ] Decide the exact `L` inventory or quick-slot behavior.
-- [ ] Add an on-screen control reference for testing.
-- [ ] Decide whether inventory pauses live gameplay.
+- [x] Add an on-screen health and hunger HUD.
+- [x] Add an on-screen `I` inventory toggle.
+- [x] Add an on-screen control hint for inventory.
+- [x] Pause movement and combat while the inventory is open.
 
 ## Immediate prototype stabilization
 
@@ -31,7 +33,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add a simple enemy health indicator or temporary damage flash.
 - [x] Add two sleeping enemies that wake when hit.
 - [x] Add a simple player health value with a 20-health prototype default.
-- [ ] Add player death and restart behavior.
+- [x] Add player death and restart behavior.
+- [x] Add a visible player death/game-over state.
 - [ ] Replace runtime-only prototype setup with an intentional prototype scene or prefab structure.
 - [ ] Remove temporary prototype shortcuts that cause unnecessary per-frame searches.
 - [ ] Add a basic debug label showing player position and facing direction.
@@ -54,8 +57,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 ### Player and ranger
 
 - [ ] Create a proper ranger player prefab.
-- [ ] Separate player movement, facing, health, combat, and inventory responsibilities.
-- [ ] Add player health and maximum health.
+- [x] Separate player movement, facing, health, combat, and inventory responsibilities.
+- [x] Add player health and maximum health.
 - [ ] Add damage, invulnerability frames, and death state.
 - [ ] Add bow cooldown and attack feedback.
 - [ ] Add ammunition or decide that arrows are unlimited.
@@ -77,9 +80,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Keep walls and door frames visible as the map outline.
 - [x] Block visibility through closed doors and reveal the area beyond opened doors.
 - [x] Track separate visible, visited, mapped, and invisible fog states.
-- [ ] Add enemy wandering behavior.
+- [x] Add enemy wandering behavior.
 - [ ] Add enemy detection radius and line-of-sight checks.
-- [ ] Add enemy chase behavior.
+- [x] Add enemy chase behavior.
+- [x] Add a close-range enemy attack with a cooldown.
 - [ ] Add enemy attack windup and cooldown.
 - [ ] Add enemy hit reactions.
 - [ ] Add enemy death feedback and cleanup.
@@ -129,7 +133,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Configure `LevelTest` as dungeon level 4 with a source-inspired 6–8 starting mob range.
 - [x] Place the eight visible prototype trap markers in generated floor cells.
 - [x] Enlarge LevelTest terrain tiles to four world units while keeping trap markers one world block wide.
-- [ ] Add a real entrance and exit.
+- [x] Add generated entrance/exit positions and an exit marker.
 - [ ] Add layout validation and unreachable-room detection.
 - [ ] Test a range of seeds and tune room/corridor dimensions.
 
@@ -189,14 +193,22 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Add a prototype status-effect component for buffs/debuffs foundation.
 - [x] Add prototype hunger states: satiated, hungry, and famished.
 - [x] Damage the player over time while famished.
+- [x] Add a 4-column by 5-row inventory overlay opened with `I`.
+- [x] Add Space-bar item pickup interaction.
+- [x] Add a key pickup and locked chest interaction.
+- [x] Add generated prototype items to LevelTest.
+- [x] Make health potions usable from the inventory.
+- [ ] Make equipment slots affect combat or player stats.
+- [ ] Add item stack counts and duplicate-item behavior.
+- [ ] Add item drop behavior.
 - [ ] Define the `L` key behavior.
-- [ ] Add an inventory UI.
-- [ ] Add weapon slot and armor slot if needed.
+- [x] Add weapon slot and armor slot placeholders.
 - [ ] Add bow and arrow data.
-- [ ] Add healing item.
+- [x] Add a prototype healing item.
 - [ ] Add one utility item.
 - [ ] Add one ranger-specific item or ability.
-- [ ] Add item pickup and drop behavior.
+- [x] Add item pickup behavior.
+- [ ] Add item drop behavior.
 - [ ] Add item persistence between scenes.
 - [ ] Keep the first item system small; add Pixel Dungeon-style complexity later.
 - [ ] Decide whether unidentified items are part of the final game.
@@ -215,12 +227,12 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 ### In-game UI
 
-- [ ] Add player health display.
+- [x] Add player health display.
 - [ ] Add score display.
 - [ ] Add timer or level display.
 - [ ] Add enemy count or encounter status.
 - [ ] Add bow cooldown or ammunition display if needed.
-- [ ] Add inventory/quick-slot display.
+- [x] Add inventory/quick-slot display.
 - [ ] Add readable controls and feedback.
 
 ### Persistence

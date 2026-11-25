@@ -13,6 +13,9 @@ public sealed class PrototypeEnemy : MonoBehaviour
     [SerializeField] private float chaseSpeed = 4.5f;
     [SerializeField] private int sightRangeCells = 8;
     [SerializeField] private float repathInterval = 0.35f;
+    [SerializeField] private float attackRange = 2.4f;
+    [SerializeField] private float attackCooldown = 1.2f;
+    [SerializeField] private int attackDamage = 1;
 
     private Renderer enemyRenderer;
     private PrototypePlayerMovement player;
@@ -23,6 +26,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
     private Vector2Int patrolTarget;
     private int pathIndex;
     private float nextRepathTime;
+    private float nextAttackTime;
 
     public bool IsAlive => health > 0 && this != null;
     public bool IsAwake { get; private set; }
@@ -58,6 +62,14 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
         if (canSeePlayer)
         {
+            var planarDistance = distanceToPlayer;
+            planarDistance.y = 0f;
+            if (planarDistance.magnitude <= attackRange)
+            {
+                AttackPlayer();
+                return;
+            }
+
             if (Time.time >= nextRepathTime)
             {
                 RebuildPath(
@@ -105,6 +117,18 @@ public sealed class PrototypeEnemy : MonoBehaviour
         {
             enemyRenderer.material.color = awakeColor;
         }
+    }
+
+    private void AttackPlayer()
+    {
+        if (Time.time < nextAttackTime || player == null)
+        {
+            return;
+        }
+
+        nextAttackTime = Time.time + attackCooldown;
+        var stats = player.GetComponent<PrototypePlayerStats>();
+        stats?.TakeDamage(attackDamage);
     }
 
     public void SetVisible(bool visible)

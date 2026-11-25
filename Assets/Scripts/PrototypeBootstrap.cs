@@ -45,16 +45,20 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             wakeDirector.Initialize(enemies, PrototypeLevelGenerator.Seed + 1000);
             var fogOfWar = root.gameObject.AddComponent<PrototypeFogOfWar>();
             fogOfWar.Initialize(player, layout.WalkableCells, root);
+            var gameUI = root.gameObject.AddComponent<PrototypeGameUI>();
+            gameUI.Initialize(player.gameObject);
         }
         else
         {
             new PrototypeTerrainGenerator().BuildRoom(root);
-            CreatePlayer(root, playerMaterial, new Vector3(0f, 1f, 0f));
+            var player = CreatePlayer(root, playerMaterial, new Vector3(0f, 1f, 0f));
             CreateEnemies(root, enemyMaterial, new[]
             {
                 new Vector3(-4f, 1f, 8f),
                 new Vector3(4f, 1f, 8f)
             }, null, null);
+            var gameUI = root.gameObject.AddComponent<PrototypeGameUI>();
+            gameUI.Initialize(player.gameObject);
         }
 
         SetupCamera(root, fullLevel);
@@ -89,6 +93,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         player.AddComponent<PrototypeInventory>();
         player.AddComponent<PrototypeStatusEffects>();
         player.AddComponent<PrototypeHunger>();
+        player.AddComponent<PrototypePlayerInteraction>();
         player.AddComponent<PrototypeCombat>();
         return movement;
     }
