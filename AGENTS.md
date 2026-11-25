@@ -9,8 +9,9 @@ The current priority is playability first. Use primitive visuals and simple syst
 - Unity project: `DungeonRanger`
 - Main test scene: `Assets/Scenes/SampleScene.unity`
 - Prototype scripts: `Assets/Scripts/`
-- The current room, player, enemies, camera, and lighting are generated at runtime by `PrototypeBootstrap`.
-- The current test room is a simple 6×6 enclosed room.
+- The current room, player, camera, and lighting are generated at runtime by `PrototypeBootstrap`.
+- `PrototypeTerrainGenerator` currently generates a procedural 32×32 room with four doorways, floor, and walls.
+- The current terrain test intentionally has no enemies, stairs, or cliffs. It includes one visible, non-functional marker for each original Pixel Dungeon trap type.
 
 Current controls:
 

@@ -2,7 +2,7 @@
 
 ## Project status
 
-The current project contains a runtime-generated 6×6 test room, a player capsule, WASD movement, three stationary enemy targets, straight bow projectiles, and a facing-direction melee slash.
+The current project contains a runtime-generated 32×32 room with four doorways, a player capsule, WASD movement, eight visible trap markers, straight bow projectiles, and a facing-direction melee slash. The trap markers are visual-only; the terrain test intentionally has no enemies, stairs, or cliffs.
 
 The goal is to make the game playable first, then improve visuals, content, balance, and presentation.
 
@@ -122,6 +122,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 ### Terrain and special rooms
 
+- [x] Add one visible prototype marker for each original Pixel Dungeon trap type.
 - [ ] Add room painters for standard rooms.
 - [ ] Add room painters for treasure rooms.
 - [ ] Add room painters for trap rooms.
@@ -130,7 +131,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add water patches.
 - [ ] Add grass or concealment patches.
 - [ ] Add decorations after the gameplay layout works.
-- [ ] Add visible and secret traps with fair telegraphing.
+- [ ] Add functional visible and secret traps with fair telegraphing.
 - [ ] Add real-time fire, gas, or hazard behavior only after the core game works.
 - [ ] Add line-of-sight and visibility data for walls and obstacles.
 
