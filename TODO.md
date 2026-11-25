@@ -115,6 +115,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Implement recursive room splitting or a comparable constrained room generator.
 - [x] Generate a seeded set of non-overlapping rectangular rooms.
 - [x] Connect rooms with corridors.
+- [x] Place doors at carved room entrances and wall off the remaining room boundaries.
+- [x] Support adjacent rooms connected by one door and corridor connections with doors at room entrances.
 - [ ] Guarantee a path from entrance to exit.
 - [ ] Add extra connections and loops for live-play retreat routes.
 - [x] Add a deterministic seed for the first level test.

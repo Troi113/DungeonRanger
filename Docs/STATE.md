@@ -25,7 +25,7 @@ Update this file at the end of each milestone.
 ## Runtime setup
 - `PrototypeBootstrap` generates the room, player, camera, and lighting at runtime.
 - `PrototypeTerrainGenerator`: procedural 32x32 room with four doorways, floor, and walls.
-- `PrototypeLevelGenerator`: seeded 32x32 floor built from several rectangular rooms and connecting corridors. Builds walls, visible door panels/triggers at room boundaries and corridor junctions, traps, player spawn data, and enemy spawn data.
+- `PrototypeLevelGenerator`: seeded 32x32 floor built from rectangular rooms and connecting corridors. Doors are placed only where a carved route crosses a room boundary: touching rooms share a door, while corridors have a door at each room entrance. Remaining room boundaries have walls; enemy pathfinding and fog use the same blocked-edge data.
   - Logical terrain tile is 4 Unity world units wide.
   - Trap markers are about 1x1 world unit.
 
@@ -42,7 +42,7 @@ Update this file at the end of each milestone.
 - Traps activate once when the player steps on them. Toxic, paralytic, poison, gripping, fire, and lightning traps apply prototype effects; alarm wakes all sleeping enemies; summoning currently wakes one sleeping enemy as a temporary stand-in for a future spawn system.
 - LevelTest now generates a key pickup, a locked chest, a health-potion pickup, and a ranger-bow pickup. Items are collected with Space; the chest consumes a key and drops a health potion.
 - The generated last room has a green exit marker, and the generator validates that the entrance room and exit room are connected through carved floor cells.
-- Not implemented yet: entrance/exit, layout validation, multiple-seed testing.
+- Connectivity and door placement were checked across 12 seeds; full gameplay playtesting across more layouts remains open.
 
 ## Terrain test contents
 - Two sleeping enemies.

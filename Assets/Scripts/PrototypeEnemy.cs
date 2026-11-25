@@ -22,6 +22,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
     private PrototypePlayerMovement player;
     private List<Vector2Int> walkableCells;
     private HashSet<Vector2Int> walkableLookup;
+    private HashSet<long> blockedEdges;
     private readonly List<Vector2Int> path = new();
     private System.Random random;
     private Vector2Int patrolTarget;
@@ -44,11 +45,13 @@ public sealed class PrototypeEnemy : MonoBehaviour
     public void Initialize(
         PrototypePlayerMovement targetPlayer,
         IReadOnlyList<Vector2Int> generatedWalkableCells,
-        int randomSeed)
+        int randomSeed,
+        IReadOnlyCollection<long> blockedRoomEdges = null)
     {
         player = targetPlayer;
         walkableCells = new List<Vector2Int>(generatedWalkableCells);
         walkableLookup = new HashSet<Vector2Int>(walkableCells);
+        blockedEdges = blockedRoomEdges != null ? new HashSet<long>(blockedRoomEdges) : new HashSet<long>();
         random = new System.Random(randomSeed);
         ChoosePatrolTarget();
     }
@@ -262,7 +265,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
             foreach (var direction in directions)
             {
                 var next = current + direction;
-                if (!walkableLookup.Contains(next) || cameFrom.ContainsKey(next))
+                if (!walkableLookup.Contains(next) || cameFrom.ContainsKey(next) ||
+                    blockedEdges.Contains(PrototypeLevelGenerator.EdgeKey(current, next)))
                 {
                     continue;
                 }

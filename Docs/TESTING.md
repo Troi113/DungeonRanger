@@ -14,6 +14,8 @@
 For code changes, also confirm that Unity finishes compiling without errors before entering Play mode.
 
 ## Procedural-generation changes
+
+Check that touching rooms connect through a single door, corridors have doors at room entrances rather than repeated doors along their length, and enemies and fog respect walls between adjacent floor cells.
 1. Test multiple seeds.
 2. Once entrance and exit systems exist, confirm they are connected.
 3. Confirm the player has a safe starting area.

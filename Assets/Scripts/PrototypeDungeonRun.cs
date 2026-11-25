@@ -93,18 +93,18 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         if (Floor < 5)
         {
             foreach (var position in layout.EnemySpawns)
-                enemies.Add(CreateEnemy(position, layout.WalkableCells, seed + enemies.Count, false));
+                enemies.Add(CreateEnemy(position, layout, seed + enemies.Count, false));
             var director = floorRoot.AddComponent<PrototypeEnemyWakeDirector>();
             director.Initialize(enemies, seed + 500);
         }
         else
         {
-            var goo = CreateEnemy(layout.ExitSpawn, layout.WalkableCells, seed + 500, true);
+            var goo = CreateEnemy(layout.ExitSpawn, layout, seed + 500, true);
             goo.Defeated += () => Victory = true;
             enemies.Add(goo);
         }
         var fog = floorRoot.AddComponent<PrototypeFogOfWar>();
-        fog.Initialize(player, layout.WalkableCells, floorRoot.transform);
+        fog.Initialize(player, layout.WalkableCells, floorRoot.transform, layout.BlockedEdges);
     }
 
     private void MovePlayer(Vector3 position)
@@ -115,7 +115,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         controller.enabled = true;
     }
 
-    private PrototypeEnemy CreateEnemy(Vector3 position, IReadOnlyList<Vector2Int> cells, int seed, bool boss)
+    private PrototypeEnemy CreateEnemy(Vector3 position, PrototypeLevelGenerator.Layout layout, int seed, bool boss)
     {
         var obj = GameObject.CreatePrimitive(boss ? PrimitiveType.Sphere : PrimitiveType.Cube);
         obj.name = boss ? "Goo_Boss" : "Enemy_Sleeping";
@@ -123,7 +123,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         obj.transform.position = position;
         obj.transform.localScale = boss ? new Vector3(3f, 2f, 3f) : new Vector3(0.9f, 2f, 0.9f);
         var enemy = obj.AddComponent<PrototypeEnemy>();
-        enemy.Initialize(player, cells, seed);
+        enemy.Initialize(player, layout.WalkableCells, seed, layout.BlockedEdges);
         if (boss) enemy.ConfigureBoss(18);
         return enemy;
     }

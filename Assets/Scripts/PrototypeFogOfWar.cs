@@ -33,6 +33,7 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
 
     private PrototypePlayerMovement player;
     private HashSet<Vector2Int> walkableCells;
+    private HashSet<long> blockedEdges;
     private readonly HashSet<Vector2Int> visibleCells = new();
     private readonly HashSet<Vector2Int> visitedCells = new();
     private readonly HashSet<Vector2Int> mappedCells = new();
@@ -47,10 +48,12 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
     public void Initialize(
         PrototypePlayerMovement targetPlayer,
         IReadOnlyList<Vector2Int> generatedWalkableCells,
-        Transform levelRoot)
+        Transform levelRoot,
+        IReadOnlyCollection<long> blockedRoomEdges = null)
     {
         player = targetPlayer;
         walkableCells = new HashSet<Vector2Int>(generatedWalkableCells);
+        blockedEdges = blockedRoomEdges != null ? new HashSet<long>(blockedRoomEdges) : new HashSet<long>();
         enemies.AddRange(FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude));
 
         foreach (var door in levelRoot.GetComponentsInChildren<PrototypeDoor>(true))
@@ -244,6 +247,7 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
 
     private bool IsBlockedByClosedDoor(Vector2Int cell, Vector2Int direction)
     {
+        if (blockedEdges.Contains(PrototypeLevelGenerator.EdgeKey(cell, cell + direction))) return true;
         var edge = new DoorEdge(cell, direction);
         return doors.TryGetValue(edge, out var door) && !door.IsOpen;
     }

@@ -58,11 +58,11 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         {
             var layout = new PrototypeLevelGenerator().Build(root);
             var player = CreatePlayer(root, playerMaterial, layout.PlayerSpawn);
-            var enemies = CreateEnemies(root, enemyMaterial, layout.EnemySpawns, player, layout.WalkableCells);
+            var enemies = CreateEnemies(root, enemyMaterial, layout.EnemySpawns, player, layout.WalkableCells, layout.BlockedEdges);
             var wakeDirector = root.gameObject.AddComponent<PrototypeEnemyWakeDirector>();
             wakeDirector.Initialize(enemies, PrototypeLevelGenerator.Seed + 1000);
             var fogOfWar = root.gameObject.AddComponent<PrototypeFogOfWar>();
-            fogOfWar.Initialize(player, layout.WalkableCells, root);
+            fogOfWar.Initialize(player, layout.WalkableCells, root, layout.BlockedEdges);
             var gameUI = root.gameObject.AddComponent<PrototypeGameUI>();
             gameUI.Initialize(player.gameObject);
         }
@@ -121,7 +121,8 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         Material material,
         IEnumerable<Vector3> positions,
         PrototypePlayerMovement player,
-        IReadOnlyList<Vector2Int> walkableCells)
+        IReadOnlyList<Vector2Int> walkableCells,
+        IReadOnlyCollection<long> blockedEdges = null)
     {
         var enemies = new List<PrototypeEnemy>();
         var index = 1;
@@ -130,7 +131,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             var enemy = CreateEnemy($"Enemy_Sleeping_{index:00}", root, position, material);
             if (player != null && walkableCells != null)
             {
-                enemy.Initialize(player, walkableCells, PrototypeLevelGenerator.Seed + index);
+                enemy.Initialize(player, walkableCells, PrototypeLevelGenerator.Seed + index, blockedEdges);
             }
 
             enemies.Add(enemy);
