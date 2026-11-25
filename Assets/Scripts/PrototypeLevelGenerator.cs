@@ -51,11 +51,13 @@ public sealed class PrototypeLevelGenerator
     {
         public readonly Vector2Int Cell;
         public readonly Vector2Int Direction;
+        public readonly RectInt OwnerBounds;
 
-        public DoorPlacement(Vector2Int cell, Vector2Int direction)
+        public DoorPlacement(Vector2Int cell, Vector2Int direction, RectInt ownerBounds)
         {
             Cell = cell;
             Direction = direction;
+            OwnerBounds = ownerBounds;
         }
     }
 
@@ -104,6 +106,8 @@ public sealed class PrototypeLevelGenerator
         var wallMaterial = CreateMaterial("Level Wall Material", WallColor);
         var doorMaterial = CreateMaterial("Level Door Material", DoorColor);
         var connectedDoors = KeepConnectedDoors(occupied, doorPlacements);
+        AddRoomBoundaryDoors(occupied, rooms, connectedDoors);
+        AddCorridorJunctionDoors(occupied, rooms, connectedDoors);
 
         BuildFloor(floorRoot, occupied, floorMaterial);
         BuildWalls(wallRoot, occupied, connectedDoors, wallMaterial);
@@ -210,8 +214,8 @@ public sealed class PrototypeLevelGenerator
         }
 
         // Every room-to-room corridor owns two doors: one at each end.
-        doors.Add(new DoorPlacement(startDoorCell, startDoorDirection));
-        doors.Add(new DoorPlacement(endDoorCell, endDoorDirection));
+        doors.Add(new DoorPlacement(startDoorCell, startDoorDirection, from.Bounds));
+        doors.Add(new DoorPlacement(endDoorCell, endDoorDirection, to.Bounds));
     }
 
     private static Vector2Int MoveToRoomBoundary(RectInt room, Vector2Int center, Vector2Int direction)
@@ -281,27 +285,177 @@ public sealed class PrototypeLevelGenerator
     private static List<DoorPlacement> KeepConnectedDoors(bool[,] occupied, List<DoorPlacement> candidates)
     {
         var connected = new List<DoorPlacement>();
+        var existingEdges = new HashSet<DoorEdge>();
 
-        // Candidates are emitted in pairs by ConnectRooms. Keep or reject the
-        // entire pair so a corridor never ends up with only one door.
-        for (var i = 0; i + 1 < candidates.Count; i += 2)
+        foreach (var candidate in candidates)
         {
-            var sourceDoor = candidates[i];
-            var destinationDoor = candidates[i + 1];
-            if (!IsConnectedDoor(occupied, sourceDoor) || !IsConnectedDoor(occupied, destinationDoor))
+            if (!IsConnectedDoor(occupied, candidate))
             {
                 // A door must sit between two carved cells. This prevents a
                 // bad route or boundary case from placing a door into empty
-                // space or through the outside wall of the dungeon. Rejecting
-                // both candidates keeps the corridor connection consistent.
+                // space or through the outside wall of the dungeon.
                 continue;
             }
 
-            connected.Add(sourceDoor);
-            connected.Add(destinationDoor);
+            var edge = new DoorEdge(candidate.Cell, candidate.Direction);
+            var reverseEdge = new DoorEdge(candidate.Cell + candidate.Direction, -candidate.Direction);
+            if (existingEdges.Contains(edge) || existingEdges.Contains(reverseEdge))
+            {
+                continue;
+            }
+
+            existingEdges.Add(edge);
+            connected.Add(candidate);
         }
 
         return connected;
+    }
+
+    private static void AddRoomBoundaryDoors(
+        bool[,] occupied,
+        List<Room> rooms,
+        List<DoorPlacement> doors)
+    {
+        var existingEdges = new HashSet<DoorEdge>();
+        foreach (var door in doors)
+        {
+            existingEdges.Add(new DoorEdge(door.Cell, door.Direction));
+        }
+
+        var directions = new[]
+        {
+            new Vector2Int(1, 0),
+            new Vector2Int(-1, 0),
+            new Vector2Int(0, 1),
+            new Vector2Int(0, -1)
+        };
+
+        foreach (var room in rooms)
+        {
+            for (var x = room.Bounds.xMin; x < room.Bounds.xMax; x++)
+            {
+                for (var y = room.Bounds.yMin; y < room.Bounds.yMax; y++)
+                {
+                    var cell = new Vector2Int(x, y);
+                    foreach (var direction in directions)
+                    {
+                        var neighbor = cell + direction;
+                        if (!IsOccupied(occupied, neighbor.x, neighbor.y) || room.Bounds.Contains(neighbor))
+                        {
+                            continue;
+                        }
+
+                        AddDoorIfNew(doors, existingEdges, cell, direction, room.Bounds);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void AddCorridorJunctionDoors(
+        bool[,] occupied,
+        List<Room> rooms,
+        List<DoorPlacement> doors)
+    {
+        var existingEdges = new HashSet<DoorEdge>();
+        foreach (var door in doors)
+        {
+            existingEdges.Add(new DoorEdge(door.Cell, door.Direction));
+        }
+
+        var directions = new[]
+        {
+            new Vector2Int(1, 0),
+            new Vector2Int(0, 1)
+        };
+
+        for (var x = 0; x < Width; x++)
+        {
+            for (var y = 0; y < Height; y++)
+            {
+                var cell = new Vector2Int(x, y);
+                if (!IsOccupied(occupied, x, y) || CountOccupiedNeighbors(occupied, cell) < 3)
+                {
+                    continue;
+                }
+
+                foreach (var direction in directions)
+                {
+                    var neighbor = cell + direction;
+                    if (!IsOccupied(occupied, neighbor.x, neighbor.y) ||
+                        AreInSameRoom(rooms, cell, neighbor) ||
+                        CountOccupiedNeighbors(occupied, neighbor) < 2)
+                    {
+                        continue;
+                    }
+
+                    AddDoorIfNew(doors, existingEdges, cell, direction, FindNearestRoom(rooms, cell));
+                }
+            }
+        }
+    }
+
+    private static void AddDoorIfNew(
+        List<DoorPlacement> doors,
+        HashSet<DoorEdge> existingEdges,
+        Vector2Int cell,
+        Vector2Int direction,
+        RectInt ownerBounds)
+    {
+        var edge = new DoorEdge(cell, direction);
+        var reverseEdge = new DoorEdge(cell + direction, -direction);
+        if (existingEdges.Contains(edge) || existingEdges.Contains(reverseEdge))
+        {
+            return;
+        }
+
+        existingEdges.Add(edge);
+        doors.Add(new DoorPlacement(cell, direction, ownerBounds));
+    }
+
+    private static int CountOccupiedNeighbors(bool[,] occupied, Vector2Int cell)
+    {
+        var count = 0;
+        if (IsOccupied(occupied, cell.x + 1, cell.y)) count++;
+        if (IsOccupied(occupied, cell.x - 1, cell.y)) count++;
+        if (IsOccupied(occupied, cell.x, cell.y + 1)) count++;
+        if (IsOccupied(occupied, cell.x, cell.y - 1)) count++;
+        return count;
+    }
+
+    private static bool AreInSameRoom(List<Room> rooms, Vector2Int first, Vector2Int second)
+    {
+        foreach (var room in rooms)
+        {
+            if (room.Bounds.Contains(first) && room.Bounds.Contains(second))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static RectInt FindNearestRoom(List<Room> rooms, Vector2Int cell)
+    {
+        if (rooms.Count == 0)
+        {
+            return new RectInt(cell.x, cell.y, 1, 1);
+        }
+
+        var nearest = rooms[0];
+        var nearestDistance = Vector2Int.Distance(cell, nearest.Center);
+        foreach (var room in rooms)
+        {
+            var distance = Vector2Int.Distance(cell, room.Center);
+            if (distance < nearestDistance)
+            {
+                nearest = room;
+                nearestDistance = distance;
+            }
+        }
+
+        return nearest.Bounds;
     }
 
     private static bool IsConnectedDoor(bool[,] occupied, DoorPlacement door)
@@ -367,6 +521,16 @@ public sealed class PrototypeLevelGenerator
             doorRoot.transform.SetParent(parent, false);
             doorRoot.transform.position = center;
 
+            var panel = CreateCube(
+                "Door_Panel",
+                doorRoot.transform,
+                new Vector3(0f, DoorHeight * 0.45f, 0f),
+                horizontalOpening
+                    ? new Vector3(DoorWidth * 0.86f, DoorHeight * 0.9f, WallThickness * 1.5f)
+                    : new Vector3(WallThickness * 1.5f, DoorHeight * 0.9f, DoorWidth * 0.86f),
+                material);
+            var panelCollider = panel.GetComponent<Collider>();
+
             if (horizontalOpening)
             {
                 CreateCube("Frame_Left", doorRoot.transform, new Vector3(-DoorWidth * 0.5f, DoorHeight * 0.5f, 0f), new Vector3(DoorFrameThickness, DoorHeight, WallThickness), material);
@@ -379,7 +543,28 @@ public sealed class PrototypeLevelGenerator
                 CreateCube("Frame_Back", doorRoot.transform, new Vector3(0f, DoorHeight * 0.5f, DoorWidth * 0.5f), new Vector3(WallThickness, DoorHeight, DoorFrameThickness), material);
                 CreateCube("Frame_Header", doorRoot.transform, new Vector3(0f, DoorHeight, 0f), new Vector3(WallThickness, DoorFrameThickness, DoorWidth), material);
             }
+
+            var trigger = doorRoot.AddComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.center = new Vector3(0f, DoorHeight * 0.45f, 0f);
+            trigger.size = horizontalOpening
+                ? new Vector3(TileSize, DoorHeight, TileSize * 0.75f)
+                : new Vector3(TileSize * 0.75f, DoorHeight, TileSize);
+
+            var behavior = doorRoot.AddComponent<PrototypeDoor>();
+            behavior.Initialize(panel.transform, panelCollider, WorldRoomBounds(door.OwnerBounds), Seed + i);
         }
+    }
+
+    private static Rect WorldRoomBounds(RectInt room)
+    {
+        var minimum = GridToWorld(new Vector2Int(room.xMin, room.yMin), 0f);
+        var maximum = GridToWorld(new Vector2Int(room.xMax - 1, room.yMax - 1), 0f);
+        return Rect.MinMaxRect(
+            minimum.x - TileSize * 0.5f,
+            minimum.z - TileSize * 0.5f,
+            maximum.x + TileSize * 0.5f,
+            maximum.z + TileSize * 0.5f);
     }
 
     private static void BuildTraps(Transform root, bool[,] occupied, List<Room> rooms)
