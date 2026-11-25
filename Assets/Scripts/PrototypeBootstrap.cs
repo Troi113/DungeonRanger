@@ -20,7 +20,8 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreatePrototype()
     {
-        if (SceneManager.GetActiveScene().name != "SampleScene")
+        var sceneName = SceneManager.GetActiveScene().name;
+        if (sceneName != "SampleScene" && sceneName != "MoveCombatTest")
         {
             return;
         }
