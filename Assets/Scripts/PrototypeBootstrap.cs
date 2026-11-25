@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Temporary runtime setup for the procedural terrain movement test.
-/// Builds a 32x32 room with doorways, then places the player inside it.
+/// Temporary runtime setup for the procedural movement and combat tests.
+/// Builds either the original room test or the full procedural LevelTest floor.
 /// </summary>
 public sealed class PrototypeBootstrap : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     private static void CreatePrototype()
     {
         var sceneName = SceneManager.GetActiveScene().name;
-        if (sceneName != "SampleScene" && sceneName != "MoveCombatTest")
+        if (sceneName != "SampleScene" && sceneName != "MoveCombatTest" && sceneName != "TrapsSleep" && sceneName != "LevelTest")
         {
             return;
         }
@@ -27,28 +28,41 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         var root = new GameObject(RootName);
         var bootstrap = root.AddComponent<PrototypeBootstrap>();
-        bootstrap.BuildRoom(root.transform);
+        bootstrap.BuildScene(root.transform, sceneName == "LevelTest");
     }
 
-    private void BuildRoom(Transform root)
+    private void BuildScene(Transform root, bool fullLevel)
     {
         var playerMaterial = CreateMaterial("Prototype Player Material", PlayerColor);
         var enemyMaterial = CreateMaterial("Prototype Sleeping Enemy Material", SleepingEnemyColor);
 
-        new PrototypeTerrainGenerator().BuildRoom(root);
+        if (fullLevel)
+        {
+            var layout = new PrototypeLevelGenerator().Build(root);
+            CreatePlayer(root, playerMaterial, layout.PlayerSpawn);
+            CreateEnemies(root, enemyMaterial, layout.EnemySpawns);
+        }
+        else
+        {
+            new PrototypeTerrainGenerator().BuildRoom(root);
+            CreatePlayer(root, playerMaterial, new Vector3(0f, 1f, 0f));
+            CreateEnemies(root, enemyMaterial, new[]
+            {
+                new Vector3(-4f, 1f, 8f),
+                new Vector3(4f, 1f, 8f)
+            });
+        }
 
-        CreatePlayer(root, playerMaterial);
-        CreateEnemies(root, enemyMaterial);
         SetupCamera(root);
         SetupLighting();
     }
 
-    private static void CreatePlayer(Transform root, Material material)
+    private static void CreatePlayer(Transform root, Material material, Vector3 position)
     {
         var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         player.name = "Player_Ranger_Test";
         player.transform.SetParent(root);
-        player.transform.SetPositionAndRotation(new Vector3(0f, 1f, 0f), Quaternion.identity);
+        player.transform.SetPositionAndRotation(position, Quaternion.identity);
         player.GetComponent<Renderer>().sharedMaterial = material;
 
         var capsuleCollider = player.GetComponent<CapsuleCollider>();
@@ -70,10 +84,14 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         player.AddComponent<PrototypeCombat>();
     }
 
-    private static void CreateEnemies(Transform root, Material material)
+    private static void CreateEnemies(Transform root, Material material, IEnumerable<Vector3> positions)
     {
-        CreateEnemy("Enemy_Sleeping_NorthWest", root, new Vector3(-4f, 1f, 8f), material);
-        CreateEnemy("Enemy_Sleeping_NorthEast", root, new Vector3(4f, 1f, 8f), material);
+        var index = 1;
+        foreach (var position in positions)
+        {
+            CreateEnemy($"Enemy_Sleeping_{index:00}", root, position, material);
+            index++;
+        }
     }
 
     private static void CreateEnemy(string objectName, Transform root, Vector3 position, Material material)

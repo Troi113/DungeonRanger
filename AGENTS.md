@@ -8,9 +8,12 @@ The current priority is playability first. Use primitive visuals and simple syst
 
 - Unity project: `DungeonRanger`
 - Main test scene: `Assets/Scenes/SampleScene.unity`
+- Saved prototype scene: `Assets/Scenes/TrapsSleep.unity` (when present)
+- Full-floor generator test: `Assets/Scenes/LevelTest.unity` (when present)
 - Prototype scripts: `Assets/Scripts/`
 - The current room, player, camera, and lighting are generated at runtime by `PrototypeBootstrap`.
 - `PrototypeTerrainGenerator` currently generates a procedural 32×32 room with four doorways, floor, and walls.
+- `PrototypeLevelGenerator` generates a seeded 32×32 floor from several rectangular rooms and connecting corridors, then builds walls, doors, traps, player spawn data, and enemy spawn data.
 - The current terrain test has two sleeping enemies, no stairs or cliffs, and one visible marker for each original Pixel Dungeon trap type.
 - Enemies are stationary for now and wake visually when hit by the player.
 
@@ -79,6 +82,11 @@ For procedural-generation changes:
 2. Confirm the entrance and exit are connected.
 3. Confirm the player has a safe starting area.
 4. Confirm the generated layout is playable in real time.
+
+The current `LevelTest` uses seed `4582`, six attempted rooms, one-cell corridors,
+visible doors, visible trap markers, and sleeping enemies. It is a first playable
+layout prototype; entrance/exit, validation, and multiple-seed testing are not
+implemented yet.
 
 For submission work:
 

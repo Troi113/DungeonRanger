@@ -2,7 +2,7 @@
 
 ## Project status
 
-The current project contains a runtime-generated 32×32 room with four doorways, a player capsule, two sleeping enemies, WASD movement, eight visible trap markers, straight bow projectiles, and a facing-direction melee slash. The trap markers are visual-only; enemies wake visually when hit but remain stationary.
+The current project contains two runtime-generated prototypes: `TrapsSleep` is a 32×32 room with four doorways, while `LevelTest` is a seeded 32×32 room-and-corridor floor. Both include a player capsule, sleeping enemies, WASD movement, straight bow projectiles, and a facing-direction melee slash. The trap markers are visual-only; enemies wake visually when hit but remain stationary.
 
 The goal is to make the game playable first, then improve visuals, content, balance, and presentation.
 
@@ -97,17 +97,30 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 ### Generator foundation
 
-- [ ] Define a logical grid representation for the dungeon.
+- [x] Define a logical grid representation for the dungeon.
 - [ ] Define terrain data for floor, wall, door, water, grass, trap, entrance, and exit.
 - [ ] Implement recursive room splitting or a comparable constrained room generator.
-- [ ] Generate a room graph.
-- [ ] Connect rooms with corridors.
+- [x] Generate a seeded set of non-overlapping rectangular rooms.
+- [x] Connect rooms with corridors.
 - [ ] Guarantee a path from entrance to exit.
 - [ ] Add extra connections and loops for live-play retreat routes.
-- [ ] Add a deterministic seed for every generated run.
+- [x] Add a deterministic seed for the first level test.
 - [ ] Add a way to display or log the active seed during testing.
 - [ ] Add a post-generation validation pass.
 - [ ] Reject or regenerate layouts that are impossible or unfair.
+
+### LevelTest milestone
+
+- [x] Create `Assets/Scenes/LevelTest.unity`.
+- [x] Generate a playable 32×32 room-and-corridor floor at runtime.
+- [x] Build walls around carved floor cells.
+- [x] Add visible doors at room/corridor connections.
+- [x] Spawn the player in the first generated room.
+- [x] Spawn sleeping enemies in later generated rooms.
+- [x] Place the eight visible prototype trap markers in generated floor cells.
+- [ ] Add a real entrance and exit.
+- [ ] Add layout validation and unreachable-room detection.
+- [ ] Test a range of seeds and tune room/corridor dimensions.
 
 ### Live-play generation rules
 
