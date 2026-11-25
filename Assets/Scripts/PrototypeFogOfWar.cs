@@ -76,6 +76,11 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
         RefreshVisibility();
     }
 
+    public void RefreshNow()
+    {
+        if (player != null && walkableCells != null) RefreshVisibility();
+    }
+
     private void BuildFogTiles(Transform levelRoot)
     {
         var fogRoot = new GameObject("Level_FogOfWar").transform;

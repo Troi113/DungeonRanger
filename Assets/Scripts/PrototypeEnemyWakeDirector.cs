@@ -14,6 +14,21 @@ public sealed class PrototypeEnemyWakeDirector : MonoBehaviour
     private readonly List<PrototypeEnemy> sleepingEnemies = new();
     private System.Random random;
     private float nextWakeTime;
+    private float pausedAt = -1f;
+
+    private void OnDisable()
+    {
+        if (random != null) pausedAt = Time.time;
+    }
+
+    private void OnEnable()
+    {
+        if (random != null && pausedAt >= 0f)
+        {
+            nextWakeTime += Time.time - pausedAt;
+            pausedAt = -1f;
+        }
+    }
 
     public void Initialize(IReadOnlyList<PrototypeEnemy> spawnedEnemies, int randomSeed)
     {

@@ -1,11 +1,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>A single continuous run; the player survives while floors are rebuilt.</summary>
+/// <summary>A single continuous run; explored floors remain in memory until restart.</summary>
 public sealed class PrototypeDungeonRun : MonoBehaviour
 {
+    private sealed class FloorState
+    {
+        public GameObject Root;
+        public Vector3 UpPosition;
+        public Vector3 DownPosition;
+    }
+
     private PrototypePlayerMovement player;
     private GameObject floorRoot;
+    private readonly Dictionary<int, FloorState> floors = new();
     private int runSeed;
     public int Floor { get; private set; }
     public bool Victory { get; private set; }
@@ -15,14 +23,21 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         player = ranger;
         runSeed = Random.Range(1, 1000000);
         Floor = 1;
-        BuildFloor();
+        EnterFloor(false);
     }
 
     public void Descend()
     {
-        if (Floor >= 5 || Victory || player.GetComponent<PrototypePlayerStats>().IsDead) return;
+        if (Floor >= 5 || player.GetComponent<PrototypePlayerStats>().IsDead) return;
         Floor++;
-        BuildFloor();
+        EnterFloor(false);
+    }
+
+    public void Ascend()
+    {
+        if (Floor <= 1 || player.GetComponent<PrototypePlayerStats>().IsDead) return;
+        Floor--;
+        EnterFloor(true);
     }
 
     public void Restart()
@@ -37,26 +52,40 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         runSeed = Random.Range(1, 1000000);
         Floor = 1;
         Victory = false;
-        BuildFloor();
+        foreach (var state in floors.Values)
+        {
+            state.Root.SetActive(false);
+            Destroy(state.Root);
+        }
+        floors.Clear();
+        floorRoot = null;
+        EnterFloor(false);
     }
 
-    private void BuildFloor()
+    private void EnterFloor(bool arrivingFromBelow)
     {
         if (floorRoot != null)
         {
             floorRoot.SetActive(false);
-            Destroy(floorRoot);
         }
+
+        if (floors.TryGetValue(Floor, out var existing))
+        {
+            floorRoot = existing.Root;
+            MovePlayer(arrivingFromBelow ? existing.DownPosition : existing.UpPosition);
+            floorRoot.SetActive(true);
+            floorRoot.GetComponent<PrototypeFogOfWar>().RefreshNow();
+            return;
+        }
+
         floorRoot = new GameObject($"Generated_Floor_{Floor}");
         floorRoot.transform.SetParent(transform, false);
         var seed = runSeed + Floor * 1000;
         var generator = new PrototypeLevelGenerator();
         var layout = Floor == 5 ? generator.BuildBossArena(floorRoot.transform, seed) : generator.Build(floorRoot.transform, seed, false);
 
-        var controller = player.GetComponent<CharacterController>();
-        controller.enabled = false;
-        player.transform.position = layout.PlayerSpawn;
-        controller.enabled = true;
+        floors.Add(Floor, new FloorState { Root = floorRoot, UpPosition = layout.PlayerSpawn, DownPosition = layout.ExitSpawn });
+        MovePlayer(layout.PlayerSpawn);
         CreateStairs(layout.PlayerSpawn, false);
         if (Floor < 5) CreateStairs(layout.ExitSpawn, true);
 
@@ -76,6 +105,14 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         }
         var fog = floorRoot.AddComponent<PrototypeFogOfWar>();
         fog.Initialize(player, layout.WalkableCells, floorRoot.transform);
+    }
+
+    private void MovePlayer(Vector3 position)
+    {
+        var controller = player.GetComponent<CharacterController>();
+        controller.enabled = false;
+        player.transform.position = new Vector3(position.x, 1f, position.z);
+        controller.enabled = true;
     }
 
     private PrototypeEnemy CreateEnemy(Vector3 position, IReadOnlyList<Vector2Int> cells, int seed, bool boss)
@@ -108,6 +145,6 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
             step.GetComponent<Renderer>().sharedMaterial = material;
             step.GetComponent<Collider>().enabled = false;
         }
-        if (down) stairs.AddComponent<PrototypeStairs>().Initialize(this);
+        stairs.AddComponent<PrototypeStairs>().Initialize(this, down);
     }
 }

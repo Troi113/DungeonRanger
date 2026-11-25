@@ -14,7 +14,8 @@ Update this file at the end of each milestone.
 
 ## DungeonGameplay prototype
 
-- Floors 1–4 use different per-run seeds and generated rooms, corridors, doors, traps and loot. Press Space near the blue down stairs to descend; the player starts on yellow up stairs. Each staircase occupies a 2×2 world-unit footprint.
+- Floors 1–4 use different per-run seeds and generated rooms, corridors, doors, traps and loot. Press Space near blue down stairs to descend or yellow up stairs to return to the previous floor; floor 1 has no previous floor. Each staircase occupies a 2×2 world-unit footprint.
+- Explored floors stay in memory during a run, preserving fog discovery and the state of enemies, traps, doors, chests and pickups. Their enemy wake timers pause while the player is on another floor. Restarting clears the run.
 - Floor 5 generates a rectangular arena with a placeholder Goo boss. Goo chases and attacks using the prototype enemy behavior; defeating it shows a victory message.
 - The same player object carries health, inventory, hunger and status effects between floors. Press R after death to restart the run.
 - Sleeping enemies wake individually at random intervals of 20–35 seconds. Awake enemies patrol until they see the player within eight logical cells with a clear line of sight, or are hit. After losing sight they search the last seen position.
@@ -81,7 +82,7 @@ Current prototype movement speed is 8 Unity world units per second.
 | `J` | Fire a straight bow projectile in the facing direction |
 | `K` | Melee attack in the facing direction with a temporary slash effect |
 | `I` | Open/close the 4x5 inventory grid |
-| `Space` | Pick up a nearby item, open a chest while facing it with a key, or descend at down stairs |
+| `Space` | Pick up a nearby item, open a chest while facing it with a key, or travel using stairs |
 | `L` | Reserved for a future inventory/quick-slot action. Do not implement until defined. |
 
 Auto-targeting is intentionally deferred. Bow shots travel straight.

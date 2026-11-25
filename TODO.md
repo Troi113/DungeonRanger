@@ -171,6 +171,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 - [x] Add a separate DungeonGameplay scene with four generated floors and a generated Goo arena.
 - [x] Add up/down stair visuals and a Space interaction to descend.
+- [x] Allow up stairs to return to previously visited floors while preserving their runtime state.
 - [x] Keep player health and inventory while replacing generated floors in the same scene.
 - [ ] Playtest all four stair transitions and the Goo victory and restart flows.
 - [ ] Add distinct Goo attacks, telegraphs, and difficulty balancing.
