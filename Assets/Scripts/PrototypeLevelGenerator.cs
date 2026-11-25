@@ -81,10 +81,10 @@ public sealed class PrototypeLevelGenerator
         public readonly List<Vector2Int> WalkableCells = new();
     }
 
-    public Layout Build(Transform root)
+    public Layout Build(Transform root, int seed = Seed, bool showExitMarker = true)
     {
         var occupied = new bool[Width, Height];
-        var rooms = CreateRooms(occupied);
+        var rooms = CreateRooms(occupied, seed);
         var doorPlacements = new List<DoorPlacement>();
 
         for (var i = 1; i < rooms.Count; i++)
@@ -113,18 +113,18 @@ public sealed class PrototypeLevelGenerator
 
         BuildFloor(floorRoot, occupied, floorMaterial);
         BuildWalls(wallRoot, occupied, connectedDoors, wallMaterial);
-        BuildDoors(doorRoot, connectedDoors, doorMaterial);
-        BuildTraps(root, occupied);
+        BuildDoors(doorRoot, connectedDoors, doorMaterial, seed);
+        BuildTraps(root, occupied, seed);
         BuildItemsAndChests(root, rooms);
 
         var entranceCell = rooms[0].Center;
         var exitCell = rooms[rooms.Count - 1].Center;
         if (!ValidateConnectivity(occupied, entranceCell, exitCell))
         {
-            Debug.LogError($"Level seed {Seed} produced an invalid disconnected layout.");
+            Debug.LogError($"Level seed {seed} produced an invalid disconnected layout.");
         }
 
-        BuildExitMarker(root, exitCell);
+        if (showExitMarker) BuildExitMarker(root, exitCell);
 
         var layout = new Layout
         {
@@ -151,9 +151,30 @@ public sealed class PrototypeLevelGenerator
         return layout;
     }
 
-    private static List<Room> CreateRooms(bool[,] occupied)
+    public Layout BuildBossArena(Transform root, int seed)
     {
-        var random = new System.Random(Seed);
+        var random = new System.Random(seed);
+        var width = random.Next(10, 14);
+        var height = random.Next(10, 14);
+        var bounds = new RectInt(random.Next(4, Width - width - 4), random.Next(4, Height - height - 4), width, height);
+        var occupied = new bool[Width, Height];
+        CarveRoom(bounds, occupied);
+        BuildFloor(CreateChild(root, "Level_Floor"), occupied, CreateMaterial("Boss Floor", FloorColor));
+        BuildWalls(CreateChild(root, "Level_Walls"), occupied, new List<DoorPlacement>(), CreateMaterial("Boss Walls", WallColor));
+        var layout = new Layout
+        {
+            PlayerSpawn = GridToWorld(new Vector2Int(bounds.xMin + 2, bounds.yMin + 2), 1f),
+            ExitSpawn = GridToWorld(new Vector2Int(bounds.xMax - 3, bounds.yMax - 3), 1f)
+        };
+        for (var x = bounds.xMin; x < bounds.xMax; x++)
+            for (var y = bounds.yMin; y < bounds.yMax; y++)
+                layout.WalkableCells.Add(new Vector2Int(x, y));
+        return layout;
+    }
+
+    private static List<Room> CreateRooms(bool[,] occupied, int seed)
+    {
+        var random = new System.Random(seed);
         var rooms = new List<Room>();
 
         for (var attempt = 0; attempt < 100 && rooms.Count < DesiredRooms; attempt++)
@@ -534,7 +555,7 @@ public sealed class PrototypeLevelGenerator
         }
     }
 
-    private static void BuildDoors(Transform parent, List<DoorPlacement> doors, Material material)
+    private static void BuildDoors(Transform parent, List<DoorPlacement> doors, Material material, int seed)
     {
         for (var i = 0; i < doors.Count; i++)
         {
@@ -580,7 +601,7 @@ public sealed class PrototypeLevelGenerator
                 panel.transform,
                 panelCollider,
                 WorldRoomBounds(door.OwnerBounds),
-                Seed + i,
+                seed + i,
                 door.Cell,
                 door.Direction);
         }
@@ -597,7 +618,7 @@ public sealed class PrototypeLevelGenerator
             maximum.z + TileSize * 0.5f);
     }
 
-    private static void BuildTraps(Transform root, bool[,] occupied)
+    private static void BuildTraps(Transform root, bool[,] occupied, int seed)
     {
         var trapRoot = CreateChild(root, "Level_Traps");
         var trapCells = new List<Vector2Int>();
@@ -611,7 +632,7 @@ public sealed class PrototypeLevelGenerator
             }
         }
 
-        var random = new System.Random(Seed + 1);
+        var random = new System.Random(seed + 1);
         while (trapCells.Count < Mathf.Min(8, candidates.Count) && candidates.Count > 0)
         {
             var index = random.Next(candidates.Count);

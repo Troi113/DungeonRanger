@@ -25,7 +25,8 @@ public sealed class PrototypeProjectile : MonoBehaviour
 
         foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude))
         {
-            if (enemy != null && enemy.IsAlive && Vector3.Distance(transform.position, enemy.transform.position) <= 0.45f)
+            if (enemy != null && enemy.IsAlive && enemy.GetComponent<Collider>() != null &&
+                Vector3.Distance(transform.position, enemy.GetComponent<Collider>().ClosestPoint(transform.position)) <= 0.2f)
             {
                 enemy.TakeDamage(damage);
                 Destroy(gameObject);

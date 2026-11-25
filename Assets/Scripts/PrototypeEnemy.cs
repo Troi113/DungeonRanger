@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -27,6 +28,9 @@ public sealed class PrototypeEnemy : MonoBehaviour
     private int pathIndex;
     private float nextRepathTime;
     private float nextAttackTime;
+    private bool noticedPlayer;
+    private Vector2Int lastSeenPlayer;
+    public event Action Defeated;
 
     public bool IsAlive => health > 0 && this != null;
     public bool IsAwake { get; private set; }
@@ -58,10 +62,12 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
         var sightRangeWorld = sightRangeCells * PrototypeLevelGenerator.TileSize;
         var distanceToPlayer = player.transform.position - transform.position;
-        var canSeePlayer = distanceToPlayer.sqrMagnitude <= sightRangeWorld * sightRangeWorld;
+        var canSeePlayer = distanceToPlayer.sqrMagnitude <= sightRangeWorld * sightRangeWorld && HasClearSight(distanceToPlayer);
 
         if (canSeePlayer)
         {
+            noticedPlayer = true;
+            lastSeenPlayer = PrototypeLevelGenerator.WorldToGrid(player.transform.position);
             var planarDistance = distanceToPlayer;
             planarDistance.y = 0f;
             if (planarDistance.magnitude <= attackRange)
@@ -82,6 +88,22 @@ public sealed class PrototypeEnemy : MonoBehaviour
             return;
         }
 
+        if (noticedPlayer)
+        {
+            if (Time.time >= nextRepathTime && pathIndex >= path.Count)
+            {
+                RebuildPath(PrototypeLevelGenerator.WorldToGrid(transform.position), lastSeenPlayer);
+                nextRepathTime = Time.time + repathInterval;
+            }
+            if (PrototypeLevelGenerator.WorldToGrid(transform.position) == lastSeenPlayer)
+                noticedPlayer = false;
+            else
+            {
+                FollowPath(chaseSpeed);
+                return;
+            }
+        }
+
         if (pathIndex >= path.Count)
         {
             ChoosePatrolTarget();
@@ -98,11 +120,42 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
 
         WakeUp();
+        if (player != null)
+        {
+            noticedPlayer = true;
+            lastSeenPlayer = PrototypeLevelGenerator.WorldToGrid(player.transform.position);
+            RebuildPath(PrototypeLevelGenerator.WorldToGrid(transform.position), lastSeenPlayer);
+        }
         health -= damage;
         if (health <= 0)
         {
+            Defeated?.Invoke();
             Destroy(gameObject);
         }
+    }
+
+    public void ConfigureBoss(int bossHealth)
+    {
+        health = bossHealth;
+        awakeColor = new Color(0.2f, 0.75f, 0.35f);
+        patrolSpeed = 2.5f;
+        chaseSpeed = 3f;
+        attackRange = 3f;
+        attackDamage = 2;
+        attackCooldown = 1.8f;
+        WakeUp();
+    }
+
+    private bool HasClearSight(Vector3 offset)
+    {
+        var distance = offset.magnitude;
+        if (distance < 0.01f) return true;
+        foreach (var hit in Physics.RaycastAll(transform.position, offset / distance, distance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+        {
+            if (hit.collider.transform.IsChildOf(transform) || hit.collider.transform.IsChildOf(player.transform)) continue;
+            if (hit.collider.name.StartsWith("Wall_") || hit.collider.name == "Door_Panel") return false;
+        }
+        return true;
     }
 
     public void WakeUp()

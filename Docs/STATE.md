@@ -10,6 +10,15 @@ Update this file at the end of each milestone.
 - `Assets/Scenes/SampleScene.unity`: main test scene
 - `Assets/Scenes/TrapsSleep.unity`: saved prototype scene (when present)
 - `Assets/Scenes/LevelTest.unity`: full-floor generator test (when present)
+- `Assets/Scenes/DungeonGameplay.unity`: playable five-floor prototype, generated at runtime.
+
+## DungeonGameplay prototype
+
+- Floors 1–4 use different per-run seeds and generated rooms, corridors, doors, traps and loot. Press Space near the blue down stairs to descend; the player starts on yellow up stairs. Each staircase occupies a 2×2 world-unit footprint.
+- Floor 5 generates a rectangular arena with a placeholder Goo boss. Goo chases and attacks using the prototype enemy behavior; defeating it shows a victory message.
+- The same player object carries health, inventory, hunger and status effects between floors. Press R after death to restart the run.
+- Sleeping enemies wake individually at random intervals of 20–35 seconds. Awake enemies patrol until they see the player within eight logical cells with a clear line of sight, or are hit. After losing sight they search the last seen position.
+- This is an early gameplay prototype: floor-to-floor transitions and Goo combat still need full playtesting; Goo has no special attacks or phases yet.
 
 ## Runtime setup
 - `PrototypeBootstrap` generates the room, player, camera, and lighting at runtime.
@@ -22,7 +31,7 @@ Update this file at the end of each milestone.
 - Seed `4582`, six attempted rooms, one-cell corridors.
 - Visible doors, visible trap markers, and sleeping enemies.
 - Sleeping enemies wake one at a time after randomized delays.
-- Awake enemies patrol across generated walkable cells and chase the player only within 8 logical cells (32 Unity world units).
+- Awake enemies patrol across generated walkable cells and detect the player within 8 logical cells (32 Unity world units) with clear line of sight.
 - Fog of war gives the hero a circular 9-cell visibility radius (36 Unity world units).
 - Closed doors block visibility; opening a door reveals the walkable area beyond it.
 - Floor contents and enemies outside current visibility are hidden while walls and door frames remain visible as the map outline.
@@ -72,7 +81,7 @@ Current prototype movement speed is 8 Unity world units per second.
 | `J` | Fire a straight bow projectile in the facing direction |
 | `K` | Melee attack in the facing direction with a temporary slash effect |
 | `I` | Open/close the 4x5 inventory grid |
-| `Space` | Pick up a nearby item or open a chest while facing it and carrying a key |
+| `Space` | Pick up a nearby item, open a chest while facing it with a key, or descend at down stairs |
 | `L` | Reserved for a future inventory/quick-slot action. Do not implement until defined. |
 
 Auto-targeting is intentionally deferred. Bow shots travel straight.

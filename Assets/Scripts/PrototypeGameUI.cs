@@ -20,6 +20,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
     private PrototypeInventory inventory;
     private PrototypeHunger hunger;
     private PrototypePlayerInteraction interaction;
+    private PrototypeDungeonRun run;
     public static bool IsInventoryOpen { get; private set; }
 
     public void Initialize(GameObject player)
@@ -28,6 +29,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         inventory = player.GetComponent<PrototypeInventory>();
         hunger = player.GetComponent<PrototypeHunger>();
         interaction = player.GetComponent<PrototypePlayerInteraction>();
+        run = GetComponent<PrototypeDungeonRun>();
     }
 
     private void Update()
@@ -40,7 +42,8 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (stats != null && stats.IsDead && Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
         {
             IsInventoryOpen = false;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            if (run != null) run.Restart();
+            else SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
 
@@ -64,11 +67,16 @@ public sealed class PrototypeGameUI : MonoBehaviour
         }
 
         GUI.Label(new Rect(Screen.width - 190f, 16f, 170f, 24f), "I: Inventory");
+        if (run != null)
+        {
+            GUI.Label(new Rect(Screen.width - 190f, 40f, 180f, 24f), run.Floor == 5 ? "Floor 5: Goo" : $"Floor {run.Floor}/5");
+            if (run.Victory) GUI.Box(new Rect(Screen.width * 0.5f - 160f, 50f, 320f, 60f), "Victory! Goo defeated");
+        }
 
         if (stats.IsDead)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 180f, Screen.height * 0.5f - 70f, 360f, 140f), "You Died");
-            GUI.Label(new Rect(Screen.width * 0.5f - 140f, Screen.height * 0.5f - 20f, 280f, 28f), "Press R to restart LevelTest");
+            GUI.Label(new Rect(Screen.width * 0.5f - 140f, Screen.height * 0.5f - 20f, 280f, 28f), "Press R to restart");
             GUI.color = oldColor;
             return;
         }

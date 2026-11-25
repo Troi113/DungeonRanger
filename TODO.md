@@ -169,6 +169,11 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 ## Level progression
 
+- [x] Add a separate DungeonGameplay scene with four generated floors and a generated Goo arena.
+- [x] Add up/down stair visuals and a Space interaction to descend.
+- [x] Keep player health and inventory while replacing generated floors in the same scene.
+- [ ] Playtest all four stair transitions and the Goo victory and restart flows.
+- [ ] Add distinct Goo attacks, telegraphs, and difficulty balancing.
 - [ ] Create a four-level procedural progression.
 - [ ] Create a fifth boss level.
 - [ ] Decide whether the first four levels share a sewer theme or use different themes.

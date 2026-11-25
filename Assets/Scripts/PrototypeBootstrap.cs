@@ -16,7 +16,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     private static void CreatePrototype()
     {
         var sceneName = SceneManager.GetActiveScene().name;
-        if (sceneName != "SampleScene" && sceneName != "MoveCombatTest" && sceneName != "TrapsSleep" && sceneName != "LevelTest")
+        if (sceneName != "SampleScene" && sceneName != "MoveCombatTest" && sceneName != "TrapsSleep" && sceneName != "LevelTest" && sceneName != "DungeonGameplay")
         {
             return;
         }
@@ -28,7 +28,19 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         var root = new GameObject(RootName);
         var bootstrap = root.AddComponent<PrototypeBootstrap>();
-        bootstrap.BuildScene(root.transform, sceneName == "LevelTest");
+        if (sceneName == "DungeonGameplay") bootstrap.BuildGameplay(root.transform);
+        else bootstrap.BuildScene(root.transform, sceneName == "LevelTest");
+    }
+
+    private void BuildGameplay(Transform root)
+    {
+        var player = CreatePlayer(root, CreateMaterial("Prototype Player Material", PlayerColor), Vector3.up);
+        var run = root.gameObject.AddComponent<PrototypeDungeonRun>();
+        run.Initialize(player);
+        var ui = root.gameObject.AddComponent<PrototypeGameUI>();
+        ui.Initialize(player.gameObject);
+        SetupCamera(root, true);
+        SetupLighting();
     }
 
     private void BuildScene(Transform root, bool fullLevel)
@@ -65,7 +77,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         SetupLighting();
     }
 
-    private static PrototypePlayerMovement CreatePlayer(Transform root, Material material, Vector3 position)
+    internal static PrototypePlayerMovement CreatePlayer(Transform root, Material material, Vector3 position)
     {
         var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         player.name = "Player_Ranger_Test";
@@ -175,7 +187,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         light.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
     }
 
-    private static Material CreateMaterial(string materialName, Color color)
+    internal static Material CreateMaterial(string materialName, Color color)
     {
         var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
         var material = new Material(shader)

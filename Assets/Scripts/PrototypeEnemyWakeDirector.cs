@@ -7,8 +7,8 @@ using UnityEngine;
 /// </summary>
 public sealed class PrototypeEnemyWakeDirector : MonoBehaviour
 {
-    [SerializeField] private float minimumWakeDelay = 3f;
-    [SerializeField] private float maximumWakeDelay = 8f;
+    [SerializeField] private float minimumWakeDelay = 20f;
+    [SerializeField] private float maximumWakeDelay = 35f;
 
     private readonly List<PrototypeEnemy> enemies = new();
     private readonly List<PrototypeEnemy> sleepingEnemies = new();
