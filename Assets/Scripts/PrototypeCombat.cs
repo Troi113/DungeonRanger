@@ -34,7 +34,7 @@ public sealed class PrototypeCombat : MonoBehaviour
             return;
         }
 
-        if (PrototypeGameUI.IsInventoryOpen)
+        if (PrototypeGameUI.IsGamePaused)
         {
             return;
         }

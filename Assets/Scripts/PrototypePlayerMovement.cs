@@ -38,7 +38,7 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
             return;
         }
 
-        if (PrototypeGameUI.IsInventoryOpen)
+        if (PrototypeGameUI.IsGamePaused)
         {
             IsMoving = false;
             return;

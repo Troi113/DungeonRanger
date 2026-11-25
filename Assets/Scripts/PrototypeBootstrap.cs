@@ -12,10 +12,16 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     private static readonly Color PlayerColor = new(0.85f, 0.66f, 0.18f);
     private static readonly Color SleepingEnemyColor = new(0.18f, 0.22f, 0.3f);
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void CreatePrototype()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterSceneHandler()
     {
-        var sceneName = SceneManager.GetActiveScene().name;
+        SceneManager.sceneLoaded -= CreatePrototype;
+        SceneManager.sceneLoaded += CreatePrototype;
+    }
+
+    private static void CreatePrototype(Scene scene, LoadSceneMode mode)
+    {
+        var sceneName = scene.name;
         if (sceneName != "SampleScene" && sceneName != "MoveCombatTest" && sceneName != "TrapsSleep" && sceneName != "LevelTest" && sceneName != "DungeonGameplay")
         {
             return;

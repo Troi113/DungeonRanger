@@ -7,6 +7,7 @@ Update this file at the end of each milestone.
 - Scripts: `Assets/Scripts/`
 
 ## Scenes
+- `Assets/Scenes/MainMenu.unity`: startup scene with Start Game and Exit Game.
 - `Assets/Scenes/SampleScene.unity`: main test scene
 - `Assets/Scenes/TrapsSleep.unity`: saved prototype scene (when present)
 - `Assets/Scenes/LevelTest.unity`: full-floor generator test (when present)
@@ -60,7 +61,8 @@ Update this file at the end of each milestone.
 - `PrototypeGameUI` displays health and hunger and opens a 4-column by 5-row inventory with `I`. The top row is reserved for weapon, armor, artifact/ring A, and artifact/ring B.
 - Clicking a health potion heals 8 health, clicking food restores 60 moving-seconds of hunger, and clicking an equippable item in a general slot moves it into its equipment slot.
 - Enemies now attack the player at close range with a cooldown. Death displays a restart prompt; `R` reloads the active scene.
-- While the inventory is open, movement and combat are paused for the prototype.
+- Opening the inventory pauses game time. Escape opens a pause menu with Continue and Quit to Main Menu; Continue resumes the run and quitting discards it. Exit Game closes a standalone build (Unity ignores application quit in the editor).
+- The build scene list starts with MainMenu, followed by DungeonGameplay; opening MainMenu in the editor and pressing Play starts at the title screen.
 
 ## Pixel Dungeon reference decisions
 
@@ -82,6 +84,7 @@ Current prototype movement speed is 8 Unity world units per second.
 | `J` | Fire a straight bow projectile in the facing direction |
 | `K` | Melee attack in the facing direction with a temporary slash effect |
 | `I` | Open/close the 4x5 inventory grid |
+| `Esc` | Open/close the pause menu |
 | `Space` | Pick up a nearby item, open a chest while facing it with a key, or travel using stairs |
 | `L` | Reserved for a future inventory/quick-slot action. Do not implement until defined. |
 

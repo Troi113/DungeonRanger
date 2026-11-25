@@ -20,6 +20,7 @@ public sealed class PrototypeProjectile : MonoBehaviour
 
     private void Update()
     {
+        if (PrototypeGameUI.IsGamePaused) return;
         transform.position += direction * speed * Time.deltaTime;
         remainingLifetime -= Time.deltaTime;
 

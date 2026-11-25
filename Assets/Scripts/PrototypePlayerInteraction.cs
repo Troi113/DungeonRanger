@@ -25,7 +25,7 @@ public sealed class PrototypePlayerInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (PrototypeGameUI.IsInventoryOpen)
+        if (PrototypeGameUI.IsGamePaused)
         {
             currentTarget = null;
             return;

@@ -19,7 +19,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Add an on-screen health and hunger HUD.
 - [x] Add an on-screen `I` inventory toggle.
 - [x] Add an on-screen control hint for inventory.
-- [x] Pause movement and combat while the inventory is open.
+- [x] Pause gameplay while the inventory is open.
+- [x] Add an Escape pause menu with Continue and Quit to Main Menu.
 
 ## Immediate prototype stabilization
 
@@ -223,10 +224,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 ### Opening and closing UI
 
-- [ ] Create a title screen.
-- [ ] Add a start game button.
+- [x] Create a title screen.
+- [x] Add a start game button.
 - [ ] Add a settings button or settings panel.
-- [ ] Add a quit or close-game option appropriate for the target platform.
+- [x] Add a quit or close-game option appropriate for the target platform.
 - [ ] Create a game-over screen.
 - [ ] Create a victory screen.
 - [ ] Add restart and return-to-title actions.

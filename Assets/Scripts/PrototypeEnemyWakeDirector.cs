@@ -40,7 +40,7 @@ public sealed class PrototypeEnemyWakeDirector : MonoBehaviour
 
     private void Update()
     {
-        if (random == null || Time.time < nextWakeTime)
+        if (PrototypeGameUI.IsGamePaused || random == null || Time.time < nextWakeTime)
         {
             return;
         }

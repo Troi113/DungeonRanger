@@ -55,7 +55,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
     private void Update()
     {
-        if (!IsAlive || !IsAwake || player == null || walkableCells == null || walkableCells.Count == 0)
+        if (PrototypeGameUI.IsGamePaused || !IsAlive || !IsAwake || player == null || walkableCells == null || walkableCells.Count == 0)
         {
             return;
         }
