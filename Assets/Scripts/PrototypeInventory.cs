@@ -69,7 +69,7 @@ public sealed class PrototypeInventory : MonoBehaviour
 
     public bool TryEquip(int inventoryIndex, PrototypeEquipmentSlot equipmentSlot)
     {
-        if (!IsValidIndex(inventoryIndex) ||
+        if (!IsValidIndex(inventoryIndex) || inventoryIndex < EquipmentSlotCount ||
             equipmentSlot == PrototypeEquipmentSlot.None ||
             (int)equipmentSlot > EquipmentSlotCount)
         {
@@ -77,22 +77,39 @@ public sealed class PrototypeInventory : MonoBehaviour
         }
 
         var item = slots[inventoryIndex];
-        if (item == null ||
-            (item.EquipmentSlot != PrototypeEquipmentSlot.None && item.EquipmentSlot != equipmentSlot))
+        if (item == null || !CanEquip(item, equipmentSlot))
         {
             return false;
         }
 
         var targetIndex = (int)equipmentSlot - 1;
-        if (slots[targetIndex] != null)
-        {
-            return false;
-        }
-
+        // Swapping keeps the replaced equipment in the original backpack slot.
+        slots[inventoryIndex] = slots[targetIndex];
         slots[targetIndex] = item;
-        slots[inventoryIndex] = null;
         InventoryChanged?.Invoke();
         return true;
+    }
+
+    public bool TryUnequip(int equipmentIndex)
+    {
+        if (equipmentIndex < 0 || equipmentIndex >= EquipmentSlotCount || slots[equipmentIndex] == null) return false;
+        for (var index = EquipmentSlotCount; index < SlotCount; index++)
+        {
+            if (slots[index] != null) continue;
+            slots[index] = slots[equipmentIndex];
+            slots[equipmentIndex] = null;
+            InventoryChanged?.Invoke();
+            return true;
+        }
+        return false;
+    }
+
+    private static bool CanEquip(PrototypeInventoryItem item, PrototypeEquipmentSlot target)
+    {
+        if (item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingA ||
+            item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingB)
+            return target == PrototypeEquipmentSlot.ArtifactOrRingA || target == PrototypeEquipmentSlot.ArtifactOrRingB;
+        return item.EquipmentSlot != PrototypeEquipmentSlot.None && item.EquipmentSlot == target;
     }
 
     public PrototypeInventoryItem RemoveAt(int index)

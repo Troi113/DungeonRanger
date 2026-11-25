@@ -58,7 +58,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
     private void Update()
     {
-        if (PrototypeGameUI.IsGamePaused || !IsAlive || !IsAwake || player == null || walkableCells == null || walkableCells.Count == 0)
+        if (PrototypeGameUI.IsGamePaused || !IsAlive || player == null || walkableCells == null || walkableCells.Count == 0)
         {
             return;
         }
@@ -69,6 +69,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
         if (canSeePlayer)
         {
+            WakeUp();
             noticedPlayer = true;
             lastSeenPlayer = PrototypeLevelGenerator.WorldToGrid(player.transform.position);
             var planarDistance = distanceToPlayer;
@@ -90,6 +91,11 @@ public sealed class PrototypeEnemy : MonoBehaviour
             FollowPath(chaseSpeed);
             return;
         }
+
+        // Sleeping enemies wait for the staggered wake director, a hit, or
+        // direct sight of the player. Randomly awakened enemies patrol until
+        // they notice the player; waking alone does not reveal the player.
+        if (!IsAwake) return;
 
         if (noticedPlayer)
         {

@@ -108,7 +108,8 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         var movement = player.AddComponent<PrototypePlayerMovement>();
         player.AddComponent<PrototypePlayerStats>();
-        player.AddComponent<PrototypeInventory>();
+        var inventory = player.AddComponent<PrototypeInventory>();
+        inventory.TryAdd(new PrototypeInventoryItem("ranger_bow"));
         player.AddComponent<PrototypeStatusEffects>();
         player.AddComponent<PrototypeHunger>();
         player.AddComponent<PrototypePlayerInteraction>();

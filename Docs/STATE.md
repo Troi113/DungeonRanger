@@ -19,7 +19,7 @@ Update this file at the end of each milestone.
 - Explored floors stay in memory during a run, preserving fog discovery and the state of enemies, traps, doors, chests and pickups. Their enemy wake timers pause while the player is on another floor. Restarting clears the run.
 - Floor 5 generates a rectangular arena with a placeholder Goo boss. Goo chases and attacks using the prototype enemy behavior; defeating it shows a victory message.
 - The same player object carries health, inventory, hunger and status effects between floors. Press R after death to restart the run.
-- Sleeping enemies wake individually at random intervals of 20–35 seconds. Awake enemies patrol until they see the player within eight logical cells with a clear line of sight, or are hit. After losing sight they search the last seen position.
+- Sleeping enemies wake individually at random intervals of 20–35 seconds and patrol; this does not reveal the player's position. A sleeping enemy also wakes immediately if it sees the player within eight logical cells with a clear line of sight or is hit. Enemies that notice the player chase, then search the last seen position if sight is lost.
 - This is an early gameplay prototype: floor-to-floor transitions and Goo combat still need full playtesting; Goo has no special attacks or phases yet.
 
 ## Runtime setup
@@ -32,7 +32,7 @@ Update this file at the end of each milestone.
 ## LevelTest prototype
 - Seed `4582`, six attempted rooms, one-cell corridors.
 - Visible doors, visible trap markers, and sleeping enemies.
-- Sleeping enemies wake one at a time after randomized delays.
+- Sleeping enemies wake one at a time after randomized delays, or immediately when they see the player or are hit.
 - Awake enemies patrol across generated walkable cells and detect the player within 8 logical cells (32 Unity world units) with clear line of sight.
 - Fog of war gives the hero a circular 9-cell visibility radius (36 Unity world units).
 - Closed doors block visibility; opening a door reveals the walkable area beyond it.
@@ -40,7 +40,7 @@ Update this file at the end of each milestone.
 - Fog tracks separate visible, visited, and mapped states; visited and mapped cells use different dimmed fog colors.
 - LevelTest now generates functional trap components. Each placed trap independently rolls one of eight types with equal 1/8 probability; each trap has a 50% chance to start hidden.
 - Traps activate once when the player steps on them. Toxic, paralytic, poison, gripping, fire, and lightning traps apply prototype effects; alarm wakes all sleeping enemies; summoning currently wakes one sleeping enemy as a temporary stand-in for a future spawn system.
-- LevelTest now generates a key pickup, a locked chest, a health-potion pickup, and a ranger-bow pickup. Items are collected with Space; the chest consumes a key and drops a health potion.
+- LevelTest generates a key pickup, a locked chest, a health-potion pickup, and melee weapon pickups. Items are collected with Space; the chest consumes a key and drops a health potion.
 - The generated last room has a green exit marker, and the generator validates that the entrance room and exit room are connected through carved floor cells.
 - Connectivity and door placement were checked across 12 seeds; full gameplay playtesting across more layouts remains open.
 
@@ -59,7 +59,9 @@ Update this file at the end of each milestone.
 - `PrototypeStatusEffects` currently supports poisoned, toxic, paralyzed, and gripped states. Damage-over-time effects tick once per second; paralyzed and gripped block movement.
 - `PrototypeHunger` starts satiated, counts moving time only, becomes Hungry after 60 moving seconds, becomes Famished after 120 moving seconds, and deals 1 damage every 5 seconds while Famished. These values are serialized prototype defaults and can be tuned later.
 - `PrototypeGameUI` displays health and hunger and opens a 4-column by 5-row inventory with `I`. The top row is reserved for weapon, armor, artifact/ring A, and artifact/ring B.
-- Clicking a health potion heals 8 health, clicking food restores 60 moving-seconds of hunger, and clicking an equippable item in a general slot moves it into its equipment slot.
+- The ranger starts with a permanent bow in a general inventory slot; it requires no equipment slot and always fires with `J` during gameplay. `K` uses the melee weapon equipped in the weapon slot, and does nothing without one.
+- Generated melee pickups include knuckledusters, knives, swords, sickles, axes, and spears, with prototype damage, reach, and cooldown values. A weapon appears near the starting room. Pixel Dungeon's melee weapons informed the variety and real-time feel; knife and sickle are prototype additions.
+- In inventory, use WASD or arrow keys to select a slot, `J` to open or confirm an item action, and `Esc` to close its action menu. Potions heal 8 health, food restores 60 moving-seconds of hunger, and equipment can be equipped or unequipped. Both artifact/ring slots are selectable. Armor and artifact/ring stat effects remain unimplemented.
 - Enemies now attack the player at close range with a cooldown. Death displays a restart prompt; `R` reloads the active scene.
 - Opening the inventory pauses game time. Escape opens a pause menu with Continue and Quit to Main Menu; Continue resumes the run and quitting discards it. Exit Game closes a standalone build (Unity ignores application quit in the editor).
 - The build scene list starts with MainMenu, followed by DungeonGameplay; opening MainMenu in the editor and pressing Play starts at the title screen.
@@ -82,9 +84,10 @@ Current prototype movement speed is 8 Unity world units per second.
 | `WASD` | Move and update facing direction |
 | `Shift` | Tumble/dash about one enlarged terrain tile in the facing direction. Collision-aware, short cooldown. |
 | `J` | Fire a straight bow projectile in the facing direction |
-| `K` | Melee attack in the facing direction with a temporary slash effect |
+| `K` | Attack in the facing direction with an equipped melee weapon and a temporary slash effect |
 | `I` | Open/close the 4x5 inventory grid |
-| `Esc` | Open/close the pause menu |
+| `WASD` / arrows, `J`, `Esc` | Navigate inventory, select/confirm an action, and deselect |
+| `Esc` | Open/close the pause menu when no inventory item action is open |
 | `Space` | Pick up a nearby item, open a chest while facing it with a key, or travel using stairs |
 | `L` | Reserved for a future inventory/quick-slot action. Do not implement until defined. |
 

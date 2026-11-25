@@ -117,7 +117,7 @@ public sealed class PrototypeLevelGenerator
         BuildWalls(wallRoot, occupied, connectedDoors, wallMaterial, blockedEdges);
         BuildDoors(doorRoot, connectedDoors, doorMaterial, seed);
         BuildTraps(root, occupied, seed);
-        BuildItemsAndChests(root, rooms);
+        BuildItemsAndChests(root, rooms, seed);
 
         var entranceCell = rooms[0].Center;
         var exitCell = rooms[rooms.Count - 1].Center;
@@ -563,14 +563,18 @@ public sealed class PrototypeLevelGenerator
         }
     }
 
-    private static void BuildItemsAndChests(Transform root, List<Room> rooms)
+    private static void BuildItemsAndChests(Transform root, List<Room> rooms, int seed)
     {
-        if (rooms.Count < 2)
-        {
-            return;
-        }
-
         var itemRoot = CreateChild(root, "Level_Items");
+        var random = new System.Random(seed + 321);
+        var availableWeapons = new List<int>();
+        for (var i = 0; i < PrototypeMeleeWeapons.Count; i++) availableWeapons.Add(i);
+        SpawnWeapon(itemRoot, OffsetRoomCell(rooms[0], 1, 0), random, availableWeapons);
+        if (rooms.Count >= 3) SpawnWeapon(itemRoot, OffsetRoomCell(rooms[2], -1, 0), random, availableWeapons);
+        if (rooms.Count >= 5) SpawnWeapon(itemRoot, OffsetRoomCell(rooms[4], 1, -1), random, availableWeapons);
+
+        if (rooms.Count < 2) return;
+
         var keyCell = OffsetRoomCell(rooms[1], -1, -1);
         PrototypeItemPickup.CreateRuntime(
             itemRoot,
@@ -630,18 +634,15 @@ public sealed class PrototypeLevelGenerator
                 new Color(0.72f, 0.48f, 0.2f));
         }
 
-        if (rooms.Count >= 5)
-        {
-            var bowCell = OffsetRoomCell(rooms[4], 1, -1);
-            PrototypeItemPickup.CreateRuntime(
-                itemRoot,
-                GridToWorld(bowCell, 0f),
-                "Item_RangerBow",
-                "ranger_bow",
-                "Ranger Bow",
-                PrototypeEquipmentSlot.Weapon,
-                new Color(0.78f, 0.5f, 0.18f));
-        }
+    }
+
+    private static void SpawnWeapon(Transform parent, Vector2Int cell, System.Random random, List<int> available)
+    {
+        var choice = random.Next(available.Count);
+        var weapon = PrototypeMeleeWeapons.Get(available[choice]);
+        available.RemoveAt(choice);
+        PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{weapon.Id}",
+            weapon.Id, weapon.Name, PrototypeEquipmentSlot.Weapon, weapon.Color);
     }
 
     private static Vector2Int OffsetRoomCell(Room room, int xOffset, int yOffset)

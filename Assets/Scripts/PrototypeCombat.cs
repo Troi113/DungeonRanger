@@ -14,9 +14,6 @@ public sealed class PrototypeCombat : MonoBehaviour
     [SerializeField] private float bowCooldown = 0.35f;
     [SerializeField] private float projectileSpeed = 10f;
     [SerializeField] private int bowDamage = 1;
-    [SerializeField] private float meleeRange = 1.6f;
-    [SerializeField] private float meleeCooldown = 0.3f;
-    [SerializeField] private int meleeDamage = 1;
 
     private PrototypePlayerMovement movement;
     private float nextBowTime;
@@ -50,9 +47,11 @@ public sealed class PrototypeCombat : MonoBehaviour
             FireBow();
         }
 
-        if (Keyboard.current.kKey.wasPressedThisFrame && Time.time >= nextMeleeTime)
+        var weapon = GetComponent<PrototypeInventory>()?.GetSlot(0);
+        if (Keyboard.current.kKey.wasPressedThisFrame && Time.time >= nextMeleeTime && weapon != null &&
+            weapon.EquipmentSlot == PrototypeEquipmentSlot.Weapon && PrototypeMeleeWeapons.TryGet(weapon.ItemId, out var meleeWeapon))
         {
-            PerformMeleeAttack();
+            PerformMeleeAttack(meleeWeapon);
         }
     }
 
@@ -76,9 +75,9 @@ public sealed class PrototypeCombat : MonoBehaviour
         projectile.Initialize(direction, projectileSpeed, bowDamage, bowRange + 4f);
     }
 
-    private void PerformMeleeAttack()
+    private void PerformMeleeAttack(PrototypeMeleeWeapons.WeaponData weapon)
     {
-        nextMeleeTime = Time.time + meleeCooldown;
+        nextMeleeTime = Time.time + weapon.Cooldown;
         var facing = movement.FacingDirection;
 
         foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude))
@@ -91,9 +90,9 @@ public sealed class PrototypeCombat : MonoBehaviour
             var offset = enemy.transform.position - transform.position;
             offset.y = 0f;
             var distance = offset.magnitude;
-            if (distance <= meleeRange && Vector3.Dot(facing, offset.normalized) >= 0.25f)
+            if (distance <= weapon.Range && Vector3.Dot(facing, offset.normalized) >= 0.25f)
             {
-                enemy.TakeDamage(meleeDamage);
+                enemy.TakeDamage(weapon.Damage);
             }
         }
 

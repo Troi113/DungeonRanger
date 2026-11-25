@@ -12,7 +12,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Movement updates the player's facing direction.
 - [x] `Shift` tumbles/dashes in the player's facing direction with collision handling and a cooldown.
 - [x] `J` fires a straight bow projectile.
-- [x] `K` performs a facing-direction melee attack.
+- [x] `K` performs a facing-direction melee attack when a melee weapon is equipped.
 - [x] Melee attack has a simple temporary slash animation.
 - [x] Basic enemy targets can receive damage and be destroyed.
 - [ ] Decide the exact `L` inventory or quick-slot behavior.
@@ -75,6 +75,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Create an enemy base component with health, damage, movement speed, and reward data.
 - [ ] Add enemy idle behavior.
 - [x] Add randomized delayed wake-up behavior for LevelTest enemies.
+- [x] Immediately wake sleeping enemies when they see the player within their attention range or are hit.
 - [x] Add walkable-cell patrol behavior for awake LevelTest enemies.
 - [x] Add an eight-cell player detection range for LevelTest enemies.
 - [x] Add circular 9-cell fog-of-war visibility around the player.
@@ -203,6 +204,11 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Add prototype hunger states: satiated, hungry, and famished.
 - [x] Damage the player over time while famished.
 - [x] Add a 4-column by 5-row inventory overlay opened with `I`.
+- [x] Add WASD/arrow navigation, `J` item actions, and `Esc` to deselect.
+- [x] Start with a permanent bow in a general inventory slot; shooting does not require equipping it.
+- [x] Generate melee weapon pickups and allow equipping, swapping, and unequipping them.
+- [ ] Playtest and balance melee weapon damage, reach, and cooldown across the generated floors.
+- [ ] Add combat or stat effects for armor, artifacts, and rings.
 - [x] Add Space-bar item pickup interaction.
 - [x] Add a key pickup and locked chest interaction.
 - [x] Add generated prototype items to LevelTest.
