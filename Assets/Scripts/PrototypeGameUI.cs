@@ -21,6 +21,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
     private PrototypeInventory inventory;
     private PrototypeHunger hunger;
     private PrototypePlayerInteraction interaction;
+    private PrototypeCombat combat;
     private PrototypeDungeonRun run;
     private int inventoryCursor;
     private int actionCursor;
@@ -36,6 +37,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         inventory = player.GetComponent<PrototypeInventory>();
         hunger = player.GetComponent<PrototypeHunger>();
         interaction = player.GetComponent<PrototypePlayerInteraction>();
+        combat = player.GetComponent<PrototypeCombat>();
         run = GetComponent<PrototypeDungeonRun>();
     }
 
@@ -129,6 +131,8 @@ public sealed class PrototypeGameUI : MonoBehaviour
         GUI.Box(new Rect(16f, 16f, 240f, 72f), string.Empty);
         GUI.Label(new Rect(28f, 24f, 210f, 24f), $"Health: {stats.CurrentHealth}/{stats.MaxHealth}");
         GUI.Label(new Rect(28f, 50f, 210f, 24f), $"Hunger: {hunger?.State.ToString() ?? "Satiated"}");
+        if (combat != null && combat.OneHitBowEnabled)
+            GUI.Box(new Rect(16f, 96f, 240f, 30f), "One-hit bow cheat ON");
 
         if (interaction?.CurrentTarget != null)
         {

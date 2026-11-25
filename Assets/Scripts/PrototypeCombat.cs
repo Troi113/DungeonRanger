@@ -18,6 +18,8 @@ public sealed class PrototypeCombat : MonoBehaviour
     private PrototypePlayerMovement movement;
     private float nextBowTime;
     private float nextMeleeTime;
+    private int consecutiveCheatKeys;
+    public bool OneHitBowEnabled { get; private set; }
 
     private void Awake()
     {
@@ -33,14 +35,18 @@ public sealed class PrototypeCombat : MonoBehaviour
 
         if (PrototypeGameUI.IsGamePaused)
         {
+            consecutiveCheatKeys = 0;
             return;
         }
 
         var stats = GetComponent<PrototypePlayerStats>();
         if (stats != null && stats.IsDead)
         {
+            consecutiveCheatKeys = 0;
             return;
         }
+
+        HandleCheatInput(Keyboard.current);
 
         if (Keyboard.current.jKey.wasPressedThisFrame && Time.time >= nextBowTime)
         {
@@ -52,6 +58,26 @@ public sealed class PrototypeCombat : MonoBehaviour
             weapon.EquipmentSlot == PrototypeEquipmentSlot.Weapon && PrototypeMeleeWeapons.TryGet(weapon.ItemId, out var meleeWeapon))
         {
             PerformMeleeAttack(meleeWeapon);
+        }
+    }
+
+    private void HandleCheatInput(Keyboard keyboard)
+    {
+        foreach (var key in keyboard.allKeys)
+        {
+            if (key != keyboard.qKey && key.wasPressedThisFrame)
+            {
+                consecutiveCheatKeys = 0;
+                return;
+            }
+        }
+
+        if (!keyboard.qKey.wasPressedThisFrame) return;
+        consecutiveCheatKeys++;
+        if (consecutiveCheatKeys == 5)
+        {
+            OneHitBowEnabled = !OneHitBowEnabled;
+            consecutiveCheatKeys = 0;
         }
     }
 
@@ -72,7 +98,7 @@ public sealed class PrototypeCombat : MonoBehaviour
         arrow.GetComponent<Renderer>().sharedMaterial = CreateMaterial("Prototype Arrow Material", new Color(0.95f, 0.82f, 0.25f));
 
         var projectile = arrow.AddComponent<PrototypeProjectile>();
-        projectile.Initialize(direction, projectileSpeed, bowDamage, bowRange + 4f);
+        projectile.Initialize(direction, projectileSpeed, OneHitBowEnabled ? int.MaxValue : bowDamage, bowRange + 4f);
     }
 
     private void PerformMeleeAttack(PrototypeMeleeWeapons.WeaponData weapon)

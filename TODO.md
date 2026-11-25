@@ -12,6 +12,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Movement updates the player's facing direction.
 - [x] `Shift` tumbles/dashes in the player's facing direction with collision handling and a cooldown.
 - [x] `J` fires a straight bow projectile.
+- [x] Five consecutive `Q` presses toggle a one-hit bow cheat for testing.
 - [x] `K` performs a facing-direction melee attack when a melee weapon is equipped.
 - [x] Melee attack has a simple temporary slash animation.
 - [x] Basic enemy targets can receive damage and be destroyed.
@@ -25,6 +26,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 ## Immediate prototype stabilization
 
 - [ ] Manually test `J` in each facing direction.
+- [ ] Playtest the five-`Q` bow cheat, including interruption, toggle-off, and a one-hit defeat of Goo.
 - [ ] Manually test `K` against an enemy directly in front of the player.
 - [ ] Test that `K` does not damage enemies behind or beside the player.
 - [ ] Test that projectiles collide with enemies and disappear correctly.

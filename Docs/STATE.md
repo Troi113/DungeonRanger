@@ -60,6 +60,7 @@ Update this file at the end of each milestone.
 - `PrototypeHunger` starts satiated, counts moving time only, becomes Hungry after 60 moving seconds, becomes Famished after 120 moving seconds, and deals 1 damage every 5 seconds while Famished. These values are serialized prototype defaults and can be tuned later.
 - `PrototypeGameUI` displays health and hunger and opens a 4-column by 5-row inventory with `I`. The top row is reserved for weapon, armor, artifact/ring A, and artifact/ring B.
 - The ranger starts with a permanent bow in a general inventory slot; it requires no equipment slot and always fires with `J` during gameplay. `K` uses the melee weapon equipped in the weapon slot, and does nothing without one.
+- During gameplay, five consecutive presses of `Q` toggle the one-hit bow cheat. The HUD displays when it is active; other key presses interrupt an unfinished sequence. It carries between floors during a run and resets when a new player is created.
 - Generated melee pickups include knuckledusters, knives, swords, sickles, axes, and spears, with prototype damage, reach, and cooldown values. A weapon appears near the starting room. Pixel Dungeon's melee weapons informed the variety and real-time feel; knife and sickle are prototype additions.
 - In inventory, use WASD or arrow keys to select a slot, `J` to open or confirm an item action, and `Esc` to close its action menu. Potions heal 8 health, food restores 60 moving-seconds of hunger, and equipment can be equipped or unequipped. Both artifact/ring slots are selectable. Armor and artifact/ring stat effects remain unimplemented.
 - Enemies now attack the player at close range with a cooldown. Death displays a restart prompt; `R` reloads the active scene.
@@ -84,6 +85,7 @@ Current prototype movement speed is 8 Unity world units per second.
 | `WASD` | Move and update facing direction |
 | `Shift` | Tumble/dash about one enlarged terrain tile in the facing direction. Collision-aware, short cooldown. |
 | `J` | Fire a straight bow projectile in the facing direction |
+| `Q` five times | Toggle the one-hit bow cheat during gameplay |
 | `K` | Attack in the facing direction with an equipped melee weapon and a temporary slash effect |
 | `I` | Open/close the 4x5 inventory grid |
 | `WASD` / arrows, `J`, `Esc` | Navigate inventory, select/confirm an action, and deselect |
