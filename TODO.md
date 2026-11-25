@@ -120,8 +120,9 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Connect rooms with corridors.
 - [x] Place doors at carved room entrances and wall off the remaining room boundaries.
 - [x] Support adjacent rooms connected by one door and corridor connections with doors at room entrances.
-- [ ] Guarantee a path from entrance to exit.
-- [ ] Add extra connections and loops for live-play retreat routes.
+- [x] Connect all generated rooms and add an alternate route for a loop.
+- [x] Route corridors around unrelated rooms instead of cutting through them.
+- [x] Retry unsuitable room placements before constructing the floor.
 - [x] Add a deterministic seed for the first level test.
 - [ ] Add a way to display or log the active seed during testing.
 - [ ] Add a post-generation validation pass.
@@ -141,7 +142,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Enlarge LevelTest terrain tiles to four world units while keeping trap markers one world block wide.
 - [x] Add generated entrance/exit positions and an exit marker.
 - [ ] Add layout validation and unreachable-room detection.
-- [ ] Test a range of seeds and tune room/corridor dimensions.
+- [x] Check connectivity, unique doors, and alternate routes across 120 seeds.
+- [ ] Playtest movement, door transitions, and combat across different layouts and tune dimensions.
 
 ### Live-play generation rules
 
@@ -179,6 +181,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Add up/down stair visuals and a Space interaction to descend.
 - [x] Allow up stairs to return to previously visited floors while preserving their runtime state.
 - [x] Keep player health and inventory while replacing generated floors in the same scene.
+- [x] Make Goo drop the Amulet of Glory; picking it up opens a congratulations scene.
 - [ ] Playtest all four stair transitions and the Goo victory and restart flows.
 - [ ] Add distinct Goo attacks, telegraphs, and difficulty balancing.
 - [ ] Create a four-level procedural progression.
@@ -196,7 +199,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Keep a separate boss arena layout or strongly constrain its generation.
 - [ ] Implement one original boss with readable attack patterns.
 - [ ] Add boss health, phases, and defeat state.
-- [ ] Add victory progression after the boss is defeated.
+- [x] Add victory progression after the boss is defeated and its amulet is collected.
 
 ## Inventory and items
 
@@ -239,7 +242,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add a settings button or settings panel.
 - [x] Add a quit or close-game option appropriate for the target platform.
 - [ ] Create a game-over screen.
-- [ ] Create a victory screen.
+- [x] Create a prototype victory screen with a return-to-menu option.
 - [ ] Add restart and return-to-title actions.
 
 ### In-game UI

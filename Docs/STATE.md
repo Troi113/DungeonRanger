@@ -17,15 +17,15 @@ Update this file at the end of each milestone.
 
 - Floors 1–4 use different per-run seeds and generated rooms, corridors, doors, traps and loot. Press Space near blue down stairs to descend or yellow up stairs to return to the previous floor; floor 1 has no previous floor. Each staircase occupies a 2×2 world-unit footprint.
 - Explored floors stay in memory during a run, preserving fog discovery and the state of enemies, traps, doors, chests and pickups. Their enemy wake timers pause while the player is on another floor. Restarting clears the run.
-- Floor 5 generates a rectangular arena with a placeholder Goo boss. Goo chases and attacks using the prototype enemy behavior; defeating it shows a victory message.
+- Floor 5 generates a rectangular arena with a placeholder Goo boss. Defeating Goo drops the Amulet of Glory at its position. Press Space nearby to collect it, even with a full inventory, and enter the dedicated runtime `Victory` scene. The congratulations screen offers a return to the main menu.
 - The same player object carries health, inventory, hunger and status effects between floors. Press R after death to restart the run.
 - Sleeping enemies wake individually at random intervals of 20–35 seconds and patrol; this does not reveal the player's position. A sleeping enemy also wakes immediately if it sees the player within eight logical cells with a clear line of sight or is hit. Enemies that notice the player chase, then search the last seen position if sight is lost.
-- This is an early gameplay prototype: floor-to-floor transitions and Goo combat still need full playtesting; Goo has no special attacks or phases yet.
+- The Goo drop, Space pickup with a full inventory, victory screen, and return to menu were checked in Play mode using a test helper to reach the boss. A complete run through all floors still needs playtesting; Goo has no special attacks or phases yet. The victory scene is created at runtime rather than saved as a scene asset.
 
 ## Runtime setup
 - `PrototypeBootstrap` generates the room, player, camera, and lighting at runtime.
 - `PrototypeTerrainGenerator`: procedural 32x32 room with four doorways, floor, and walls.
-- `PrototypeLevelGenerator`: seeded 32x32 floor built from rectangular rooms and connecting corridors. Doors are placed only where a carved route crosses a room boundary: touching rooms share a door, while corridors have a door at each room entrance. Remaining room boundaries have walls; enemy pathfinding and fog use the same blocked-edge data.
+- `PrototypeLevelGenerator`: seeded 32x32 floor built from six rectangular rooms connected by a nearby-room network plus an alternate route that forms a loop. Corridor routes go around unrelated rooms. Touching rooms share one door; separate rooms have a door at each end of their corridor. Remaining room boundaries have walls; enemy pathfinding and fog use the same blocked-edge data. Invalid placements are retried before terrain objects are created, with a fixed connected layout as a fallback.
   - Logical terrain tile is 4 Unity world units wide.
   - Trap markers are about 1x1 world unit.
 
@@ -42,7 +42,7 @@ Update this file at the end of each milestone.
 - Traps activate once when the player steps on them. Toxic, paralytic, poison, gripping, fire, and lightning traps apply prototype effects; alarm wakes all sleeping enemies; summoning currently wakes one sleeping enemy as a temporary stand-in for a future spawn system.
 - LevelTest generates a key pickup, a locked chest, a health-potion pickup, and melee weapon pickups. Items are collected with Space; the chest consumes a key and drops a health potion.
 - The generated last room has a green exit marker, and the generator validates that the entrance room and exit room are connected through carved floor cells.
-- Connectivity and door placement were checked across 12 seeds; full gameplay playtesting across more layouts remains open.
+- Geometry was checked across 120 seeds for reachable rooms and corridors, unique doors, and an alternate route. Complete movement, combat, and door playtesting across layouts remains open.
 
 ## Terrain test contents
 - Two sleeping enemies.

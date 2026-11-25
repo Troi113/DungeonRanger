@@ -145,7 +145,6 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (run != null)
         {
             GUI.Label(new Rect(Screen.width - 190f, 40f, 180f, 24f), run.Floor == 5 ? "Floor 5: Goo" : $"Floor {run.Floor}/5");
-            if (run.Victory) GUI.Box(new Rect(Screen.width * 0.5f - 160f, 50f, 320f, 60f), "Victory! Goo defeated");
         }
 
         if (IsPauseMenuOpen)

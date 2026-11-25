@@ -27,6 +27,10 @@ public sealed class PrototypeLevelGenerator
     private const int DesiredRooms = 6;
     // Rooms may touch; a connection between adjacent rooms uses one door.
     private const int RoomPadding = 0;
+    private static readonly Vector2Int[] CardinalDirections =
+    {
+        Vector2Int.right, Vector2Int.up, Vector2Int.left, Vector2Int.down
+    };
 
     private static readonly Color FloorColor = new(0.24f, 0.28f, 0.34f);
     private static readonly Color WallColor = new(0.12f, 0.15f, 0.2f);
@@ -74,6 +78,13 @@ public sealed class PrototypeLevelGenerator
         public Vector2Int Center => new(Bounds.xMin + Bounds.width / 2, Bounds.yMin + Bounds.height / 2);
     }
 
+    private sealed class FloorPlan
+    {
+        public bool[,] Occupied;
+        public List<Room> Rooms;
+        public List<DoorPlacement> Doors;
+    }
+
     public sealed class Layout
     {
         public Vector3 PlayerSpawn;
@@ -86,23 +97,10 @@ public sealed class PrototypeLevelGenerator
 
     public Layout Build(Transform root, int seed = Seed, bool showExitMarker = true)
     {
-        var occupied = new bool[Width, Height];
-        var rooms = CreateRooms(occupied, seed);
-        var doorPlacements = new List<DoorPlacement>();
-
-        for (var i = 1; i < rooms.Count; i++)
-        {
-            ConnectRooms(rooms[i - 1], rooms[i], rooms, occupied, doorPlacements, i % 2 == 0);
-        }
-
-        // Guarantee a useful connected layout even if random placement produced
-        // fewer rooms than expected.
-        if (rooms.Count == 0)
-        {
-            var fallback = new Room(new RectInt(4, 4, 8, 8));
-            rooms.Add(fallback);
-            CarveRoom(fallback.Bounds, occupied);
-        }
+        var plan = GenerateFloorPlan(seed);
+        var occupied = plan.Occupied;
+        var rooms = plan.Rooms;
+        var doorPlacements = plan.Doors;
 
         var floorRoot = CreateChild(root, "Level_Floor");
         var wallRoot = CreateChild(root, "Level_Walls");
@@ -121,9 +119,10 @@ public sealed class PrototypeLevelGenerator
 
         var entranceCell = rooms[0].Center;
         var exitCell = rooms[rooms.Count - 1].Center;
-        if (!ValidateConnectivity(occupied, entranceCell, exitCell, blockedEdges))
+        foreach (var room in rooms)
         {
-            Debug.LogError($"Level seed {seed} produced an invalid disconnected layout.");
+            if (!ValidateConnectivity(occupied, entranceCell, room.Center, blockedEdges))
+                Debug.LogError($"Level seed {seed} produced an unreachable room.");
         }
 
         if (showExitMarker) BuildExitMarker(root, exitCell);
@@ -153,6 +152,34 @@ public sealed class PrototypeLevelGenerator
         }
 
         return layout;
+    }
+
+    private static FloorPlan GenerateFloorPlan(int seed)
+    {
+        // Retry the geometry before building any Unity objects. This preserves
+        // the requested loop even for a crowded or enclosed random placement.
+        for (var attempt = 0; attempt < 24; attempt++)
+        {
+            var occupied = new bool[Width, Height];
+            var rooms = CreateRooms(occupied, unchecked(seed + attempt * 7919));
+            var doors = new List<DoorPlacement>();
+            if (rooms.Count == DesiredRooms && ConnectRoomNetwork(rooms, occupied, doors))
+                return new FloorPlan { Occupied = occupied, Rooms = rooms, Doors = doors };
+        }
+
+        // A deterministic, well-spaced fallback ensures a playable loop even
+        // when all random attempts fail.
+        var fallback = new FloorPlan { Occupied = new bool[Width, Height], Rooms = new List<Room>(), Doors = new List<DoorPlacement>() };
+        foreach (var y in new[] { 2, 18 })
+        foreach (var x in new[] { 2, 13, 24 })
+        {
+            var room = new Room(new RectInt(x, y, 6, 6));
+            fallback.Rooms.Add(room);
+            CarveRoom(room.Bounds, fallback.Occupied);
+        }
+        if (!ConnectRoomNetwork(fallback.Rooms, fallback.Occupied, fallback.Doors))
+            Debug.LogError("Failed to generate the fallback dungeon layout.");
+        return fallback;
     }
 
     public Layout BuildBossArena(Transform root, int seed)
@@ -217,47 +244,144 @@ public sealed class PrototypeLevelGenerator
         return rooms;
     }
 
-    private static void ConnectRooms(
-        Room from,
-        Room to,
-        List<Room> rooms,
-        bool[,] occupied,
-        List<DoorPlacement> doors,
-        bool horizontalFirst)
+    private static bool ConnectRoomNetwork(List<Room> rooms, bool[,] occupied, List<DoorPlacement> doors)
     {
-        var start = from.Center;
-        var end = to.Center;
-        var delta = end - start;
-        var useHorizontalFirst = (horizontalFirst && delta.x != 0) || delta.y == 0;
-        if (useHorizontalFirst)
+        if (rooms.Count < 3) return false;
+        var connected = new HashSet<int> { 0 };
+        var roomLinks = new HashSet<long>();
+        while (connected.Count < rooms.Count)
         {
-            CarveHorizontal(start.x, end.x, start.y, occupied);
-            CarveVertical(start.y, end.y, end.x, occupied);
-            var bend = new Vector2Int(end.x, start.y);
-            RecordRoomCrossings(start, bend, rooms, doors);
-            RecordRoomCrossings(bend, end, rooms, doors);
+            List<Vector2Int> shortest = null;
+            var bestFrom = -1;
+            var bestTo = -1;
+            for (var from = 0; from < rooms.Count; from++)
+            {
+                if (!connected.Contains(from)) continue;
+                for (var to = 0; to < rooms.Count; to++)
+                {
+                    if (connected.Contains(to)) continue;
+                    var route = FindRoomRoute(from, to, rooms, occupied, false, doors);
+                    if (route == null || (shortest != null && route.Count >= shortest.Count)) continue;
+                    shortest = route;
+                    bestFrom = from;
+                    bestTo = to;
+                }
+            }
+
+            if (shortest == null)
+            {
+                return false;
+            }
+            CarveConnection(shortest, rooms[bestFrom], rooms[bestTo], occupied, doors);
+            connected.Add(bestTo);
+            roomLinks.Add(RoomLink(bestFrom, bestTo));
         }
-        else
+
+        // Add a separate route between two rooms already in the network.
+        // Keeping it off existing corridors makes it a real alternate path.
+        List<Vector2Int> loop = null;
+        var loopFrom = -1;
+        var loopTo = -1;
+        for (var from = 0; from < rooms.Count; from++)
+        for (var to = from + 1; to < rooms.Count; to++)
         {
-            CarveVertical(start.y, end.y, start.x, occupied);
-            CarveHorizontal(start.x, end.x, end.y, occupied);
-            var bend = new Vector2Int(start.x, end.y);
-            RecordRoomCrossings(start, bend, rooms, doors);
-            RecordRoomCrossings(bend, end, rooms, doors);
+            if (roomLinks.Contains(RoomLink(from, to))) continue;
+            var route = FindRoomRoute(from, to, rooms, occupied, true, doors);
+            if (route == null || (loop != null && route.Count >= loop.Count)) continue;
+            loop = route;
+            loopFrom = from;
+            loopTo = to;
         }
+        if (loop == null) return false;
+        CarveConnection(loop, rooms[loopFrom], rooms[loopTo], occupied, doors);
+        return true;
     }
 
-    private static void RecordRoomCrossings(Vector2Int start, Vector2Int end, List<Room> rooms, List<DoorPlacement> doors)
+    private static long RoomLink(int first, int second) => ((long)Math.Min(first, second) << 32) | (uint)Math.Max(first, second);
+
+    private static List<Vector2Int> FindRoomRoute(int from, int to, List<Room> rooms, bool[,] occupied, bool avoidCorridors, List<DoorPlacement> doors)
     {
-        var direction = new Vector2Int(Math.Sign(end.x - start.x), Math.Sign(end.y - start.y));
-        for (var cell = start; cell != end; cell += direction)
+        var queue = new Queue<Vector2Int>();
+        var visited = new bool[Width, Height];
+        var previous = new Vector2Int[Width, Height];
+        var bounds = rooms[from].Bounds;
+        var targetBounds = rooms[to].Bounds;
+
+        // Start only on room edges, excluding corners, so openings face a
+        // corridor or another room instead of slicing across room interiors.
+        for (var x = bounds.xMin; x < bounds.xMax; x++)
+        for (var y = bounds.yMin; y < bounds.yMax; y++)
         {
-            var next = cell + direction;
-            var currentRoom = RoomIndex(rooms, cell);
-            var nextRoom = RoomIndex(rooms, next);
-            if (currentRoom == nextRoom) continue;
-            var owner = currentRoom >= 0 ? currentRoom : nextRoom;
-            if (owner >= 0) doors.Add(new DoorPlacement(cell, direction, rooms[owner].Bounds));
+            var cell = new Vector2Int(x, y);
+            foreach (var direction in CardinalDirections)
+            {
+                var next = cell + direction;
+                if (bounds.Contains(next) || !IsValidDoorCell(bounds, cell, direction)) continue;
+                if (targetBounds.Contains(next) && IsValidDoorCell(targetBounds, next, -direction))
+                {
+                    if (avoidCorridors && HasDoor(doors, cell, next)) continue;
+                    return new List<Vector2Int> { cell, next };
+                }
+                if (!InsideMap(next) || RoomIndex(rooms, next) >= 0 || visited[next.x, next.y] ||
+                    (avoidCorridors && occupied[next.x, next.y])) continue;
+                visited[next.x, next.y] = true;
+                previous[next.x, next.y] = cell;
+                queue.Enqueue(next);
+            }
+        }
+
+        while (queue.Count > 0)
+        {
+            var cell = queue.Dequeue();
+            foreach (var direction in CardinalDirections)
+            {
+                var next = cell + direction;
+                if (targetBounds.Contains(next) && IsValidDoorCell(targetBounds, next, -direction))
+                {
+                    var route = new List<Vector2Int> { next };
+                    var step = cell;
+                    while (!bounds.Contains(step))
+                    {
+                        route.Add(step);
+                        step = previous[step.x, step.y];
+                    }
+                    route.Add(step);
+                    route.Reverse();
+                    return route;
+                }
+                if (!InsideMap(next) || visited[next.x, next.y] || RoomIndex(rooms, next) >= 0 ||
+                    (avoidCorridors && occupied[next.x, next.y])) continue;
+                visited[next.x, next.y] = true;
+                previous[next.x, next.y] = cell;
+                queue.Enqueue(next);
+            }
+        }
+        return null;
+    }
+
+    private static bool IsValidDoorCell(RectInt room, Vector2Int cell, Vector2Int outward)
+    {
+        return outward.x != 0 ? cell.y > room.yMin && cell.y < room.yMax - 1 : cell.x > room.xMin && cell.x < room.xMax - 1;
+    }
+
+    private static bool InsideMap(Vector2Int cell) => cell.x > 0 && cell.x < Width - 1 && cell.y > 0 && cell.y < Height - 1;
+
+    private static bool HasDoor(List<DoorPlacement> doors, Vector2Int a, Vector2Int b)
+    {
+        var edge = EdgeKey(a, b);
+        foreach (var door in doors)
+            if (EdgeKey(door.Cell, door.Cell + door.Direction) == edge) return true;
+        return false;
+    }
+
+    private static void CarveConnection(List<Vector2Int> route, Room from, Room to, bool[,] occupied, List<DoorPlacement> doors)
+    {
+        foreach (var cell in route) CarveCell(occupied, cell.x, cell.y);
+        doors.Add(new DoorPlacement(route[0], route[1] - route[0], from.Bounds));
+        if (route.Count > 2)
+        {
+            var last = route.Count - 1;
+            doors.Add(new DoorPlacement(route[last], route[last - 1] - route[last], to.Bounds));
         }
     }
 
@@ -307,26 +431,6 @@ public sealed class PrototypeLevelGenerator
             {
                 occupied[x, y] = true;
             }
-        }
-    }
-
-    private static void CarveHorizontal(int fromX, int toX, int y, bool[,] occupied)
-    {
-        var min = Mathf.Min(fromX, toX);
-        var max = Mathf.Max(fromX, toX);
-        for (var x = min; x <= max; x++)
-        {
-            CarveCell(occupied, x, y);
-        }
-    }
-
-    private static void CarveVertical(int fromY, int toY, int x, bool[,] occupied)
-    {
-        var min = Mathf.Min(fromY, toY);
-        var max = Mathf.Max(fromY, toY);
-        for (var y = min; y <= max; y++)
-        {
-            CarveCell(occupied, x, y);
         }
     }
 

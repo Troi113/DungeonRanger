@@ -100,11 +100,19 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         else
         {
             var goo = CreateEnemy(layout.ExitSpawn, layout, seed + 500, true);
-            goo.Defeated += () => Victory = true;
+            var bossFloor = floorRoot.transform;
+            goo.Defeated += () => PrototypeVictoryAmulet.Create(bossFloor, goo.transform.position, this);
             enemies.Add(goo);
         }
         var fog = floorRoot.AddComponent<PrototypeFogOfWar>();
         fog.Initialize(player, layout.WalkableCells, floorRoot.transform, layout.BlockedEdges);
+    }
+
+    public void CollectAmulet()
+    {
+        if (Victory) return;
+        Victory = true;
+        PrototypeVictoryScreen.Show();
     }
 
     private void MovePlayer(Vector3 position)
