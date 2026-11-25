@@ -20,7 +20,9 @@ Update this file at the end of each milestone.
 
 ## LevelTest prototype
 - Seed `4582`, six attempted rooms, one-cell corridors.
-- Visible doors, visible trap markers, sleeping enemies.
+- Visible doors, visible trap markers, and sleeping enemies.
+- Sleeping enemies wake one at a time after randomized delays.
+- Awake enemies patrol across generated walkable cells and chase the player only within 8 logical cells (32 Unity world units).
 - Not implemented yet: entrance/exit, layout validation, multiple-seed testing.
 
 ## Terrain test contents

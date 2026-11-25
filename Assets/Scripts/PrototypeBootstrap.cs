@@ -39,8 +39,10 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         if (fullLevel)
         {
             var layout = new PrototypeLevelGenerator().Build(root);
-            CreatePlayer(root, playerMaterial, layout.PlayerSpawn);
-            CreateEnemies(root, enemyMaterial, layout.EnemySpawns);
+            var player = CreatePlayer(root, playerMaterial, layout.PlayerSpawn);
+            var enemies = CreateEnemies(root, enemyMaterial, layout.EnemySpawns, player, layout.WalkableCells);
+            var wakeDirector = root.gameObject.AddComponent<PrototypeEnemyWakeDirector>();
+            wakeDirector.Initialize(enemies, PrototypeLevelGenerator.Seed + 1000);
         }
         else
         {
@@ -50,14 +52,14 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             {
                 new Vector3(-4f, 1f, 8f),
                 new Vector3(4f, 1f, 8f)
-            });
+            }, null, null);
         }
 
         SetupCamera(root, fullLevel);
         SetupLighting();
     }
 
-    private static void CreatePlayer(Transform root, Material material, Vector3 position)
+    private static PrototypePlayerMovement CreatePlayer(Transform root, Material material, Vector3 position)
     {
         var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         player.name = "Player_Ranger_Test";
@@ -80,21 +82,36 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         controller.skinWidth = 0.05f;
         controller.minMoveDistance = 0f;
 
-        player.AddComponent<PrototypePlayerMovement>();
+        var movement = player.AddComponent<PrototypePlayerMovement>();
         player.AddComponent<PrototypeCombat>();
+        return movement;
     }
 
-    private static void CreateEnemies(Transform root, Material material, IEnumerable<Vector3> positions)
+    private static List<PrototypeEnemy> CreateEnemies(
+        Transform root,
+        Material material,
+        IEnumerable<Vector3> positions,
+        PrototypePlayerMovement player,
+        IReadOnlyList<Vector2Int> walkableCells)
     {
+        var enemies = new List<PrototypeEnemy>();
         var index = 1;
         foreach (var position in positions)
         {
-            CreateEnemy($"Enemy_Sleeping_{index:00}", root, position, material);
+            var enemy = CreateEnemy($"Enemy_Sleeping_{index:00}", root, position, material);
+            if (player != null && walkableCells != null)
+            {
+                enemy.Initialize(player, walkableCells, PrototypeLevelGenerator.Seed + index);
+            }
+
+            enemies.Add(enemy);
             index++;
         }
+
+        return enemies;
     }
 
-    private static void CreateEnemy(string objectName, Transform root, Vector3 position, Material material)
+    private static PrototypeEnemy CreateEnemy(string objectName, Transform root, Vector3 position, Material material)
     {
         var enemy = GameObject.CreatePrimitive(PrimitiveType.Cube);
         enemy.name = objectName;
@@ -102,7 +119,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         enemy.transform.SetPositionAndRotation(position, Quaternion.identity);
         enemy.transform.localScale = new Vector3(0.9f, 2f, 0.9f);
         enemy.GetComponent<Renderer>().sharedMaterial = material;
-        enemy.AddComponent<PrototypeEnemy>();
+        return enemy.AddComponent<PrototypeEnemy>();
     }
 
     private static void SetupCamera(Transform root, bool fullLevel)

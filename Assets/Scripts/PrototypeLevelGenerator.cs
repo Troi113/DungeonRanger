@@ -18,7 +18,7 @@ public sealed class PrototypeLevelGenerator
     // A logical dungeon tile is four Unity world units wide. The grid remains
     // 32x32, but rooms and one-tile corridors now have enough space for live
     // movement and ranged combat.
-    private const float TileSize = 4f;
+    public const float TileSize = 4f;
     private const float WallThickness = 0.25f;
     private const float WallHeight = 2.5f;
     private const float DoorWidth = 3f;
@@ -77,6 +77,7 @@ public sealed class PrototypeLevelGenerator
     {
         public Vector3 PlayerSpawn;
         public readonly List<Vector3> EnemySpawns = new();
+        public readonly List<Vector2Int> WalkableCells = new();
     }
 
     public Layout Build(Transform root)
@@ -122,6 +123,17 @@ public sealed class PrototypeLevelGenerator
         for (var i = 1; i < rooms.Count; i++)
         {
             layout.EnemySpawns.Add(GridToWorld(rooms[i].Center, 1f));
+        }
+
+        for (var x = 0; x < Width; x++)
+        {
+            for (var y = 0; y < Height; y++)
+            {
+                if (occupied[x, y])
+                {
+                    layout.WalkableCells.Add(new Vector2Int(x, y));
+                }
+            }
         }
 
         return layout;
@@ -631,12 +643,19 @@ public sealed class PrototypeLevelGenerator
         return x >= 0 && x < Width && y >= 0 && y < Height && occupied[x, y];
     }
 
-    private static Vector3 GridToWorld(Vector2Int cell, float y)
+    public static Vector3 GridToWorld(Vector2Int cell, float y)
     {
         return new Vector3(
             (cell.x - (Width - 1) * 0.5f) * TileSize,
             y,
             (cell.y - (Height - 1) * 0.5f) * TileSize);
+    }
+
+    public static Vector2Int WorldToGrid(Vector3 world)
+    {
+        return new Vector2Int(
+            Mathf.RoundToInt(world.x / TileSize + (Width - 1) * 0.5f),
+            Mathf.RoundToInt(world.z / TileSize + (Height - 1) * 0.5f));
     }
 
     private static Transform CreateChild(Transform parent, string name)

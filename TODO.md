@@ -2,7 +2,7 @@
 
 ## Project status
 
-The current project contains two runtime-generated prototypes: `TrapsSleep` is a 32×32 room with four doorways, while `LevelTest` is a seeded 32×32 room-and-corridor floor. Both include a player capsule, sleeping enemies, WASD movement, straight bow projectiles, and a facing-direction melee slash. The trap markers are visual-only; enemies wake visually when hit but remain stationary.
+The current project contains two runtime-generated prototypes: `TrapsSleep` is a 32×32 room with four doorways, while `LevelTest` is a seeded 32×32 room-and-corridor floor. Both include a player capsule, sleeping enemies, WASD movement, straight bow projectiles, and a facing-direction melee slash. The trap markers are visual-only. In `LevelTest`, sleeping enemies now wake one at a time and patrol the generated floor.
 
 The goal is to make the game playable first, then improve visuals, content, balance, and presentation.
 
@@ -70,6 +70,9 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 - [ ] Create an enemy base component with health, damage, movement speed, and reward data.
 - [ ] Add enemy idle behavior.
+- [x] Add randomized delayed wake-up behavior for LevelTest enemies.
+- [x] Add walkable-cell patrol behavior for awake LevelTest enemies.
+- [x] Add an eight-cell player detection range for LevelTest enemies.
 - [ ] Add enemy wandering behavior.
 - [ ] Add enemy detection radius and line-of-sight checks.
 - [ ] Add enemy chase behavior.
