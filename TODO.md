@@ -40,10 +40,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 - [x] Create `AGENTS.md` with project rules.
 - [x] Create `TODO.md`.
-- [ ] Fill `Docs/GAME_DESIGN.md` with the approved game concept.
-- [ ] Fill `Docs/ROADMAP.md` with milestone dates and priorities.
-- [ ] Fill `Docs/ART_BIBLE.md` with the visual direction.
-- [ ] Fill `Docs/DECISIONS.md` with major technical and design decisions.
+- [x] Create `Docs/DESIGN.md` with the approved game direction.
+- [x] Create `Docs/STATE.md` with the current project state.
+- [x] Create `Docs/TESTING.md` with verification checklists.
+- [ ] Keep the files in `Docs/` synchronized with each milestone.
 - [ ] Update `README.md` with setup, controls, and how to run the project.
 - [ ] Add a Unity-appropriate `.gitignore` if version control is configured.
 - [ ] Configure Git LFS for large binary assets if needed.
