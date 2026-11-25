@@ -13,6 +13,8 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
     private CharacterController characterController;
     private float verticalVelocity;
 
+    public Vector3 FacingDirection { get; private set; } = Vector3.forward;
+
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
@@ -33,6 +35,11 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
 
         input = Vector2.ClampMagnitude(input, 1f);
         var movement = new Vector3(input.x, 0f, input.y) * moveSpeed;
+
+        if (input.sqrMagnitude > 0.01f)
+        {
+            FacingDirection = new Vector3(input.x, 0f, input.y).normalized;
+        }
 
         if (characterController.isGrounded && verticalVelocity < 0f)
         {

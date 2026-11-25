@@ -15,6 +15,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     private static readonly Color FloorColor = new(0.24f, 0.28f, 0.34f);
     private static readonly Color WallColor = new(0.12f, 0.15f, 0.2f);
     private static readonly Color PlayerColor = new(0.85f, 0.66f, 0.18f);
+    private static readonly Color EnemyColor = new(0.72f, 0.18f, 0.2f);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreatePrototype()
@@ -39,6 +40,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         var floorMaterial = CreateMaterial("Prototype Floor Material", FloorColor);
         var wallMaterial = CreateMaterial("Prototype Wall Material", WallColor);
         var playerMaterial = CreateMaterial("Prototype Player Material", PlayerColor);
+        var enemyMaterial = CreateMaterial("Prototype Enemy Material", EnemyColor);
 
         CreateCube("Floor_6x6", root, new Vector3(0f, -0.1f, 0f), new Vector3(RoomSize, 0.2f, RoomSize), floorMaterial);
 
@@ -51,6 +53,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         CreateCube("Wall_West", root, new Vector3(-RoomSize * 0.5f - WallThickness * 0.5f, wallY, 0f), new Vector3(WallThickness, WallHeight, RoomSize), wallMaterial);
 
         CreatePlayer(root, playerMaterial);
+        CreateEnemies(root, enemyMaterial);
         SetupCamera(root);
         SetupLighting();
     }
@@ -79,6 +82,25 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         controller.minMoveDistance = 0f;
 
         player.AddComponent<PrototypePlayerMovement>();
+        player.AddComponent<PrototypeCombat>();
+    }
+
+    private static void CreateEnemies(Transform root, Material material)
+    {
+        CreateEnemy("Enemy_NorthWest", root, new Vector3(-1.8f, 0.5f, 1.7f), material);
+        CreateEnemy("Enemy_NorthEast", root, new Vector3(1.7f, 0.5f, 1.5f), material);
+        CreateEnemy("Enemy_South", root, new Vector3(0f, 0.5f, -2f), material);
+    }
+
+    private static void CreateEnemy(string objectName, Transform root, Vector3 position, Material material)
+    {
+        var enemy = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        enemy.name = objectName;
+        enemy.transform.SetParent(root);
+        enemy.transform.SetPositionAndRotation(position, Quaternion.identity);
+        enemy.transform.localScale = new Vector3(0.7f, 1f, 0.7f);
+        enemy.GetComponent<Renderer>().sharedMaterial = material;
+        enemy.AddComponent<PrototypeEnemy>();
     }
 
     private static void SetupCamera(Transform root)
