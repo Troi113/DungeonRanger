@@ -17,3 +17,10 @@ Use the original Watabou Pixel Dungeon source as an architectural and gameplay r
 
 ## Licensing
 Respect the original Pixel Dungeon license and attribution requirements if any source, asset, or design is reused. Prefer new Unity code and original assets.
+
+## How to win
+1. Choose a hero class.
+2. Descend through the dungeon.
+3. Explore each floor for equipment, potions, scrolls, food, and keys.
+4. Defeat the boss at floor 5
+5. Boss drops the Amulet of Glory, win the game!
