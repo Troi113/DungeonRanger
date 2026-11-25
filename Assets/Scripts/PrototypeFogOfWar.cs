@@ -9,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public sealed class PrototypeFogOfWar : MonoBehaviour
 {
-    [SerializeField] private int visibilityRadiusCells = 12;
+    [SerializeField] private int visibilityRadiusCells = 9;
     [SerializeField] private float refreshInterval = 0.1f;
     [SerializeField] private Color fogColor = new(0.025f, 0.03f, 0.05f);
 
@@ -33,7 +33,6 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
     private HashSet<Vector2Int> walkableCells;
     private readonly HashSet<Vector2Int> visibleCells = new();
     private readonly HashSet<Vector2Int> discoveredCells = new();
-    private readonly Queue<Vector2Int> frontier = new();
     private readonly Dictionary<Vector2Int, GameObject> fogTiles = new();
     private readonly Dictionary<DoorEdge, PrototypeDoor> doors = new();
     private readonly List<PrototypeEnemy> enemies = new();
@@ -101,40 +100,19 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
     {
         nextRefreshTime = Time.time + refreshInterval;
         visibleCells.Clear();
-        frontier.Clear();
 
         var start = FindNearestWalkable(PrototypeLevelGenerator.WorldToGrid(player.transform.position));
-        visibleCells.Add(start);
-        frontier.Enqueue(start);
-
         var radiusSquared = visibilityRadiusCells * visibilityRadiusCells;
-        var directions = new[]
-        {
-            new Vector2Int(1, 0),
-            new Vector2Int(-1, 0),
-            new Vector2Int(0, 1),
-            new Vector2Int(0, -1)
-        };
 
-        while (frontier.Count > 0)
+        // Test every floor cell against a circular radius and a grid line of
+        // sight. This prevents a nearby corridor from revealing an entire
+        // room simply because its path distance is short enough.
+        foreach (var cell in walkableCells)
         {
-            var current = frontier.Dequeue();
-            foreach (var direction in directions)
+            var offsetFromHero = cell - start;
+            if (offsetFromHero.sqrMagnitude <= radiusSquared && HasLineOfSight(start, cell))
             {
-                var next = current + direction;
-                if (!walkableCells.Contains(next) || visibleCells.Contains(next))
-                {
-                    continue;
-                }
-
-                var offsetFromHero = next - start;
-                if (offsetFromHero.sqrMagnitude > radiusSquared || IsBlockedByClosedDoor(current, direction))
-                {
-                    continue;
-                }
-
-                visibleCells.Add(next);
-                frontier.Enqueue(next);
+                visibleCells.Add(cell);
             }
         }
 
@@ -152,6 +130,73 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
                 enemy.SetVisible(visibleCells.Contains(PrototypeLevelGenerator.WorldToGrid(enemy.transform.position)));
             }
         }
+    }
+
+    private bool HasLineOfSight(Vector2Int start, Vector2Int target)
+    {
+        if (start == target)
+        {
+            return true;
+        }
+
+        var current = start;
+        var delta = target - start;
+        var deltaX = Mathf.Abs(delta.x);
+        var deltaY = Mathf.Abs(delta.y);
+        var stepX = delta.x >= 0 ? 1 : -1;
+        var stepY = delta.y >= 0 ? 1 : -1;
+        var error = deltaX - deltaY;
+
+        while (current != target)
+        {
+            var previous = current;
+            var doubleError = error * 2;
+            var movedX = false;
+            var movedY = false;
+
+            if (doubleError > -deltaY)
+            {
+                error -= deltaY;
+                current.x += stepX;
+                movedX = true;
+            }
+
+            if (doubleError < deltaX)
+            {
+                error += deltaX;
+                current.y += stepY;
+                movedY = true;
+            }
+
+            if (!walkableCells.Contains(current))
+            {
+                return false;
+            }
+
+            if (movedX && movedY)
+            {
+                var horizontal = new Vector2Int(stepX, 0);
+                var vertical = new Vector2Int(0, stepY);
+                var horizontalCell = previous + horizontal;
+                var verticalCell = previous + vertical;
+
+                if (!walkableCells.Contains(horizontalCell) ||
+                    !walkableCells.Contains(verticalCell) ||
+                    IsBlockedByClosedDoor(previous, horizontal) ||
+                    IsBlockedByClosedDoor(previous, vertical) ||
+                    IsBlockedByClosedDoor(horizontalCell, vertical) ||
+                    IsBlockedByClosedDoor(verticalCell, horizontal))
+                {
+                    return false;
+                }
+            }
+            else if (IsBlockedByClosedDoor(previous, current - previous))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private bool IsBlockedByClosedDoor(Vector2Int cell, Vector2Int direction)
