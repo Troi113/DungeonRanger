@@ -36,14 +36,14 @@ public sealed class PrototypeTrapShowcase
 
     private static readonly TrapDefinition[] TrapDefinitions =
     {
-        new("Fire", new Color(0.95f, 0.2f, 0.05f), new Vector3(-9f, 0f, -5f), Glyph.Orb),
-        new("Poison", new Color(0.25f, 0.85f, 0.15f), new Vector3(-3f, 0f, -5f), Glyph.Pill),
-        new("Toxic", new Color(0.05f, 0.65f, 0.45f), new Vector3(3f, 0f, -5f), Glyph.Bar),
-        new("Paralytic", new Color(0.65f, 0.25f, 0.95f), new Vector3(9f, 0f, -5f), Glyph.Cross),
-        new("Alarm", new Color(1f, 0.8f, 0.05f), new Vector3(-9f, 0f, 5f), Glyph.Beacon),
-        new("Lightning", new Color(0.15f, 0.55f, 1f), new Vector3(-3f, 0f, 5f), Glyph.Bolt),
-        new("Gripping", new Color(0.7f, 0.35f, 0.1f), new Vector3(3f, 0f, 5f), Glyph.Grasp),
-        new("Summoning", new Color(0.95f, 0.15f, 0.7f), new Vector3(9f, 0f, 5f), Glyph.Ring)
+        new("Fire", new Color(1f, 0.45f, 0.05f), new Vector3(-9f, 0f, -5f), Glyph.Orb),
+        new("Poison", new Color(0.65f, 0.1f, 0.85f), new Vector3(-3f, 0f, -5f), Glyph.Pill),
+        new("Toxic", new Color(0.1f, 1f, 0.1f), new Vector3(3f, 0f, -5f), Glyph.Bar),
+        new("Paralytic", new Color(1f, 0.9f, 0.05f), new Vector3(9f, 0f, -5f), Glyph.Cross),
+        new("Alarm", new Color(0.9f, 0.05f, 0.05f), new Vector3(-9f, 0f, 5f), Glyph.Beacon),
+        new("Lightning", new Color(0.1f, 0.4f, 1f), new Vector3(-3f, 0f, 5f), Glyph.Bolt),
+        new("Gripping", new Color(0.5f, 0.52f, 0.55f), new Vector3(3f, 0f, 5f), Glyph.Grasp),
+        new("Summoning", new Color(0.35f, 0.8f, 1f), new Vector3(9f, 0f, 5f), Glyph.Ring)
     };
 
     public void Build(Transform root)

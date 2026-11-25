@@ -2,7 +2,7 @@
 
 ## Project status
 
-The current project contains a runtime-generated 32×32 room with four doorways, a player capsule, WASD movement, eight visible trap markers, straight bow projectiles, and a facing-direction melee slash. The trap markers are visual-only; the terrain test intentionally has no enemies, stairs, or cliffs.
+The current project contains a runtime-generated 32×32 room with four doorways, a player capsule, two sleeping enemies, WASD movement, eight visible trap markers, straight bow projectiles, and a facing-direction melee slash. The trap markers are visual-only; enemies wake visually when hit but remain stationary.
 
 The goal is to make the game playable first, then improve visuals, content, balance, and presentation.
 
@@ -28,6 +28,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Test room-boundary collision from every direction.
 - [ ] Add simple hit feedback to enemies.
 - [ ] Add a simple enemy health indicator or temporary damage flash.
+- [x] Add two sleeping enemies that wake when hit.
 - [ ] Add a simple player health value.
 - [ ] Add player death and restart behavior.
 - [ ] Replace runtime-only prototype setup with an intentional prototype scene or prefab structure.

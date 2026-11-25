@@ -23,7 +23,7 @@ public sealed class PrototypeProjectile : MonoBehaviour
         transform.position += direction * speed * Time.deltaTime;
         remainingLifetime -= Time.deltaTime;
 
-        foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude))
         {
             if (enemy != null && enemy.IsAlive && Vector3.Distance(transform.position, enemy.transform.position) <= 0.45f)
             {

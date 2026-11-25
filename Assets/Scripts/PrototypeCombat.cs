@@ -70,7 +70,7 @@ public sealed class PrototypeCombat : MonoBehaviour
         nextMeleeTime = Time.time + meleeCooldown;
         var facing = movement.FacingDirection;
 
-        foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude))
         {
             if (enemy == null || !enemy.IsAlive)
             {

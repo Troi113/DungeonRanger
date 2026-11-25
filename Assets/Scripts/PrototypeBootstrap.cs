@@ -9,6 +9,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 {
     private const string RootName = "ProceduralTerrainTest";
     private static readonly Color PlayerColor = new(0.85f, 0.66f, 0.18f);
+    private static readonly Color SleepingEnemyColor = new(0.18f, 0.22f, 0.3f);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreatePrototype()
@@ -32,10 +33,12 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     private void BuildRoom(Transform root)
     {
         var playerMaterial = CreateMaterial("Prototype Player Material", PlayerColor);
+        var enemyMaterial = CreateMaterial("Prototype Sleeping Enemy Material", SleepingEnemyColor);
 
         new PrototypeTerrainGenerator().BuildRoom(root);
 
         CreatePlayer(root, playerMaterial);
+        CreateEnemies(root, enemyMaterial);
         SetupCamera(root);
         SetupLighting();
     }
@@ -65,6 +68,23 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         player.AddComponent<PrototypePlayerMovement>();
         player.AddComponent<PrototypeCombat>();
+    }
+
+    private static void CreateEnemies(Transform root, Material material)
+    {
+        CreateEnemy("Enemy_Sleeping_NorthWest", root, new Vector3(-4f, 1f, 8f), material);
+        CreateEnemy("Enemy_Sleeping_NorthEast", root, new Vector3(4f, 1f, 8f), material);
+    }
+
+    private static void CreateEnemy(string objectName, Transform root, Vector3 position, Material material)
+    {
+        var enemy = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        enemy.name = objectName;
+        enemy.transform.SetParent(root);
+        enemy.transform.SetPositionAndRotation(position, Quaternion.identity);
+        enemy.transform.localScale = new Vector3(0.9f, 2f, 0.9f);
+        enemy.GetComponent<Renderer>().sharedMaterial = material;
+        enemy.AddComponent<PrototypeEnemy>();
     }
 
     private static void SetupCamera(Transform root)

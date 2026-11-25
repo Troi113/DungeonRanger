@@ -11,7 +11,8 @@ The current priority is playability first. Use primitive visuals and simple syst
 - Prototype scripts: `Assets/Scripts/`
 - The current room, player, camera, and lighting are generated at runtime by `PrototypeBootstrap`.
 - `PrototypeTerrainGenerator` currently generates a procedural 32×32 room with four doorways, floor, and walls.
-- The current terrain test intentionally has no enemies, stairs, or cliffs. It includes one visible, non-functional marker for each original Pixel Dungeon trap type.
+- The current terrain test has two sleeping enemies, no stairs or cliffs, and one visible marker for each original Pixel Dungeon trap type.
+- Enemies are stationary for now and wake visually when hit by the player.
 
 Current controls:
 
