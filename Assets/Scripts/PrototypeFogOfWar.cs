@@ -11,7 +11,9 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
 {
     [SerializeField] private int visibilityRadiusCells = 9;
     [SerializeField] private float refreshInterval = 0.1f;
-    [SerializeField] private Color fogColor = new(0.025f, 0.03f, 0.05f);
+    [SerializeField] private Color invisibleColor = new(0.01f, 0.01f, 0.015f);
+    [SerializeField] private Color visitedColor = new(0.07f, 0.08f, 0.1f);
+    [SerializeField] private Color mappedColor = new(0.2f, 0.11f, 0.06f);
 
     private readonly struct DoorEdge : IEquatable<DoorEdge>
     {
@@ -32,10 +34,14 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
     private PrototypePlayerMovement player;
     private HashSet<Vector2Int> walkableCells;
     private readonly HashSet<Vector2Int> visibleCells = new();
-    private readonly HashSet<Vector2Int> discoveredCells = new();
-    private readonly Dictionary<Vector2Int, GameObject> fogTiles = new();
+    private readonly HashSet<Vector2Int> visitedCells = new();
+    private readonly HashSet<Vector2Int> mappedCells = new();
+    private readonly Dictionary<Vector2Int, Renderer> fogTiles = new();
     private readonly Dictionary<DoorEdge, PrototypeDoor> doors = new();
     private readonly List<PrototypeEnemy> enemies = new();
+    private Material invisibleMaterial;
+    private Material visitedMaterial;
+    private Material mappedMaterial;
     private float nextRefreshTime;
 
     public void Initialize(
@@ -55,6 +61,7 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
             doors[reverseEdge] = door;
         }
 
+        CreateFogMaterials();
         BuildFogTiles(levelRoot);
         RefreshVisibility();
     }
@@ -73,7 +80,6 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
     {
         var fogRoot = new GameObject("Level_FogOfWar").transform;
         fogRoot.SetParent(levelRoot, false);
-        var material = CreateMaterial("Level Fog Material", fogColor);
 
         foreach (var cell in walkableCells)
         {
@@ -85,14 +91,15 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
                 PrototypeLevelGenerator.TileSize,
                 0.05f,
                 PrototypeLevelGenerator.TileSize);
-            fogTile.GetComponent<Renderer>().sharedMaterial = material;
+            var renderer = fogTile.GetComponent<Renderer>();
+            renderer.sharedMaterial = invisibleMaterial;
             var collider = fogTile.GetComponent<Collider>();
             if (collider != null)
             {
                 collider.enabled = false;
             }
 
-            fogTiles[cell] = fogTile;
+            fogTiles[cell] = renderer;
         }
     }
 
@@ -116,11 +123,25 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
             }
         }
 
-        discoveredCells.UnionWith(visibleCells);
+        visitedCells.UnionWith(visibleCells);
 
         foreach (var pair in fogTiles)
         {
-            pair.Value.SetActive(!visibleCells.Contains(pair.Key));
+            var cell = pair.Key;
+            var renderer = pair.Value;
+            if (visibleCells.Contains(cell))
+            {
+                renderer.enabled = false;
+            }
+            else
+            {
+                renderer.enabled = true;
+                renderer.sharedMaterial = visitedCells.Contains(cell)
+                    ? visitedMaterial
+                    : mappedCells.Contains(cell)
+                        ? mappedMaterial
+                        : invisibleMaterial;
+            }
         }
 
         foreach (var enemy in enemies)
@@ -130,6 +151,23 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
                 enemy.SetVisible(visibleCells.Contains(PrototypeLevelGenerator.WorldToGrid(enemy.transform.position)));
             }
         }
+    }
+
+    /// <summary>
+    /// Marks cells as known by a future map item or mapping effect. Mapped
+    /// cells use a separate state from cells the hero has physically visited.
+    /// </summary>
+    public void RevealMappedCells(IEnumerable<Vector2Int> cells)
+    {
+        foreach (var cell in cells)
+        {
+            if (walkableCells.Contains(cell))
+            {
+                mappedCells.Add(cell);
+            }
+        }
+
+        RefreshVisibility();
     }
 
     private bool HasLineOfSight(Vector2Int start, Vector2Int target)
@@ -225,6 +263,13 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
         }
 
         return nearest;
+    }
+
+    private void CreateFogMaterials()
+    {
+        invisibleMaterial = CreateMaterial("Level Fog Invisible Material", invisibleColor);
+        visitedMaterial = CreateMaterial("Level Fog Visited Material", visitedColor);
+        mappedMaterial = CreateMaterial("Level Fog Mapped Material", mappedColor);
     }
 
     private static Material CreateMaterial(string materialName, Color color)

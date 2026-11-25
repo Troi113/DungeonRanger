@@ -113,7 +113,7 @@ public sealed class PrototypeLevelGenerator
         BuildFloor(floorRoot, occupied, floorMaterial);
         BuildWalls(wallRoot, occupied, connectedDoors, wallMaterial);
         BuildDoors(doorRoot, connectedDoors, doorMaterial);
-        BuildTraps(root, occupied, rooms);
+        BuildTraps(root, occupied);
 
         var layout = new Layout
         {
@@ -585,7 +585,7 @@ public sealed class PrototypeLevelGenerator
             maximum.z + TileSize * 0.5f);
     }
 
-    private static void BuildTraps(Transform root, bool[,] occupied, List<Room> rooms)
+    private static void BuildTraps(Transform root, bool[,] occupied)
     {
         var trapRoot = CreateChild(root, "Level_Traps");
         var trapCells = new List<Vector2Int>();
@@ -619,28 +619,55 @@ public sealed class PrototypeLevelGenerator
             if (!tooClose) trapCells.Add(cell);
         }
 
-        var definitions = new[]
-        {
-            ("Fire", new Color(1f, 0.45f, 0.05f)),
-            ("Poison", new Color(0.65f, 0.1f, 0.85f)),
-            ("Toxic", new Color(0.1f, 1f, 0.1f)),
-            ("Paralytic", new Color(1f, 0.9f, 0.05f)),
-            ("Alarm", new Color(0.9f, 0.05f, 0.05f)),
-            ("Lightning", new Color(0.1f, 0.4f, 1f)),
-            ("Gripping", new Color(0.5f, 0.52f, 0.55f)),
-            ("Summoning", new Color(0.35f, 0.8f, 1f))
-        };
-
         for (var i = 0; i < trapCells.Count; i++)
         {
-            var trap = new GameObject($"Trap_{definitions[i].Item1}");
-            trap.transform.SetParent(trapRoot, false);
-            trap.transform.position = GridToWorld(trapCells[i], 0f);
-            var material = CreateMaterial($"Level {definitions[i].Item1} Trap Material", definitions[i].Item2);
+            var trapType = (PrototypeTrapType)random.Next(8);
+            var color = TrapColor(trapType);
+            var hidden = random.NextDouble() < 0.5;
+            var trapObject = new GameObject($"Trap_{trapType}");
+            trapObject.transform.SetParent(trapRoot, false);
+            trapObject.transform.position = GridToWorld(trapCells[i], 0f);
+            var material = CreateMaterial($"Level {trapType} Trap Material", color);
+
+            var visualRoot = new GameObject("Trap_Visual").transform;
+            visualRoot.SetParent(trapObject.transform, false);
             // Traps intentionally remain one world block wide inside the
             // enlarged four-unit terrain tile.
-            CreateCube("Marker_Base", trap.transform, new Vector3(0f, 0.08f, 0f), new Vector3(1f, 0.12f, 1f), material);
-            CreateCube("Marker_Core", trap.transform, new Vector3(0f, 0.28f, 0f), new Vector3(0.22f, 0.32f, 0.22f), material);
+            DisableCollider(CreateCube("Marker_Base", visualRoot, new Vector3(0f, 0.08f, 0f), new Vector3(1f, 0.12f, 1f), material));
+            DisableCollider(CreateCube("Marker_Core", visualRoot, new Vector3(0f, 0.28f, 0f), new Vector3(0.22f, 0.32f, 0.22f), material));
+
+            var trigger = trapObject.AddComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.center = new Vector3(0f, 1f, 0f);
+            trigger.size = new Vector3(1.2f, 2f, 1.2f);
+
+            var trap = trapObject.AddComponent<PrototypeTrap>();
+            trap.Initialize(trapType, hidden, color, visualRoot);
+        }
+    }
+
+    private static Color TrapColor(PrototypeTrapType trapType)
+    {
+        return trapType switch
+        {
+            PrototypeTrapType.ToxicGas => new Color(0.1f, 1f, 0.1f),
+            PrototypeTrapType.Fire => new Color(1f, 0.45f, 0.05f),
+            PrototypeTrapType.ParalyticGas => new Color(1f, 0.9f, 0.05f),
+            PrototypeTrapType.PoisonDart => new Color(0.65f, 0.1f, 0.85f),
+            PrototypeTrapType.Alarm => new Color(0.9f, 0.05f, 0.05f),
+            PrototypeTrapType.Lightning => new Color(0.1f, 0.4f, 1f),
+            PrototypeTrapType.Gripping => new Color(0.5f, 0.52f, 0.55f),
+            PrototypeTrapType.Summoning => new Color(0.35f, 0.8f, 1f),
+            _ => Color.white
+        };
+    }
+
+    private static void DisableCollider(GameObject visual)
+    {
+        var collider = visual.GetComponent<Collider>();
+        if (collider != null)
+        {
+            collider.enabled = false;
         }
     }
 

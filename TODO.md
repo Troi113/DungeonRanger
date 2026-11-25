@@ -2,7 +2,7 @@
 
 ## Project status
 
-The current project contains two runtime-generated prototypes: `TrapsSleep` is a 32×32 room with four doorways, while `LevelTest` is a seeded 32×32 room-and-corridor floor. Both include a player capsule, sleeping enemies, WASD movement, straight bow projectiles, and a facing-direction melee slash. The trap markers are visual-only. In `LevelTest`, sleeping enemies now wake one at a time and patrol the generated floor.
+The current project contains two runtime-generated prototypes: `TrapsSleep` is a 32×32 room with four doorways, while `LevelTest` is a seeded 32×32 room-and-corridor floor. Both include a player capsule, sleeping enemies, WASD movement, straight bow projectiles, and a facing-direction melee slash. `LevelTest` now also contains functional one-use traps, player health, inventory data, status effects, and hunger logic. Sleeping enemies wake one at a time and patrol the generated floor.
 
 The goal is to make the game playable first, then improve visuals, content, balance, and presentation.
 
@@ -30,7 +30,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add simple hit feedback to enemies.
 - [ ] Add a simple enemy health indicator or temporary damage flash.
 - [x] Add two sleeping enemies that wake when hit.
-- [ ] Add a simple player health value.
+- [x] Add a simple player health value with a 20-health prototype default.
 - [ ] Add player death and restart behavior.
 - [ ] Replace runtime-only prototype setup with an intentional prototype scene or prefab structure.
 - [ ] Remove temporary prototype shortcuts that cause unnecessary per-frame searches.
@@ -76,6 +76,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Add circular 9-cell fog-of-war visibility around the player.
 - [x] Keep walls and door frames visible as the map outline.
 - [x] Block visibility through closed doors and reveal the area beyond opened doors.
+- [x] Track separate visible, visited, mapped, and invisible fog states.
 - [ ] Add enemy wandering behavior.
 - [ ] Add enemy detection radius and line-of-sight checks.
 - [ ] Add enemy chase behavior.
@@ -90,7 +91,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 ### Combat and live-play rules
 
-- [ ] Establish a shared damage and health system.
+- [x] Establish a shared prototype damage and health system.
 - [ ] Add combat cooldowns that feel good in real time.
 - [ ] Add projectile collision with walls, terrain, and enemies.
 - [ ] Add clear attack telegraphs for enemies.
@@ -146,7 +147,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 ### Terrain and special rooms
 
-- [x] Add one visible prototype marker for each original Pixel Dungeon trap type.
+- [x] Add eight prototype trap types with equal 1/8 generation probability.
+- [x] Allow traps to start visible or hidden.
+- [x] Activate traps once when the player steps on them.
+- [x] Add prototype effects for damage, damage-over-time, movement blocking, and enemy wake-up.
 - [ ] Add room painters for standard rooms.
 - [ ] Add room painters for treasure rooms.
 - [ ] Add room painters for trap rooms.
@@ -155,7 +159,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add water patches.
 - [ ] Add grass or concealment patches.
 - [ ] Add decorations after the gameplay layout works.
-- [ ] Add functional visible and secret traps with fair telegraphing.
+- [ ] Improve functional visible and secret traps with fair telegraphing.
 - [ ] Add real-time fire, gas, or hazard behavior only after the core game works.
 - [ ] Add line-of-sight and visibility data for walls and obstacles.
 
@@ -180,7 +184,11 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 ## Inventory and items
 
-- [ ] Define the inventory model.
+- [x] Define a 20-slot inventory model.
+- [x] Reserve weapon, armor, and two artifact/ring equipment slots.
+- [x] Add a prototype status-effect component for buffs/debuffs foundation.
+- [x] Add prototype hunger states: satiated, hungry, and famished.
+- [x] Damage the player over time while famished.
 - [ ] Define the `L` key behavior.
 - [ ] Add an inventory UI.
 - [ ] Add weapon slot and armor slot if needed.

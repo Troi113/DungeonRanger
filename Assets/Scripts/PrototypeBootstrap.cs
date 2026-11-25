@@ -85,6 +85,10 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         controller.minMoveDistance = 0f;
 
         var movement = player.AddComponent<PrototypePlayerMovement>();
+        player.AddComponent<PrototypePlayerStats>();
+        player.AddComponent<PrototypeInventory>();
+        player.AddComponent<PrototypeStatusEffects>();
+        player.AddComponent<PrototypeHunger>();
         player.AddComponent<PrototypeCombat>();
         return movement;
     }

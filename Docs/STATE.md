@@ -26,14 +26,25 @@ Update this file at the end of each milestone.
 - Fog of war gives the hero a circular 9-cell visibility radius (36 Unity world units).
 - Closed doors block visibility; opening a door reveals the walkable area beyond it.
 - Floor contents and enemies outside current visibility are hidden while walls and door frames remain visible as the map outline.
-- Previously discovered cells are tracked for future map/UI use.
+- Fog tracks separate visible, visited, and mapped states; visited and mapped cells use different dimmed fog colors.
+- LevelTest now generates functional trap components. Each placed trap independently rolls one of eight types with equal 1/8 probability; each trap has a 50% chance to start hidden.
+- Traps activate once when the player steps on them. Toxic, paralytic, poison, gripping, fire, and lightning traps apply prototype effects; alarm wakes all sleeping enemies; summoning currently wakes one sleeping enemy as a temporary stand-in for a future spawn system.
 - Not implemented yet: entrance/exit, layout validation, multiple-seed testing.
 
 ## Terrain test contents
 - Two sleeping enemies.
 - No stairs or cliffs.
-- One visible marker per original Pixel Dungeon trap type.
+- Eight possible trap types using the source-inspired names: Toxic Gas, Fire, Paralytic Gas, Poison Dart, Alarm, Lightning, Gripping, and Summoning.
+- Trap colors: bright green, orange, yellow, purple, red, blue, grey, and light blue respectively.
+- Hidden trap visuals reveal when the trap is activated; visible traps use their type color from spawn.
 - Enemies are stationary and wake visually when hit by the player.
+
+## Player systems
+
+- `PrototypePlayerStats` starts the player at 20 health and supports damage, healing, and death state.
+- `PrototypeInventory` provides 20 slots. The first four are reserved for weapon, armor, artifact/ring A, and artifact/ring B; the remaining 16 are general inventory slots.
+- `PrototypeStatusEffects` currently supports poisoned, toxic, paralyzed, and gripped states. Damage-over-time effects tick once per second; paralyzed and gripped block movement.
+- `PrototypeHunger` starts satiated, counts moving time only, becomes Hungry after 60 moving seconds, becomes Famished after 120 moving seconds, and deals 1 damage every 5 seconds while Famished. These values are serialized prototype defaults and can be tuned later.
 
 ## Controls
 

@@ -23,6 +23,7 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
 
     public Vector3 FacingDirection { get; private set; } = Vector3.forward;
     public bool IsTumbling { get; private set; }
+    public bool IsMoving { get; private set; }
 
     private void Awake()
     {
@@ -33,6 +34,7 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
     {
         if (Keyboard.current == null)
         {
+            IsMoving = false;
             return;
         }
 
@@ -43,6 +45,7 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
 
         if (IsTumbling)
         {
+            IsMoving = true;
             UpdateTumble();
             return;
         }
@@ -54,6 +57,13 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
         if (Keyboard.current.wKey.isPressed) input.y += 1f;
 
         input = Vector2.ClampMagnitude(input, 1f);
+        var statusEffects = GetComponent<PrototypeStatusEffects>();
+        if (statusEffects != null && statusEffects.IsMovementBlocked)
+        {
+            input = Vector2.zero;
+        }
+
+        IsMoving = input.sqrMagnitude > 0.01f;
         var movement = new Vector3(input.x, 0f, input.y) * moveSpeed;
 
         if (input.sqrMagnitude > 0.01f)
