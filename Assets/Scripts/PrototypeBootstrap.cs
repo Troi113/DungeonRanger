@@ -53,7 +53,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             });
         }
 
-        SetupCamera(root);
+        SetupCamera(root, fullLevel);
         SetupLighting();
     }
 
@@ -105,7 +105,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         enemy.AddComponent<PrototypeEnemy>();
     }
 
-    private static void SetupCamera(Transform root)
+    private static void SetupCamera(Transform root, bool fullLevel)
     {
         var camera = Camera.main;
         if (camera == null)
@@ -128,7 +128,9 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         var player = root.Find("Player_Ranger_Test");
         follow.Target = player;
-        follow.Offset = new Vector3(0f, 14f, -14f);
+        follow.Offset = fullLevel
+            ? new Vector3(0f, 24f, -24f)
+            : new Vector3(0f, 14f, -14f);
     }
 
     private static void SetupLighting()

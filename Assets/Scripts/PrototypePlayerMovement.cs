@@ -9,11 +9,20 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 4f;
     [SerializeField] private float gravity = -20f;
+    [SerializeField] private float tumbleDistance = 4f;
+    [SerializeField] private float tumbleDuration = 0.2f;
+    [SerializeField] private float tumbleCooldown = 0.65f;
 
     private CharacterController characterController;
     private float verticalVelocity;
+    private Vector3 tumbleDirection;
+    private float tumbleElapsed;
+    private float nextTumbleTime;
+    private Quaternion tumbleStartRotation;
+    private Vector3 tumbleRotationAxis;
 
     public Vector3 FacingDirection { get; private set; } = Vector3.forward;
+    public bool IsTumbling { get; private set; }
 
     private void Awake()
     {
@@ -24,6 +33,17 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
     {
         if (Keyboard.current == null)
         {
+            return;
+        }
+
+        if (!IsTumbling && Time.time >= nextTumbleTime && IsShiftPressedThisFrame())
+        {
+            BeginTumble();
+        }
+
+        if (IsTumbling)
+        {
+            UpdateTumble();
             return;
         }
 
@@ -49,5 +69,41 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
         verticalVelocity += gravity * Time.deltaTime;
         movement.y = verticalVelocity;
         characterController.Move(movement * Time.deltaTime);
+    }
+
+    private void BeginTumble()
+    {
+        nextTumbleTime = Time.time + tumbleCooldown;
+        tumbleDirection = FacingDirection.sqrMagnitude > 0.01f
+            ? FacingDirection.normalized
+            : Vector3.forward;
+        tumbleElapsed = 0f;
+        tumbleStartRotation = transform.rotation;
+        tumbleRotationAxis = Vector3.Cross(Vector3.up, tumbleDirection).normalized;
+        IsTumbling = true;
+    }
+
+    private void UpdateTumble()
+    {
+        tumbleElapsed += Time.deltaTime;
+        var progress = Mathf.Clamp01(tumbleElapsed / Mathf.Max(0.01f, tumbleDuration));
+        var tumbleSpeed = tumbleDistance / Mathf.Max(0.01f, tumbleDuration);
+        characterController.Move(tumbleDirection * tumbleSpeed * Time.deltaTime);
+
+        if (tumbleRotationAxis.sqrMagnitude > 0.01f)
+        {
+            transform.rotation = tumbleStartRotation * Quaternion.AngleAxis(progress * 360f, tumbleRotationAxis);
+        }
+
+        if (progress >= 1f)
+        {
+            IsTumbling = false;
+            transform.rotation = tumbleStartRotation;
+        }
+    }
+
+    private static bool IsShiftPressedThisFrame()
+    {
+        return Keyboard.current.leftShiftKey.wasPressedThisFrame || Keyboard.current.rightShiftKey.wasPressedThisFrame;
     }
 }

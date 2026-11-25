@@ -15,10 +15,13 @@ public sealed class PrototypeLevelGenerator
     public const int Height = 32;
     public const int Seed = 4582;
 
-    private const float TileSize = 1f;
+    // A logical dungeon tile is four Unity world units wide. The grid remains
+    // 32x32, but rooms and one-tile corridors now have enough space for live
+    // movement and ranged combat.
+    private const float TileSize = 4f;
     private const float WallThickness = 0.25f;
     private const float WallHeight = 2.5f;
-    private const float DoorWidth = 1.2f;
+    private const float DoorWidth = 3f;
     private const float DoorHeight = 2.2f;
     private const float DoorFrameThickness = 0.12f;
     private const int DesiredRooms = 6;
@@ -100,10 +103,11 @@ public sealed class PrototypeLevelGenerator
         var floorMaterial = CreateMaterial("Level Floor Material", FloorColor);
         var wallMaterial = CreateMaterial("Level Wall Material", WallColor);
         var doorMaterial = CreateMaterial("Level Door Material", DoorColor);
+        var connectedDoors = KeepConnectedDoors(occupied, doorPlacements);
 
         BuildFloor(floorRoot, occupied, floorMaterial);
-        BuildWalls(wallRoot, occupied, doorPlacements, wallMaterial);
-        BuildDoors(doorRoot, doorPlacements, doorMaterial);
+        BuildWalls(wallRoot, occupied, connectedDoors, wallMaterial);
+        BuildDoors(doorRoot, connectedDoors, doorMaterial);
         BuildTraps(root, occupied, rooms);
 
         var layout = new Layout
@@ -169,34 +173,45 @@ public sealed class PrototypeLevelGenerator
     {
         var start = from.Center;
         var end = to.Center;
-        var startDoorDirection = DirectionToward(start, end);
-        var endDoorDirection = DirectionToward(end, start);
-        var startDoorCell = MoveToRoomBoundary(from.Bounds, start, startDoorDirection);
-        var endDoorCell = MoveToRoomBoundary(to.Bounds, end, endDoorDirection);
+        var delta = end - start;
+        var useHorizontalFirst = (horizontalFirst && delta.x != 0) || delta.y == 0;
+        Vector2Int startDoorDirection;
+        Vector2Int endDoorDirection;
+        Vector2Int startDoorCell;
+        Vector2Int endDoorCell;
 
-        if (horizontalFirst)
+        if (useHorizontalFirst)
         {
+            // The first corridor segment leaves the source room horizontally.
+            // The final segment enters the destination room vertically.
+            startDoorDirection = new Vector2Int(Math.Sign(delta.x), 0);
+            endDoorDirection = delta.y != 0
+                ? new Vector2Int(0, -Math.Sign(delta.y))
+                : new Vector2Int(-Math.Sign(delta.x), 0);
+            startDoorCell = MoveToRoomBoundary(from.Bounds, start, startDoorDirection);
+            endDoorCell = MoveToRoomBoundary(to.Bounds, end, endDoorDirection);
+
             CarveHorizontal(start.x, end.x, start.y, occupied);
             CarveVertical(start.y, end.y, end.x, occupied);
         }
         else
         {
+            // The first corridor segment leaves the source room vertically.
+            // The final segment enters the destination room horizontally.
+            startDoorDirection = new Vector2Int(0, Math.Sign(delta.y));
+            endDoorDirection = delta.x != 0
+                ? new Vector2Int(-Math.Sign(delta.x), 0)
+                : new Vector2Int(0, -Math.Sign(delta.y));
+            startDoorCell = MoveToRoomBoundary(from.Bounds, start, startDoorDirection);
+            endDoorCell = MoveToRoomBoundary(to.Bounds, end, endDoorDirection);
+
             CarveVertical(start.y, end.y, start.x, occupied);
             CarveHorizontal(start.x, end.x, end.y, occupied);
         }
 
+        // Every room-to-room corridor owns two doors: one at each end.
         doors.Add(new DoorPlacement(startDoorCell, startDoorDirection));
         doors.Add(new DoorPlacement(endDoorCell, endDoorDirection));
-    }
-
-    private static Vector2Int DirectionToward(Vector2Int from, Vector2Int to)
-    {
-        if (Mathf.Abs(to.x - from.x) >= Mathf.Abs(to.y - from.y))
-        {
-            return new Vector2Int(Math.Sign(to.x - from.x), 0);
-        }
-
-        return new Vector2Int(0, Math.Sign(to.y - from.y));
     }
 
     private static Vector2Int MoveToRoomBoundary(RectInt room, Vector2Int center, Vector2Int direction)
@@ -263,6 +278,39 @@ public sealed class PrototypeLevelGenerator
         }
     }
 
+    private static List<DoorPlacement> KeepConnectedDoors(bool[,] occupied, List<DoorPlacement> candidates)
+    {
+        var connected = new List<DoorPlacement>();
+
+        // Candidates are emitted in pairs by ConnectRooms. Keep or reject the
+        // entire pair so a corridor never ends up with only one door.
+        for (var i = 0; i + 1 < candidates.Count; i += 2)
+        {
+            var sourceDoor = candidates[i];
+            var destinationDoor = candidates[i + 1];
+            if (!IsConnectedDoor(occupied, sourceDoor) || !IsConnectedDoor(occupied, destinationDoor))
+            {
+                // A door must sit between two carved cells. This prevents a
+                // bad route or boundary case from placing a door into empty
+                // space or through the outside wall of the dungeon. Rejecting
+                // both candidates keeps the corridor connection consistent.
+                continue;
+            }
+
+            connected.Add(sourceDoor);
+            connected.Add(destinationDoor);
+        }
+
+        return connected;
+    }
+
+    private static bool IsConnectedDoor(bool[,] occupied, DoorPlacement door)
+    {
+        var neighbor = door.Cell + door.Direction;
+        return IsOccupied(occupied, door.Cell.x, door.Cell.y) &&
+               IsOccupied(occupied, neighbor.x, neighbor.y);
+    }
+
     private static void BuildWalls(
         Transform parent,
         bool[,] occupied,
@@ -298,7 +346,7 @@ public sealed class PrototypeLevelGenerator
                     if (IsOccupied(occupied, neighbor.x, neighbor.y)) continue;
                     if (doorEdges.Contains(new DoorEdge(cell, direction))) continue;
 
-                    var center = GridToWorld(cell, WallHeight * 0.5f) + new Vector3(direction.x, 0f, direction.y) * 0.5f;
+                    var center = GridToWorld(cell, WallHeight * 0.5f) + new Vector3(direction.x, 0f, direction.y) * (TileSize * 0.5f);
                     var scale = direction.x != 0
                         ? new Vector3(WallThickness, WallHeight, TileSize)
                         : new Vector3(TileSize, WallHeight, WallThickness);
@@ -313,7 +361,7 @@ public sealed class PrototypeLevelGenerator
         for (var i = 0; i < doors.Count; i++)
         {
             var door = doors[i];
-            var center = GridToWorld(door.Cell, 0f) + new Vector3(door.Direction.x, 0f, door.Direction.y) * 0.5f;
+            var center = GridToWorld(door.Cell, 0f) + new Vector3(door.Direction.x, 0f, door.Direction.y) * (TileSize * 0.5f);
             var horizontalOpening = door.Direction.y != 0;
             var doorRoot = new GameObject($"Door_{i + 1:00}");
             doorRoot.transform.SetParent(parent, false);
@@ -386,7 +434,9 @@ public sealed class PrototypeLevelGenerator
             trap.transform.SetParent(trapRoot, false);
             trap.transform.position = GridToWorld(trapCells[i], 0f);
             var material = CreateMaterial($"Level {definitions[i].Item1} Trap Material", definitions[i].Item2);
-            CreateCube("Marker_Base", trap.transform, new Vector3(0f, 0.08f, 0f), new Vector3(0.72f, 0.12f, 0.72f), material);
+            // Traps intentionally remain one world block wide inside the
+            // enlarged four-unit terrain tile.
+            CreateCube("Marker_Base", trap.transform, new Vector3(0f, 0.08f, 0f), new Vector3(1f, 0.12f, 1f), material);
             CreateCube("Marker_Core", trap.transform, new Vector3(0f, 0.28f, 0f), new Vector3(0.22f, 0.32f, 0.22f), material);
         }
     }
@@ -398,7 +448,10 @@ public sealed class PrototypeLevelGenerator
 
     private static Vector3 GridToWorld(Vector2Int cell, float y)
     {
-        return new Vector3(cell.x - (Width - 1) * 0.5f, y, cell.y - (Height - 1) * 0.5f);
+        return new Vector3(
+            (cell.x - (Width - 1) * 0.5f) * TileSize,
+            y,
+            (cell.y - (Height - 1) * 0.5f) * TileSize);
     }
 
     private static Transform CreateChild(Transform parent, string name)

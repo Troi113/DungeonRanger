@@ -10,6 +10,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 - [x] `WASD` moves the player.
 - [x] Movement updates the player's facing direction.
+- [x] `Shift` tumbles/dashes in the player's facing direction with collision handling and a cooldown.
 - [x] `J` fires a straight bow projectile.
 - [x] `K` performs a facing-direction melee attack.
 - [x] Melee attack has a simple temporary slash animation.
@@ -118,6 +119,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Spawn the player in the first generated room.
 - [x] Spawn sleeping enemies in later generated rooms.
 - [x] Place the eight visible prototype trap markers in generated floor cells.
+- [x] Enlarge LevelTest terrain tiles to four world units while keeping trap markers one world block wide.
 - [ ] Add a real entrance and exit.
 - [ ] Add layout validation and unreachable-room detection.
 - [ ] Test a range of seeds and tune room/corridor dimensions.

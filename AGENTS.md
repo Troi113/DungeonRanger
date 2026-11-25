@@ -13,13 +13,14 @@ The current priority is playability first. Use primitive visuals and simple syst
 - Prototype scripts: `Assets/Scripts/`
 - The current room, player, camera, and lighting are generated at runtime by `PrototypeBootstrap`.
 - `PrototypeTerrainGenerator` currently generates a procedural 32×32 room with four doorways, floor, and walls.
-- `PrototypeLevelGenerator` generates a seeded 32×32 floor from several rectangular rooms and connecting corridors, then builds walls, doors, traps, player spawn data, and enemy spawn data.
+- `PrototypeLevelGenerator` generates a seeded 32×32 floor from several rectangular rooms and connecting corridors, then builds walls, doors, traps, player spawn data, and enemy spawn data. Its logical terrain tile is currently 4 Unity world units wide; trap markers remain approximately 1×1 world unit.
 - The current terrain test has two sleeping enemies, no stairs or cliffs, and one visible marker for each original Pixel Dungeon trap type.
 - Enemies are stationary for now and wake visually when hit by the player.
 
 Current controls:
 
 - `WASD`: move the player and update the direction the player is facing.
+- `Shift`: tumble/dash about one enlarged terrain tile in the facing direction. The dash is collision-aware and has a short cooldown.
 - `J`: fire a straight bow projectile in the facing direction.
 - `K`: perform a melee attack in the facing direction and show a temporary slash effect.
 - `L`: reserved for a future inventory or quick-slot action; do not implement it until the control is defined.
