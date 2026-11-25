@@ -73,6 +73,9 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Add randomized delayed wake-up behavior for LevelTest enemies.
 - [x] Add walkable-cell patrol behavior for awake LevelTest enemies.
 - [x] Add an eight-cell player detection range for LevelTest enemies.
+- [x] Add 12-cell fog-of-war visibility around the player.
+- [x] Keep walls and door frames visible as the map outline.
+- [x] Block visibility through closed doors and reveal the area beyond opened doors.
 - [ ] Add enemy wandering behavior.
 - [ ] Add enemy detection radius and line-of-sight checks.
 - [ ] Add enemy chase behavior.

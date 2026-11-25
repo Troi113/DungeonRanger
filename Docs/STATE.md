@@ -23,6 +23,10 @@ Update this file at the end of each milestone.
 - Visible doors, visible trap markers, and sleeping enemies.
 - Sleeping enemies wake one at a time after randomized delays.
 - Awake enemies patrol across generated walkable cells and chase the player only within 8 logical cells (32 Unity world units).
+- Fog of war gives the hero a 12-cell visibility radius (48 Unity world units).
+- Closed doors block visibility; opening a door reveals the walkable area beyond it.
+- Floor contents and enemies outside current visibility are hidden while walls and door frames remain visible as the map outline.
+- Previously discovered cells are tracked for future map/UI use.
 - Not implemented yet: entrance/exit, layout validation, multiple-seed testing.
 
 ## Terrain test contents

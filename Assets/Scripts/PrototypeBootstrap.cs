@@ -43,6 +43,8 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             var enemies = CreateEnemies(root, enemyMaterial, layout.EnemySpawns, player, layout.WalkableCells);
             var wakeDirector = root.gameObject.AddComponent<PrototypeEnemyWakeDirector>();
             wakeDirector.Initialize(enemies, PrototypeLevelGenerator.Seed + 1000);
+            var fogOfWar = root.gameObject.AddComponent<PrototypeFogOfWar>();
+            fogOfWar.Initialize(player, layout.WalkableCells, root);
         }
         else
         {

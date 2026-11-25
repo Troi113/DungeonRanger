@@ -22,12 +22,22 @@ public sealed class PrototypeDoor : MonoBehaviour
     private Coroutine panelAnimation;
 
     public bool IsOpen { get; private set; }
+    public Vector2Int Cell { get; private set; }
+    public Vector2Int Direction { get; private set; }
 
-    public void Initialize(Transform panel, Collider panelCollider, Rect roomBounds, int alertSeed)
+    public void Initialize(
+        Transform panel,
+        Collider panelCollider,
+        Rect roomBounds,
+        int alertSeed,
+        Vector2Int cell,
+        Vector2Int direction)
     {
         doorPanel = panel;
         doorPanelCollider = panelCollider;
         ownerRoomBounds = roomBounds;
+        Cell = cell;
+        Direction = direction;
         closedPanelPosition = panel != null ? panel.localPosition : Vector3.zero;
         openPanelPosition = closedPanelPosition + Vector3.up * openHeight;
         alertRandom = new System.Random(alertSeed);

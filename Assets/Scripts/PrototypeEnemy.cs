@@ -107,6 +107,14 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
     }
 
+    public void SetVisible(bool visible)
+    {
+        if (enemyRenderer != null)
+        {
+            enemyRenderer.enabled = visible;
+        }
+    }
+
     private void ChoosePatrolTarget()
     {
         if (random == null || walkableCells == null || walkableCells.Count == 0)

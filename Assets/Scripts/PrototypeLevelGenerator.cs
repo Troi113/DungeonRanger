@@ -564,7 +564,13 @@ public sealed class PrototypeLevelGenerator
                 : new Vector3(TileSize * 0.75f, DoorHeight, TileSize);
 
             var behavior = doorRoot.AddComponent<PrototypeDoor>();
-            behavior.Initialize(panel.transform, panelCollider, WorldRoomBounds(door.OwnerBounds), Seed + i);
+            behavior.Initialize(
+                panel.transform,
+                panelCollider,
+                WorldRoomBounds(door.OwnerBounds),
+                Seed + i,
+                door.Cell,
+                door.Direction);
         }
     }
 
