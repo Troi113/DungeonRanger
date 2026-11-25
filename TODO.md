@@ -116,8 +116,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Generate a playable 32×32 room-and-corridor floor at runtime.
 - [x] Build walls around carved floor cells.
 - [x] Add visible doors at room/corridor connections.
+- [x] Add opening door panels with room-scoped enemy alert behavior.
 - [x] Spawn the player in the first generated room.
 - [x] Spawn sleeping enemies in later generated rooms.
+- [x] Configure `LevelTest` as dungeon level 4 with a source-inspired 6–8 starting mob range.
 - [x] Place the eight visible prototype trap markers in generated floor cells.
 - [x] Enlarge LevelTest terrain tiles to four world units while keeping trap markers one world block wide.
 - [ ] Add a real entrance and exit.
