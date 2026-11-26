@@ -22,42 +22,27 @@ public sealed class PrototypeVictoryScreen : MonoBehaviour
 
     private void OnGUI()
     {
-        var originalColor = GUI.color;
-        var originalMatrix = GUI.matrix;
-        GUI.color = new Color(0.025f, 0.045f, 0.065f);
-        GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+        PrototypeUITheme.BeginScaledGui();
+        PrototypeUITheme.Fill(new Rect(0f, 0f, PrototypeUITheme.Width, PrototypeUITheme.Height), new Color(0.025f, 0.045f, 0.065f));
 
-        var width = Mathf.Min(600f, Screen.width - 32f);
-        var height = Mathf.Min(480f, Screen.height - 32f);
-        var x = (Screen.width - width) * 0.5f;
-        var y = (Screen.height - height) * 0.5f;
-        GUI.color = new Color(0.72f, 0.5f, 0.16f);
-        GUI.DrawTexture(new Rect(x, y, width, height), Texture2D.whiteTexture);
-        GUI.color = new Color(0.06f, 0.09f, 0.12f);
-        GUI.DrawTexture(new Rect(x + 4f, y + 4f, width - 8f, height - 8f), Texture2D.whiteTexture);
+        var width = Mathf.Min(600f, PrototypeUITheme.Width - 32f);
+        var height = Mathf.Min(480f, PrototypeUITheme.Height - 32f);
+        var x = (PrototypeUITheme.Width - width) * 0.5f;
+        var y = (PrototypeUITheme.Height - height) * 0.5f;
+        PrototypeUITheme.DrawPanel(new Rect(x, y, width, height));
 
-        var title = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 32, fontStyle = FontStyle.Bold };
-        title.normal.textColor = new Color(1f, 0.82f, 0.38f);
-        var message = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 18, wordWrap = true };
-        message.normal.textColor = Color.white;
-        GUI.color = Color.white;
-        GUI.Label(new Rect(x + 16f, y + 24f, width - 32f, 50f), "CONGRATULATIONS!", title);
-        GUI.Label(new Rect(x + 16f, y + 78f, width - 32f, 35f), "You found the Amulet of Glory", message);
+        PrototypeUITheme.Label(new Rect(x + 16f, y + 30f, width - 32f, 50f), "CONGRATULATIONS!", 34, PrototypeUITheme.Gold, TextAnchor.MiddleCenter, true);
+        PrototypeUITheme.Label(new Rect(x + 16f, y + 84f, width - 32f, 32f), "You found the Amulet of Glory", 18, PrototypeUITheme.Parchment, TextAnchor.MiddleCenter);
 
-        var center = new Vector2(Screen.width * 0.5f, y + height * 0.49f);
-        GUI.color = new Color(0.9f, 0.63f, 0.14f);
-        GUIUtility.RotateAroundPivot(45f, center);
-        GUI.DrawTexture(new Rect(center.x - 45f, center.y - 45f, 90f, 90f), Texture2D.whiteTexture);
-        GUI.color = new Color(0.2f, 0.8f, 0.9f);
-        GUI.DrawTexture(new Rect(center.x - 27f, center.y - 27f, 54f, 54f), Texture2D.whiteTexture);
-        GUI.matrix = originalMatrix;
-        GUI.color = Color.white;
-        GUI.Label(new Rect(x + 16f, y + height * 0.66f, width - 32f, 35f), "YOU WIN!", title);
-        if (GUI.Button(new Rect(x + width * 0.5f - 110f, y + height - 80f, 220f, 42f), "Return to Main Menu"))
+        var center = new Vector2(PrototypeUITheme.Width * 0.5f, y + height * 0.47f);
+        PrototypeUITheme.DrawIcon(new Rect(center.x - 48f, center.y - 66f, 96f, 96f), PrototypeUITheme.Trophy);
+        PrototypeUITheme.DrawIcon(new Rect(center.x - 116f, center.y - 34f, 48f, 48f), PrototypeUITheme.Crown);
+        PrototypeUITheme.DrawIcon(new Rect(center.x + 68f, center.y - 34f, 48f, 48f), PrototypeUITheme.Ring);
+        PrototypeUITheme.Label(new Rect(x + 16f, y + height * 0.64f, width - 32f, 50f), "YOU WIN!", 34, PrototypeUITheme.Gold, TextAnchor.MiddleCenter, true);
+        if (PrototypeUITheme.Button(new Rect(x + width * 0.5f - 130f, y + height - 88f, 260f, 50f), "Return to Main Menu"))
         {
             Time.timeScale = 1f;
             SceneManager.LoadScene("MainMenu");
         }
-        GUI.color = originalColor;
     }
 }

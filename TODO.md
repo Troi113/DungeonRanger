@@ -272,6 +272,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add bow cooldown or ammunition display if needed.
 - [x] Add inventory/quick-slot display.
 - [ ] Add readable controls and feedback.
+- [x] Restyle the IMGUI HUD, inventory, pause, death, main menu, and victory screens with the medieval pixel UI pack.
+- [ ] Playtest the restyled inventory, item-action popup, pause menu, and death screen (not yet viewed in Play mode).
+- [ ] Replace approximate item icons (sickle, cloth armor, leather armor) if better art is found.
+- [ ] Check the UI colors in a standalone build (the Linear color-space correction was verified only in the editor).
 
 ### Persistence
 

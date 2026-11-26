@@ -77,6 +77,14 @@ Update this file at the end of each milestone.
 - Opening the inventory pauses game time. Escape opens a pause menu with Continue and Quit to Main Menu; Continue resumes the run and quitting discards it. Exit Game closes a standalone build (Unity ignores application quit in the editor).
 - The build scene list starts with MainMenu, followed by DungeonGameplay; opening MainMenu in the editor and pressing Play starts at the title screen.
 
+## UI art
+
+- All prototype UI (HUD, interaction prompt, inventory, item actions, pause, death, main menu, victory) is still immediate-mode GUI, now drawn through `PrototypeUITheme` with the Free Medieval Fantasy UI Pack by Kibyra (`Assets/ThirdParty/Resources/FreeMedievalFantasyUIPack/`, see `Docs/CREDITS.md`).
+- Panels and slots are 9-sliced from the pack's wood/iron frames; buttons use the wood plank; items, hearts, hunger, floor and menu buttons use pack icons. Some item icons are approximations (sickle, cloth and leather armor).
+- `Assets/Scripts/Editor/PixelArtTextureImporter.cs` imports PNGs under `Assets/ThirdParty/` as readable, point-filtered, uncompressed sprites.
+- The project uses Linear color space, where IMGUI washes out colors. `PrototypeUITheme` converts its colors to linear and makes a one-time linearized copy of each texture when first loaded. Verified in the editor by comparing rendered panel pixels against the source PNG.
+- `PrototypeUITheme.BeginScaledGui` scales the UI to an 800px reference height (0.5x–2x).
+
 ## Pixel Dungeon reference decisions
 
 - `RegularLevel` uses an entrance room, an exit room, graph connectivity, and regeneration when a layout is invalid. Our current prototype mirrors the entrance/exit and validation concepts; regeneration and scene transitions remain open work.
