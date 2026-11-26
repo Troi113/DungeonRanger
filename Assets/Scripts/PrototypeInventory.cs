@@ -60,7 +60,7 @@ public sealed class PrototypeInventory : MonoBehaviour
             return false;
         }
 
-        if (PrototypeScrolls.IsScroll(item.ItemId))
+        if (PrototypeScrolls.IsScroll(item.ItemId) || PrototypePotions.IsPotion(item.ItemId))
         {
             for (var index = EquipmentSlotCount; index < SlotCount; index++)
             {

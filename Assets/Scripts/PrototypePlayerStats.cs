@@ -14,6 +14,10 @@ public sealed class PrototypePlayerStats : MonoBehaviour
     /// <summary>Strength: equipment needs enough of it (see PrototypeStrength); Potions of Strength raise it.</summary>
     public int Strength { get; private set; }
     public int CurrentHealth { get; private set; }
+    /// <summary>Experience level (Pixel Dungeon: each level needs 5 + 5 x level experience and gives +5 max health).</summary>
+    public int Level { get; private set; } = 1;
+    public int Experience { get; private set; }
+    public int ExperienceToLevel => 5 + Level * 5;
     public bool IsDead => CurrentHealth <= 0;
 
     public event Action<int, int> HealthChanged;
@@ -56,6 +60,35 @@ public sealed class PrototypePlayerStats : MonoBehaviour
     }
 
     public void AddStrength(int amount) => Strength += amount;
+
+    /// <summary>Adds experience; each level gained raises max health by 5 and heals 5.</summary>
+    public int EarnExperience(int amount)
+    {
+        if (IsDead || amount <= 0) return 0;
+        Experience += amount;
+        var gained = 0;
+        while (Experience >= ExperienceToLevel)
+        {
+            Experience -= ExperienceToLevel;
+            Level++;
+            gained++;
+            maxHealth += 5;
+            CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + 5);
+        }
+        if (gained > 0) HealthChanged?.Invoke(CurrentHealth, MaxHealth);
+        return gained;
+    }
+
+    /// <summary>Restores level, experience, and max health from a saved game.</summary>
+    public void RestoreLevel(int level, int experience, int savedMaxHealth)
+    {
+        Level = Mathf.Max(1, level);
+        Experience = Mathf.Max(0, experience);
+        if (savedMaxHealth > 0) maxHealth = savedMaxHealth;
+    }
+
+    /// <summary>Full heal (Potion of Healing).</summary>
+    public void HealFully() => Heal(MaxHealth);
 
     public void RestoreStrength(int value) => Strength = Mathf.Max(1, value);
 

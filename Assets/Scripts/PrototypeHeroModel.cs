@@ -67,11 +67,39 @@ public sealed class PrototypeHeroModel : MonoBehaviour
             return;
         }
 
+        UpdateInvisibilityLook();
         var facing = movement.FacingDirection;
         facing.y = 0f;
         if (facing.sqrMagnitude > 0.001f)
             model.localRotation = Quaternion.RotateTowards(model.localRotation, Quaternion.LookRotation(facing), turnSpeed * Time.deltaTime);
         Play(movement.IsMoving ? moveClip : idleClip, WrapMode.Loop);
+    }
+
+    private PrototypeStatusEffects statuses;
+    private Renderer[] modelRenderers;
+    private MaterialPropertyBlock ghostBlock;
+    private bool ghostly;
+
+    /// <summary>While invisible the Ranger is drawn as a pale, flickering blue ghost.</summary>
+    private void UpdateInvisibilityLook()
+    {
+        if (statuses == null) statuses = GetComponent<PrototypeStatusEffects>();
+        var invisible = statuses != null && statuses.Has(PrototypeStatusEffectType.Invisible);
+        if (!invisible && !ghostly) return;
+        modelRenderers ??= model.GetComponentsInChildren<Renderer>(true);
+        ghostBlock ??= new MaterialPropertyBlock();
+        foreach (var renderer in modelRenderers)
+        {
+            if (renderer == null || renderer is TrailRenderer || renderer is ParticleSystemRenderer) continue;
+            if (invisible)
+            {
+                var pulse = 0.35f + 0.15f * Mathf.Sin(Time.time * 6f);
+                ghostBlock.SetColor("_BaseColor", new Color(pulse, pulse + 0.15f, 1f, 1f));
+                renderer.SetPropertyBlock(ghostBlock);
+            }
+            else renderer.SetPropertyBlock(null);
+        }
+        ghostly = invisible;
     }
 
     private void Play(string clipName, WrapMode wrap)

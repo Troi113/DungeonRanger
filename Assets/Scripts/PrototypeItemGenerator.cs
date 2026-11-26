@@ -26,6 +26,9 @@ public static class PrototypeItemGenerator
     private enum Category { Potion, Scroll, Weapon, Armor }
     private static readonly float[] CategoryWeights = { 50f, 40f, 15f, 10f };
 
+    private static readonly string[] RandomPotions = { PrototypePotions.Healing, PrototypePotions.Experience, PrototypePotions.LiquidFlame, PrototypePotions.Invisibility };
+    private static readonly float[] RandomPotionWeights = { 45f, 4f, 15f, 10f };
+
     // Random scrolls (PD-style weights); Upgrade comes only from the quota.
     private static readonly string[] RandomScrolls = { "scroll_identify", "scroll_remove_curse", "scroll_teleportation", "scroll_magic_mapping", "scroll_challenge" };
     private static readonly float[] RandomScrollWeights = { 30f, 15f, 10f, 10f, 8f };
@@ -62,8 +65,8 @@ public static class PrototypeItemGenerator
         switch (category)
         {
             case Category.Potion:
-                // Healing is the only potion that drops randomly; Strength comes from the quota.
-                return new PrototypeInventoryItem(HealthPotion);
+                // PD weights among our potions; Strength comes only from the quota.
+                return new PrototypeInventoryItem(RandomPotions[Pick(RandomPotionWeights, random)]);
             case Category.Scroll:
                 return new PrototypeInventoryItem(RandomScrolls[Pick(RandomScrollWeights, random)]);
             case Category.Weapon:

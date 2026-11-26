@@ -101,8 +101,7 @@ public static class PrototypeUITheme
         return itemId switch
         {
             "ranger_bow" => Bow,
-            "health_potion" => Icon(3, 17),
-            "strength_potion" => Icon(3, 18),
+            _ when PrototypePotions.IsPotion(itemId) => PotionIcon(itemId),
             "food" => Bread,
             "key" => Icon(3, 29),
             "knuckleduster" => Icon(3, 14),
@@ -116,6 +115,14 @@ public static class PrototypeUITheme
             "mail_armor" => Chainmail,
             _ => null
         };
+    }
+
+    /// <summary>Potion icon by its random color (red/blue/green flask) so the icon never reveals the type.</summary>
+    private static Texture2D PotionIcon(string itemId)
+    {
+        var tint = PrototypePotions.Current != null ? PrototypePotions.Current.TintOf(itemId) : Color.red;
+        var icon = tint.r >= tint.g && tint.r >= tint.b ? 17 : tint.b >= tint.g ? 18 : 19;
+        return Icon(3, icon);
     }
 
     /// <summary>Faded placeholder shown in an empty equipment slot.</summary>

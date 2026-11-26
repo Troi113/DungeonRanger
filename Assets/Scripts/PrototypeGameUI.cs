@@ -202,7 +202,10 @@ public sealed class PrototypeGameUI : MonoBehaviour
             : hungerState == PrototypeHungerState.Hungry ? PrototypeUITheme.Warning : PrototypeUITheme.Parchment;
         PrototypeUITheme.DrawIcon(new Rect(left.x + 18f, left.y + 54f, 32f, 32f), PrototypeUITheme.Bread);
         PrototypeUITheme.Label(new Rect(left.x + 58f, left.y + 54f, left.width - 76f, 32f), hungerState.ToString(), 16, hungerColor, TextAnchor.MiddleLeft, true);
-        PrototypeUITheme.Label(new Rect(left.x + 58f, left.y + 54f, left.width - 76f, 32f), $"STR {stats.Strength}", 16, PrototypeUITheme.Gold, TextAnchor.MiddleRight, true);
+        PrototypeUITheme.Label(new Rect(left.x + 58f, left.y + 54f, left.width - 76f, 32f), $"Lv {stats.Level}   STR {stats.Strength}", 16, PrototypeUITheme.Gold, TextAnchor.MiddleRight, true);
+        // Thin experience bar under the panel.
+        PrototypeUITheme.DrawBar(new Rect(left.x + 12f, left.yMax - 10f, left.width - 24f, 8f),
+            stats.ExperienceToLevel > 0 ? (float)stats.Experience / stats.ExperienceToLevel : 0f, new Color(0.35f, 0.75f, 1f));
 
         if (combat != null && combat.OneHitBowEnabled)
         {
@@ -373,6 +376,22 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (itemActionsOpen) DrawItemActions();
     }
 
+    // Two-press confirmation for risky potion actions (Pixel Dungeon asks before these).
+    private int confirmSlot = -1;
+    private ItemAction confirmAction;
+
+    private bool ConfirmPending(ItemAction action)
+    {
+        if (confirmSlot == inventoryCursor && confirmAction == action)
+        {
+            confirmSlot = -1;
+            return true;
+        }
+        confirmSlot = inventoryCursor;
+        confirmAction = action;
+        return false;
+    }
+
     private enum ItemAction { Unequip, Consume, Drink, Eat, Read, Equip, EquipRingA, EquipRingB, Drop, Throw }
 
     private readonly System.Collections.Generic.List<ItemAction> actionBuffer = new();
@@ -383,8 +402,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         actionBuffer.Clear();
         if (item == null) return actionBuffer;
         if (index < 4) actionBuffer.Add(ItemAction.Unequip);
-        else if (item.ItemId == "health_potion") actionBuffer.Add(ItemAction.Consume);
-        else if (item.ItemId == PrototypeItemGenerator.StrengthPotion) actionBuffer.Add(ItemAction.Drink);
+        else if (PrototypePotions.IsPotion(item.ItemId)) actionBuffer.Add(ItemAction.Drink);
         else if (item.ItemId == "food") actionBuffer.Add(ItemAction.Eat);
         else if (PrototypeScrolls.IsScroll(item.ItemId)) actionBuffer.Add(ItemAction.Read);
         else if (item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingA || item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingB)
@@ -431,17 +449,25 @@ public sealed class PrototypeGameUI : MonoBehaviour
             case ItemAction.Unequip:
                 if (!inventory.TryUnequip(inventoryCursor)) { inventoryMessage = item.IsCursed ? "Cursed equipment cannot be removed." : "Inventory is full."; return; }
                 break;
-            case ItemAction.Consume:
-                if (stats.CurrentHealth >= stats.MaxHealth) { inventoryMessage = "Health is already full."; return; }
-                inventory.RemoveAt(inventoryCursor);
-                stats.Heal(8);
-                break;
             case ItemAction.Drink:
+            {
+                var potions = stats.GetComponent<PrototypePotions>();
+                if (potions == null) return;
+                // Like Pixel Dungeon, drinking a known harmful potion asks first.
+                if (potions.IsKnown(item.ItemId) && PrototypePotions.IsHarmful(item.ItemId) && !ConfirmPending(ItemAction.Drink))
+                {
+                    inventoryMessage = "Harmful potion! Press J again to drink it anyway.";
+                    return;
+                }
+                var potionId = item.ItemId;
                 inventory.ConsumeOneAt(inventoryCursor);
-                stats.AddStrength(1);
-                inventoryMessage = $"Newfound strength surges through you! Strength is now {stats.Strength}.";
+                var message = potions.Drink(potionId);
+                PrototypeGameUI.ShowNotice(message);
+                inventoryMessage = message;
                 itemActionsOpen = false;
+                if (potionId == PrototypePotions.LiquidFlame) { IsInventoryOpen = false; ApplyPause(); }
                 return;
+            }
             case ItemAction.Eat:
                 inventory.RemoveAt(inventoryCursor);
                 hunger.Eat(60f);
@@ -476,6 +502,14 @@ public sealed class PrototypeGameUI : MonoBehaviour
             }
             case ItemAction.Throw:
             {
+                // Throwing a known helpful potion asks first (it would just shatter).
+                var knownPotions = stats.GetComponent<PrototypePotions>();
+                if (knownPotions != null && PrototypePotions.IsPotion(item.ItemId) && knownPotions.IsKnown(item.ItemId)
+                    && !PrototypePotions.IsHarmful(item.ItemId) && !ConfirmPending(ItemAction.Throw))
+                {
+                    inventoryMessage = "Beneficial potion! Press J again to throw it anyway.";
+                    return;
+                }
                 // Throws one item from a stack, then closes the inventory so play resumes.
                 var thrown = inventory.TakeOneAt(inventoryCursor);
                 itemActionsOpen = false;
@@ -514,12 +548,11 @@ public sealed class PrototypeGameUI : MonoBehaviour
         string info = null;
         if (item.ItemId == "ranger_bow") info = "Always available with J in gameplay.";
         else if (scrolls != null && PrototypeScrolls.IsScroll(item.ItemId)) info = scrolls.Description(item.ItemId);
+        else if (PrototypePotions.IsPotion(item.ItemId) && PrototypePotions.Current != null) info = PrototypePotions.Current.Description(item.ItemId);
         else if (PrototypeMeleeWeapons.TryGet(item.ItemId, out var weapon))
             info = $"Damage {weapon.Damage + item.UpgradeLevel}    Reach {weapon.Range:0} tile{(weapon.Range > 1f ? "s" : "")}    Delay {weapon.Cooldown:0.00}s";
         else if (PrototypeArmors.TryGet(item.ItemId, out _))
             info = $"Absorbs 0-{PrototypeArmors.MaxAbsorb(item)} damage per enemy hit";
-        else if (item.ItemId == "health_potion") info = "Restores 8 health.";
-        else if (item.ItemId == PrototypeItemGenerator.StrengthPotion) info = "Permanently increases your Strength by 1.";
         var required = PrototypeStrength.Required(item);
         if (required > 0)
         {

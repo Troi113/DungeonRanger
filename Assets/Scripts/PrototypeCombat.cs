@@ -101,6 +101,7 @@ public sealed class PrototypeCombat : MonoBehaviour
     private void FireBow()
     {
         nextBowTime = Time.time + bowCooldown;
+        EndInvisibility();
         var direction = movement.FacingDirection;
 
         if (direction.sqrMagnitude < 0.01f)
@@ -134,6 +135,7 @@ public sealed class PrototypeCombat : MonoBehaviour
 
     private void PerformMeleeAttack(PrototypeMeleeWeapons.WeaponData weapon)
     {
+        EndInvisibility();
         nextMeleeTime = Time.time + weapon.Cooldown;
         var facing = movement.FacingDirection;
         facing.y = 0f;
@@ -151,6 +153,10 @@ public sealed class PrototypeCombat : MonoBehaviour
         ResolveMeleeHit(weapon, facing);
         StartCoroutine(AnimateSlash(facing, depth));
     }
+
+    /// <summary>Attacking reveals an invisible ranger (Pixel Dungeon rule).</summary>
+    private void EndInvisibility() =>
+        GetComponent<PrototypeStatusEffects>()?.Cure(PrototypeStatusEffectType.Invisible);
 
     private IEnumerator StrikeAfter(float delay, PrototypeMeleeWeapons.WeaponData weapon, Vector3 facing)
     {

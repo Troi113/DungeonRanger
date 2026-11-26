@@ -25,6 +25,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float hitSpeedMultiplier = 0.5f;
 
     private Renderer enemyRenderer;
+    private PrototypeStatusEffects playerStatuses;
     private Renderer[] modelRenderers;
     private MaterialPropertyBlock tintBlock;
     private PrototypePlayerMovement player;
@@ -65,6 +66,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
     public int MaxHealth => maxHealth;
     public bool HasTakenDamage => hasTakenDamage;
     public bool IsVisible { get; private set; } = true;
+    public bool IsWalkableCell(Vector2Int cell) => walkableLookup != null && walkableLookup.Contains(cell);
 
     /// <summary>World bounds of whatever represents this enemy on screen.</summary>
     public Bounds VisualBounds
@@ -134,7 +136,9 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
         var sightRangeWorld = sightRangeCells * PrototypeLevelGenerator.TileSize;
         var distanceToPlayer = player.transform.position - transform.position;
-        var canSeePlayer = distanceToPlayer.sqrMagnitude <= sightRangeWorld * sightRangeWorld && HasClearSight(distanceToPlayer);
+        if (playerStatuses == null) playerStatuses = player.GetComponent<PrototypeStatusEffects>();
+        var invisible = playerStatuses != null && playerStatuses.Has(PrototypeStatusEffectType.Invisible);
+        var canSeePlayer = !invisible && distanceToPlayer.sqrMagnitude <= sightRangeWorld * sightRangeWorld && HasClearSight(distanceToPlayer);
 
         if (canSeePlayer)
         {
@@ -265,7 +269,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
         awakeColor = new Color(0.2f, 0.75f, 0.35f);
         patrolSpeed = 2.5f;
         chaseSpeed = 3f;
-        attackRange = 3f;
+        // Reaches to the edge of its big model, not just its small body.
+        attackRange = 4.2f;
         // Charge damage stays fixed at 2; normal contact attacks roll Goo's damage range.
         attackDamage = 2;
         attackCooldown = 1.8f;

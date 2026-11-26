@@ -93,6 +93,10 @@ public sealed class PrototypeSaveData
     public float PlayerZ;
     public int Health;
     public int Strength;
+    public int Level;
+    public int Experience;
+    public int MaxHealth;
+    public List<string> KnownPotions = new();
     public float HungerMovingTime;
     public int Score;
     public float ElapsedSeconds;

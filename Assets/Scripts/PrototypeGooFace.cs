@@ -20,6 +20,7 @@ public sealed class PrototypeGooFace : MonoBehaviour
     private float faceTimer;
     private float squashTimer;
     private int sillyIndex;
+    private float squeeze = 1f;
 
     private void Start()
     {
@@ -111,7 +112,13 @@ public sealed class PrototypeGooFace : MonoBehaviour
             squashTimer -= Time.deltaTime;
             squash = Mathf.Sin((1f - squashTimer / squashSeconds) * Mathf.PI * 2f) * 0.18f * (squashTimer / squashSeconds);
         }
-        transform.localScale = new Vector3(baseScale.x * (1f + squash), baseScale.y * (1f - squash), baseScale.z * (1f + squash));
+        // Squeeze thin (and a bit taller) to fit through one-tile corridors.
+        var cell = PrototypeLevelGenerator.WorldToGrid(transform.position);
+        var corridor = (!enemy.IsWalkableCell(cell + Vector2Int.right) && !enemy.IsWalkableCell(cell + Vector2Int.left))
+                    || (!enemy.IsWalkableCell(cell + Vector2Int.up) && !enemy.IsWalkableCell(cell + Vector2Int.down));
+        squeeze = Mathf.MoveTowards(squeeze, corridor ? 0.42f : 1f, Time.deltaTime * 2.5f);
+        var stretch = 1f + (1f - squeeze) * 0.45f;
+        transform.localScale = new Vector3(baseScale.x * (1f + squash) * squeeze, baseScale.y * (1f - squash) * stretch, baseScale.z * (1f + squash) * squeeze);
     }
 
     private void ShowFace(int index)

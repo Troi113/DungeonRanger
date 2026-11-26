@@ -82,6 +82,11 @@ public sealed class PrototypeScrolls : MonoBehaviour
             var scrollName = known.Contains(item.ItemId) ? Names[index] : $"Scroll '{labels[item.ItemId]}'";
             return item.Quantity > 1 ? $"{scrollName} x{item.Quantity}" : scrollName;
         }
+        if (PrototypePotions.IsPotion(item.ItemId) && PrototypePotions.Current != null)
+        {
+            var potionName = PrototypePotions.Current.NameOf(item.ItemId);
+            return item.Quantity > 1 ? $"{potionName} x{item.Quantity}" : potionName;
+        }
         PrototypeItemCatalog.Describe(item.ItemId, out var label, out _);
         if (item.UpgradeLevel > 0) label += $" +{item.UpgradeLevel}";
         if (item.EquipmentSlot != PrototypeEquipmentSlot.None)
@@ -96,7 +101,9 @@ public sealed class PrototypeScrolls : MonoBehaviour
             return (item.EquipmentSlot == PrototypeEquipmentSlot.Weapon && PrototypeMeleeWeapons.TryGet(item.ItemId, out _)) ||
                    (item.EquipmentSlot == PrototypeEquipmentSlot.Armor && PrototypeArmors.TryGet(item.ItemId, out _));
         if (scrollId == "scroll_identify")
-            return IsScroll(item.ItemId) ? !IsKnown(item.ItemId) : item.EquipmentSlot != PrototypeEquipmentSlot.None && !item.IsIdentified;
+            return IsScroll(item.ItemId) ? !IsKnown(item.ItemId)
+                : PrototypePotions.IsPotion(item.ItemId) ? PrototypePotions.Current != null && !PrototypePotions.Current.IsKnown(item.ItemId)
+                : item.EquipmentSlot != PrototypeEquipmentSlot.None && !item.IsIdentified;
         return false;
     }
 
@@ -169,6 +176,7 @@ public sealed class PrototypeScrolls : MonoBehaviour
         else
         {
             if (IsScroll(target.ItemId)) known.Add(target.ItemId);
+            else if (PrototypePotions.IsPotion(target.ItemId)) PrototypePotions.Current?.SetKnown(target.ItemId);
             else target.IsIdentified = true;
             message = $"Identified {DisplayName(target)}.";
         }

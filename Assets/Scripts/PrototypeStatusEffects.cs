@@ -8,7 +8,10 @@ public enum PrototypeStatusEffectType
     Paralyzed,
     Gripped,
     Bleeding,
-    Oozed
+    Oozed,
+    Slowed,
+    Invisible,
+    Burning
 }
 
 /// <summary>
@@ -74,11 +77,19 @@ public sealed class PrototypeStatusEffects : MonoBehaviour
 
     private static bool IsDamageOverTime(PrototypeStatusEffectType effect) =>
         effect == PrototypeStatusEffectType.Poisoned || effect == PrototypeStatusEffectType.Toxic ||
-        effect == PrototypeStatusEffectType.Bleeding || effect == PrototypeStatusEffectType.Oozed;
+        effect == PrototypeStatusEffectType.Bleeding || effect == PrototypeStatusEffectType.Oozed ||
+        effect == PrototypeStatusEffectType.Burning;
 
     private bool IsDamageOverTimeActive() =>
         Has(PrototypeStatusEffectType.Poisoned) || Has(PrototypeStatusEffectType.Toxic) ||
-        Has(PrototypeStatusEffectType.Bleeding) || Has(PrototypeStatusEffectType.Oozed);
+        Has(PrototypeStatusEffectType.Bleeding) || Has(PrototypeStatusEffectType.Oozed) ||
+        Has(PrototypeStatusEffectType.Burning);
+
+    /// <summary>Ends the given effects immediately (cures, or attacking ending invisibility).</summary>
+    public void Cure(params PrototypeStatusEffectType[] effects)
+    {
+        foreach (var effect in effects) expirationTimes.Remove(effect);
+    }
 
     public bool Has(PrototypeStatusEffectType effect)
     {

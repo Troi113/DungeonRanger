@@ -196,6 +196,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Lengthen and speed up Goo's charge (18 units at 4.5x speed) and knock the ranger back on hit.
 - [ ] Playtest Goo's knockback distance and the longer charge.
 - [x] Give Goo an original slime look with silly hit faces, triple its size, and add a slowing slime trail that blocks tumbling.
+- [x] Boss fixes: no squish/falling out of the world, 7–11 damage charge, caustic glob ranged attack, Goo squeezes through corridors.
 - [ ] Playtest giant Goo: hit faces, slime trail slowdown/no-tumble, charge and knockback at the new size (look and arena fit checked).
 - [x] Scale traps to four times their width (full tile).
 - [ ] With full-tile traps, avoid trapping one-cell corridors and doorways so traps stay avoidable.
@@ -254,6 +255,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Generate floor items like Pixel Dungeon (food, Strength/Upgrade quotas, weighted random categories with halving).
 - [x] Add Strength as a stat and Potion of Strength; weapons and armor have Strength requirements.
 - [ ] Playtest item counts per floor, Strength requirements, and encumbrance penalties.
+- [x] Add Pixel Dungeon potions: Healing, Strength, Experience, Invisibility, Liquid Flame (random colors, identify, drink/throw, confirmations).
+- [x] Add hero experience and levels (needed for Experience and future talents).
+- [ ] Add Huntress tier-1 talents (design to confirm).
+- [ ] Playtest potion effects, fire damage, invisibility, and leveling pace.
 - [ ] Add item stack counts and duplicate-item behavior.
 - [x] Add Drop and Throw inventory actions; thrown items open doors, trigger traps, and land before walls.
 - [x] Detect traps for thrown items by grid cell instead of physics; make traps one flat plate with a taller trigger.

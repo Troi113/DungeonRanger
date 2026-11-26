@@ -8,6 +8,9 @@ public sealed class PrototypeGooCharge : MonoBehaviour
     [SerializeField] private float distance = 18f;
     [SerializeField] private float speedMultiplier = 4.5f;
     [SerializeField] private float knockbackDistance = 6f;
+    [Tooltip("The charge is Goo's big move: 7-11 damage (before armor).")]
+    [SerializeField] private int chargeMinDamage = 7;
+    [SerializeField] private int chargeMaxDamage = 11;
     [SerializeField] private float knockbackDuration = 0.25f;
 
     private enum ChargeState { Ready, Windup, Charging }
@@ -22,6 +25,7 @@ public sealed class PrototypeGooCharge : MonoBehaviour
     private float windupRemaining;
     private float distanceRemaining;
     private float bodyRadius;
+    private float hitRadius;
     private int damage;
     private bool hitPlayer;
     private Vector3 lockedDirection;
@@ -52,6 +56,11 @@ public sealed class PrototypeGooCharge : MonoBehaviour
     public bool TryStart()
     {
         if (state != ChargeState.Ready || cooldownRemaining > 0f || player == null) return false;
+        // Measured per charge: the small body stops at walls (so Goo can charge down corridors);
+        // the bigger model-sized radius decides whether the ranger is run over.
+        var body = GetComponent<Collider>();
+        bodyRadius = body != null ? Mathf.Max(body.bounds.extents.x, body.bounds.extents.z) : 1.5f;
+        hitRadius = bossRenderer != null ? Mathf.Max(bodyRadius, bossRenderer.bounds.extents.x * 0.6f) : bodyRadius;
         state = ChargeState.Windup;
         windupRemaining = windupDuration;
         if (bossRenderer != null) bossRenderer.material.color = new Color(1f, 0.48f, 0.08f);
@@ -98,7 +107,9 @@ public sealed class PrototypeGooCharge : MonoBehaviour
         if (!hitPlayer && PlayerTouchesSegment(start, end))
         {
             hitPlayer = true;
-            player.GetComponent<PrototypePlayerStats>()?.TakeAttackDamage(damage);
+            player.GetComponent<PrototypePlayerStats>()?.TakeAttackDamage(Random.Range(chargeMinDamage, chargeMaxDamage + 1));
+            PrototypeGameFeel.Shake(0.6f, 0.35f);
+            PrototypeGameFeel.HitStop(0.1f);
             player.ApplyKnockback(KnockbackDirection(start, end), knockbackDistance, knockbackDuration);
         }
         transform.position = end;
@@ -141,7 +152,7 @@ public sealed class PrototypeGooCharge : MonoBehaviour
         var segment = end - start;
         var t = segment.sqrMagnitude > 0.0001f ? Mathf.Clamp01(Vector3.Dot(position - start, segment) / segment.sqrMagnitude) : 0f;
         var controller = player.GetComponent<CharacterController>();
-        var radius = bodyRadius + (controller != null ? controller.radius : 0.45f);
+        var radius = Mathf.Max(hitRadius, bodyRadius) + (controller != null ? controller.radius : 0.45f);
         return (position - (start + segment * t)).sqrMagnitude <= radius * radius;
     }
 

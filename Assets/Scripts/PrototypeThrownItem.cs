@@ -108,9 +108,11 @@ public sealed class PrototypeThrownItem : MonoBehaviour
         return null;
     }
 
-    private static bool IsStopper(Collider collider)
+    private bool IsStopper(Collider collider)
     {
         if (IsWall(collider)) return true;
+        // Potions break on enemies (to splash fire on them); other items fly past.
+        if (PrototypePotions.IsPotion(item.ItemId) && collider.GetComponentInParent<PrototypeEnemy>() != null) return true;
         return collider.name == "Door_Panel" && collider.enabled;
     }
 
@@ -119,6 +121,11 @@ public sealed class PrototypeThrownItem : MonoBehaviour
 
     private void HandleImpact(RaycastHit hit)
     {
+        if (hit.collider.GetComponentInParent<PrototypeEnemy>() != null)
+        {
+            Land(new Vector3(hit.point.x, 0f, hit.point.z));
+            return;
+        }
         if (hit.collider.name == "Door_Panel")
         {
             var door = hit.collider.GetComponentInParent<PrototypeDoor>();
@@ -140,6 +147,14 @@ public sealed class PrototypeThrownItem : MonoBehaviour
     {
         if (landed) return null;
         landed = true;
+        if (PrototypePotions.IsPotion(item.ItemId) && PrototypePotions.Current != null)
+        {
+            // A thrown potion breaks where it lands instead of becoming a pickup.
+            PrototypeGameUI.ShowNotice(PrototypePotions.Current.Shatter(item.ItemId, landingParent, position));
+            gameObject.SetActive(false);
+            Destroy(gameObject);
+            return null;
+        }
         var pickup = PrototypeItemPickup.CreateForItem(landingParent, position, item);
         gameObject.SetActive(false);
         Destroy(gameObject);

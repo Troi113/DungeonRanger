@@ -26,16 +26,17 @@ public static class PrototypeItemCatalog
             return;
         }
 
+        if (PrototypePotions.IsPotion(itemId))
+        {
+            // Unidentified potions show only their random color for this run.
+            var potions = PrototypePotions.Current;
+            name = potions != null ? potions.NameOf(itemId) : "Potion";
+            color = potions != null ? potions.TintOf(itemId) : new Color(0.8f, 0.8f, 0.9f);
+            return;
+        }
+
         switch (itemId)
         {
-            case "health_potion":
-                name = "Potion of Healing";
-                color = new Color(0.9f, 0.15f, 0.2f);
-                return;
-            case "strength_potion":
-                name = "Potion of Strength";
-                color = new Color(0.25f, 0.45f, 0.95f);
-                return;
             case "food":
                 name = "Food Ration";
                 color = new Color(0.72f, 0.48f, 0.2f);

@@ -33,8 +33,15 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
         characterController = GetComponent<CharacterController>();
     }
 
+    [Tooltip("Below this height the ranger is returned to the last safe floor position.")]
+    [SerializeField] private float fallLimitY = -3f;
+    [SerializeField, Range(0f, 1f)] private float slowedSpeedMultiplier = 0.5f;
+    private Vector3 lastSafePosition;
+    private bool hasSafePosition;
+
     private void Update()
     {
+        RecoverFromFall();
         if (Keyboard.current == null)
         {
             IsMoving = false;
@@ -91,7 +98,9 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
         }
 
         IsMoving = input.sqrMagnitude > 0.01f;
-        var movement = new Vector3(input.x, 0f, input.y) * moveSpeed * (slimed ? slimeSpeedMultiplier : 1f) * ArmorSpeedMultiplier();
+        var slowed = statusEffects != null && statusEffects.Has(PrototypeStatusEffectType.Slowed);
+        var movement = new Vector3(input.x, 0f, input.y) * moveSpeed * (slimed ? slimeSpeedMultiplier : 1f)
+                       * (slowed ? slowedSpeedMultiplier : 1f) * ArmorSpeedMultiplier();
 
         if (input.sqrMagnitude > 0.01f)
         {
@@ -156,6 +165,26 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
 
     private PrototypeInventory inventory;
     private PrototypePlayerStats playerStats;
+
+    /// <summary>
+    /// Safety net: remembers the last grounded spot on the floor, and if the ranger is ever pushed
+    /// below the floor (falling forever), puts them back there.
+    /// </summary>
+    private void RecoverFromFall()
+    {
+        var position = transform.position;
+        if (characterController.isGrounded && position.y > 0.5f && position.y < 2f)
+        {
+            lastSafePosition = position;
+            hasSafePosition = true;
+        }
+        if (position.y >= fallLimitY || !hasSafePosition) return;
+        characterController.enabled = false;
+        transform.position = lastSafePosition + Vector3.up * 0.2f;
+        characterController.enabled = true;
+        verticalVelocity = 0f;
+        knockbackRemaining = 0f;
+    }
 
     /// <summary>Armor the ranger is too weak for slows them down (Pixel Dungeon Strength rule).</summary>
     private float ArmorSpeedMultiplier()

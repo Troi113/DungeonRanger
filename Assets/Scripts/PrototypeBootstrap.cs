@@ -119,6 +119,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         player.AddComponent<PrototypePlayerInteraction>();
         player.AddComponent<PrototypeCombat>();
         player.AddComponent<PrototypeScrolls>();
+        player.AddComponent<PrototypePotions>();
         return movement;
     }
 

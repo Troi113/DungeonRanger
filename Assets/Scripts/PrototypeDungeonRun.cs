@@ -26,6 +26,10 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     private const float StairsWidth = 3.2f;
     // Gap between the stand point (spawn/arrival) and the foot of the steps.
     private const float StairsFootGap = 0.4f;
+    // Share of floor 5 cells seeded with water before smoothing (lower = less water).
+    private const float BossWaterFill = 0.4f;
+    // Goo's body radius in world units (its model is much bigger).
+    private const float GooBodyRadius = 1.6f;
 
     [Tooltip("Chance that a generated rat is an albino rat (Pixel Dungeon uses 1 in 30).")]
     [SerializeField, Range(0f, 1f)] private float albinoRatChance = 1f / 30f;
@@ -70,6 +74,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
 
         runSeed = Random.Range(1, 1000000);
         player.GetComponent<PrototypeScrolls>().Initialize(runSeed);
+        player.GetComponent<PrototypePotions>()?.Initialize(runSeed);
         Floor = 1;
         EnterFloor(false);
     }
@@ -100,6 +105,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         WatchPlayerDeath();
         runSeed = Random.Range(1, 1000000);
         player.GetComponent<PrototypeScrolls>().Initialize(runSeed);
+        player.GetComponent<PrototypePotions>()?.Initialize(runSeed);
         Floor = 1;
         Victory = false;
         runEnded = false;
@@ -147,6 +153,18 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     public int Score { get; private set; }
     public float ElapsedSeconds { get; private set; }
     public int DeepestFloor { get; private set; } = 1;
+
+    /// <summary>
+    /// Pixel Dungeon experience: a rat gives 1 (none once the hero is above level 5, the rat's
+    /// max level); Goo gives 10.
+    /// </summary>
+    private void GrantKillExperience(PrototypeMobs.MobData data)
+    {
+        var stats = player != null ? player.GetComponent<PrototypePlayerStats>() : null;
+        if (stats == null) return;
+        var experience = data.Id == "goo" ? 10 : stats.Level <= 5 ? 1 : 0;
+        if (stats.EarnExperience(experience) > 0) PrototypeGameUI.ShowNotice($"Level up! You are now level {stats.Level}.");
+    }
 
     private static int KillPoints(PrototypeMobs.MobData data) => data.Id switch
     {
@@ -225,9 +243,8 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         {
             // Goo lives in the boss room (the room farthest along the generated path) and stays there.
             var bossRoom = RoomContaining(layout, PrototypeLevelGenerator.WorldToGrid(layout.ExitSpawn));
-            var bossCells = new List<Vector2Int>();
-            foreach (var cell in layout.WalkableCells) if (bossRoom.Contains(cell)) bossCells.Add(cell);
-            var goo = CreateEnemy(layout.ExitSpawn, layout, seed + 500, true, PrototypeMobs.Goo, bossCells.Count > 0 ? bossCells : null);
+            // Goo starts in its room but can squeeze through corridors to chase the ranger.
+            var goo = CreateEnemy(layout.ExitSpawn, layout, seed + 500, true, PrototypeMobs.Goo);
             var bossFloor = floorRoot.transform;
             goo.Defeated += () =>
             {
@@ -238,8 +255,9 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
             state.Enemies.Add(goo);
             bossGoo = goo;
             bossRoomBounds = bossRoom;
-            // Sewer water over about half the floor (Goo heals in it); stairs and spawns stay dry.
-            PrototypeSewerWater.Create(floorRoot.transform, layout.WalkableCells, seed, 0.5f, 5,
+            // Sewer water patches (Goo heals in them); stairs and spawns stay dry. A 40% starting
+            // fill smoothed by majority vote leaves scattered pools instead of PD's half-flooded floor.
+            PrototypeSewerWater.Create(floorRoot.transform, layout.WalkableCells, seed, BossWaterFill, 5,
                 new[] { PrototypeLevelGenerator.WorldToGrid(layout.PlayerSpawn), PrototypeLevelGenerator.WorldToGrid(layout.ExitSpawn) });
         }
 
@@ -288,6 +306,9 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
             PlayerZ = player.transform.position.z,
             Health = stats.CurrentHealth,
             Strength = stats.Strength,
+            Level = stats.Level,
+            Experience = stats.Experience,
+            MaxHealth = stats.MaxHealth,
             HungerMovingTime = player.GetComponent<PrototypeHunger>()?.MovingTime ?? 0f,
             Score = Score,
             ElapsedSeconds = ElapsedSeconds,
@@ -296,6 +317,8 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var inventory = player.GetComponent<PrototypeInventory>();
         for (var i = 0; i < inventory.Capacity; i++) data.Inventory.Add(PrototypeItemSave.From(inventory.GetSlot(i)));
         data.KnownScrolls.AddRange(player.GetComponent<PrototypeScrolls>().KnownScrolls);
+        var knownPotions = player.GetComponent<PrototypePotions>();
+        if (knownPotions != null) data.KnownPotions.AddRange(knownPotions.KnownPotions);
         foreach (var pair in floors) data.Floors.Add(CaptureFloor(pair.Key, pair.Value));
         PrototypeSaveSystem.Save(data);
     }
@@ -366,10 +389,14 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var scrolls = player.GetComponent<PrototypeScrolls>();
         scrolls.Initialize(runSeed);
         scrolls.RestoreKnown(data.KnownScrolls);
+        var potions = player.GetComponent<PrototypePotions>();
+        potions?.Initialize(runSeed);
+        if (data.KnownPotions != null) potions?.RestoreKnown(data.KnownPotions);
 
         var inventory = player.GetComponent<PrototypeInventory>();
         for (var i = 0; i < inventory.Capacity; i++)
             inventory.SetSlot(i, i < data.Inventory.Count ? data.Inventory[i].ToItem() : null);
+        player.GetComponent<PrototypePlayerStats>().RestoreLevel(data.Level, data.Experience, data.MaxHealth);
         player.GetComponent<PrototypePlayerStats>().RestoreHealth(data.Health);
         if (data.Strength > 0) player.GetComponent<PrototypePlayerStats>().RestoreStrength(data.Strength);
         player.GetComponent<PrototypeHunger>()?.RestoreMovingTime(data.HungerMovingTime);
@@ -486,7 +513,11 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         if (useModel)
             enemy.UseModel(PrototypeMobModels.Create(data.ModelName, obj.transform, data.Scale.z * ModelLengthScale, -data.Scale.y * 0.5f));
         enemy.Initialize(player, walkableOverride ?? layout.WalkableCells, seed, layout.BlockedEdges);
-        enemy.Defeated += () => Score += KillPoints(data);
+        enemy.Defeated += () =>
+        {
+            Score += KillPoints(data);
+            GrantKillExperience(data);
+        };
         obj.AddComponent<PrototypeHitFlash>();
         if (boss)
         {
@@ -494,6 +525,18 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
             obj.AddComponent<PrototypeGooFace>();
             obj.AddComponent<PrototypeSlimeTrail>();
             obj.AddComponent<PrototypeGooWaterHeal>();
+            obj.AddComponent<PrototypeGooGlob>();
+            // The big slime model stays; its body for hits and movement is about one tile wide,
+            // low enough for arrows, so it fits corridors.
+            if (obj.GetComponent<Collider>() is SphereCollider body)
+            {
+                body.radius = GooBodyRadius / Mathf.Max(data.Scale.x, data.Scale.z);
+                body.center = new Vector3(0f, (GooBodyRadius - data.Scale.y * 0.5f) / data.Scale.y, 0f);
+            }
+            // Never let Goo and the ranger push each other's bodies (that could squeeze the
+            // ranger through the floor).
+            var playerBody = player != null ? player.GetComponent<CharacterController>() : null;
+            if (playerBody != null && obj.TryGetComponent<Collider>(out var gooBody)) Physics.IgnoreCollision(playerBody, gooBody);
         }
         else enemy.Configure(data);
         return enemy;
