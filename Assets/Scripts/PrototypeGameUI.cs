@@ -3,8 +3,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Prototype HUD, inventory, and pause menu. Uses immediate-mode GUI drawn with
-/// the medieval pixel-art pack through PrototypeUITheme.
+/// Lightweight prototype HUD. It intentionally uses immediate-mode GUI so the
+/// gameplay loop can be tested before committing to a final UI art direction.
 /// </summary>
 [DefaultExecutionOrder(-100)]
 public sealed class PrototypeGameUI : MonoBehaviour
@@ -29,6 +29,8 @@ public sealed class PrototypeGameUI : MonoBehaviour
     private bool itemActionsOpen;
     private string inventoryMessage;
     private int targetingScroll = -1;
+    private GUIStyle inventorySlotStyle;
+    private GUIStyle descriptionStyle;
     public static bool IsInventoryOpen { get; private set; }
     public static bool IsPauseMenuOpen { get; private set; }
     public static bool IsGamePaused => IsInventoryOpen || IsPauseMenuOpen;
@@ -141,22 +143,40 @@ public sealed class PrototypeGameUI : MonoBehaviour
             return;
         }
 
-        PrototypeUITheme.BeginScaledGui();
-        DrawHud();
+        var oldColor = GUI.color;
+        GUI.color = Color.white;
+        GUI.Box(new Rect(16f, 16f, 240f, 72f), string.Empty);
+        GUI.Label(new Rect(28f, 24f, 210f, 24f), $"Health: {stats.CurrentHealth}/{stats.MaxHealth}");
+        GUI.Label(new Rect(28f, 50f, 210f, 24f), $"Hunger: {hunger?.State.ToString() ?? "Satiated"}");
+        if (combat != null && combat.OneHitBowEnabled)
+            GUI.Box(new Rect(16f, 96f, 240f, 30f), "One-hit bow cheat ON");
 
         var currentTarget = interaction != null ? interaction.CurrentTarget : null;
-        if (currentTarget != null && currentTarget.isActiveAndEnabled && !IsGamePaused && !stats.IsDead)
-            DrawPrompt(currentTarget.InteractionPrompt);
+        if (currentTarget != null && currentTarget.isActiveAndEnabled)
+        {
+            var prompt = currentTarget.InteractionPrompt;
+            GUI.Box(new Rect(Screen.width * 0.5f - 170f, Screen.height - 72f, 340f, 36f), prompt);
+        }
+
+        GUI.Label(new Rect(Screen.width - 190f, 16f, 170f, 24f), "I: Inventory");
+        GUI.Label(new Rect(Screen.width - 190f, 64f, 170f, 24f), "Esc: Pause");
+        if (run != null)
+        {
+            GUI.Label(new Rect(Screen.width - 190f, 40f, 180f, 24f), run.Floor == 5 ? "Floor 5: Goo" : $"Floor {run.Floor}/5");
+        }
 
         if (IsPauseMenuOpen)
         {
             DrawPauseMenu();
+            GUI.color = oldColor;
             return;
         }
 
         if (stats.IsDead)
         {
-            DrawDeathScreen();
+            GUI.Box(new Rect(Screen.width * 0.5f - 180f, Screen.height * 0.5f - 70f, 360f, 140f), "You Died");
+            GUI.Label(new Rect(Screen.width * 0.5f - 140f, Screen.height * 0.5f - 20f, 280f, 28f), "Press R to restart");
+            GUI.color = oldColor;
             return;
         }
 
@@ -164,79 +184,19 @@ public sealed class PrototypeGameUI : MonoBehaviour
         {
             DrawInventory();
         }
-    }
 
-    private void DrawHud()
-    {
-        var left = new Rect(16f, 16f, 290f, 100f);
-        PrototypeUITheme.DrawPanel(left);
-        var healthFraction = stats.MaxHealth > 0 ? (float)stats.CurrentHealth / stats.MaxHealth : 0f;
-        PrototypeUITheme.DrawIcon(new Rect(left.x + 18f, left.y + 16f, 32f, 32f),
-            healthFraction <= 0.3f ? PrototypeUITheme.BrokenHeart : PrototypeUITheme.Heart);
-        var bar = new Rect(left.x + 58f, left.y + 20f, left.width - 76f, 24f);
-        PrototypeUITheme.DrawBar(bar, healthFraction, new Color(0.78f, 0.12f, 0.1f));
-        PrototypeUITheme.Label(bar, $"{stats.CurrentHealth} / {stats.MaxHealth}", 14, PrototypeUITheme.Parchment, TextAnchor.MiddleCenter, true);
-
-        var hungerState = hunger != null ? hunger.State : PrototypeHungerState.Satiated;
-        var hungerColor = hungerState == PrototypeHungerState.Famished ? PrototypeUITheme.Danger
-            : hungerState == PrototypeHungerState.Hungry ? PrototypeUITheme.Warning : PrototypeUITheme.Parchment;
-        PrototypeUITheme.DrawIcon(new Rect(left.x + 18f, left.y + 54f, 32f, 32f), PrototypeUITheme.Bread);
-        PrototypeUITheme.Label(new Rect(left.x + 58f, left.y + 54f, left.width - 76f, 32f), hungerState.ToString(), 16, hungerColor, TextAnchor.MiddleLeft, true);
-
-        if (combat != null && combat.OneHitBowEnabled)
-        {
-            var cheat = new Rect(16f, left.yMax + 6f, 290f, 48f);
-            PrototypeUITheme.DrawPanel(cheat);
-            PrototypeUITheme.DrawIcon(new Rect(cheat.x + 16f, cheat.y + 10f, 28f, 28f), PrototypeUITheme.Star);
-            PrototypeUITheme.Label(new Rect(cheat.x + 52f, cheat.y, cheat.width - 64f, cheat.height), "One-hit bow cheat ON", 14, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
-        }
-
-        var right = new Rect(PrototypeUITheme.Width - 246f, 16f, 230f, 100f);
-        PrototypeUITheme.DrawPanel(right);
-        if (run != null)
-        {
-            var bossFloor = run.Floor == 5;
-            PrototypeUITheme.DrawIcon(new Rect(right.x + 18f, right.y + 14f, 32f, 32f), bossFloor ? PrototypeUITheme.Skull : PrototypeUITheme.Castle);
-            PrototypeUITheme.Label(new Rect(right.x + 58f, right.y + 14f, right.width - 74f, 32f),
-                bossFloor ? "Floor 5: Goo" : $"Floor {run.Floor} / 5", 16, bossFloor ? PrototypeUITheme.Danger : PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
-        }
-        PrototypeUITheme.DrawIcon(new Rect(right.x + 20f, right.y + 58f, 24f, 24f), PrototypeUITheme.Bag);
-        PrototypeUITheme.Label(new Rect(right.x + 48f, right.y + 56f, 70f, 28f), "I  Bag", 13, PrototypeUITheme.Muted);
-        PrototypeUITheme.DrawIcon(new Rect(right.x + 120f, right.y + 58f, 24f, 24f), PrototypeUITheme.Pause);
-        PrototypeUITheme.Label(new Rect(right.x + 148f, right.y + 56f, 70f, 28f), "Esc  Pause", 13, PrototypeUITheme.Muted);
-    }
-
-    private static void DrawPrompt(string prompt)
-    {
-        var rect = new Rect(PrototypeUITheme.Width * 0.5f - 200f, PrototypeUITheme.Height - 86f, 400f, 54f);
-        PrototypeUITheme.DrawPanel(rect);
-        PrototypeUITheme.Label(rect, prompt, 16, PrototypeUITheme.Parchment, TextAnchor.MiddleCenter, true);
-    }
-
-    private static void DrawDeathScreen()
-    {
-        PrototypeUITheme.Fill(new Rect(0f, 0f, PrototypeUITheme.Width, PrototypeUITheme.Height), new Color(0.15f, 0f, 0f, 0.55f));
-        const float width = 380f;
-        const float height = 230f;
-        var rect = new Rect((PrototypeUITheme.Width - width) * 0.5f, (PrototypeUITheme.Height - height) * 0.5f, width, height);
-        PrototypeUITheme.DrawPanel(rect);
-        PrototypeUITheme.DrawIcon(new Rect(rect.center.x - 32f, rect.y + 24f, 64f, 64f), PrototypeUITheme.Skull);
-        PrototypeUITheme.Label(new Rect(rect.x, rect.y + 96f, width, 48f), "You Died", 32, PrototypeUITheme.Danger, TextAnchor.MiddleCenter, true);
-        PrototypeUITheme.Label(new Rect(rect.x, rect.y + 150f, width, 40f), "Press R to restart", 17, PrototypeUITheme.Parchment, TextAnchor.MiddleCenter);
+        GUI.color = oldColor;
     }
 
     private void DrawPauseMenu()
     {
-        PrototypeUITheme.Fill(new Rect(0f, 0f, PrototypeUITheme.Width, PrototypeUITheme.Height), new Color(0f, 0f, 0f, 0.55f));
-        const float width = 340f;
-        const float height = 270f;
-        var x = (PrototypeUITheme.Width - width) * 0.5f;
-        var y = (PrototypeUITheme.Height - height) * 0.5f;
-        PrototypeUITheme.DrawPanel(new Rect(x, y, width, height));
-        PrototypeUITheme.DrawIcon(new Rect(x + width * 0.5f - 24f, y + 22f, 48f, 48f), PrototypeUITheme.Pause);
-        PrototypeUITheme.Label(new Rect(x, y + 74f, width, 36f), "Paused", 26, PrototypeUITheme.Gold, TextAnchor.MiddleCenter, true);
-        if (PrototypeUITheme.Button(new Rect(x + 40f, y + 124f, width - 80f, 48f), "Continue")) ResumeGame();
-        if (PrototypeUITheme.Button(new Rect(x + 40f, y + 186f, width - 80f, 48f), "Quit to Main Menu"))
+        const float width = 300f;
+        const float height = 190f;
+        var x = (Screen.width - width) * 0.5f;
+        var y = (Screen.height - height) * 0.5f;
+        GUI.Box(new Rect(x, y, width, height), "Paused");
+        if (GUI.Button(new Rect(x + 35f, y + 48f, width - 70f, 45f), "Continue")) ResumeGame();
+        if (GUI.Button(new Rect(x + 35f, y + 108f, width - 70f, 45f), "Quit to Main Menu"))
         {
             ResumeGame();
             SceneManager.LoadScene("MainMenu");
@@ -257,56 +217,44 @@ public sealed class PrototypeGameUI : MonoBehaviour
 
     private void DrawInventory()
     {
-        const float cell = 96f;
-        const float panelWidth = cell * 4f + 48f;
-        const float panelHeight = cell * 5f + 150f;
-        var panelX = PrototypeUITheme.Width * 0.5f - panelWidth * 0.5f;
-        var panelY = PrototypeUITheme.Height * 0.5f - panelHeight * 0.5f;
+        const float cellWidth = 112f;
+        const float cellHeight = 64f;
+        const float panelWidth = cellWidth * 4f + 32f;
+        const float panelHeight = cellHeight * 5f + 90f;
+        var panelX = Screen.width * 0.5f - panelWidth * 0.5f;
+        var panelY = Screen.height * 0.5f - panelHeight * 0.5f;
 
-        PrototypeUITheme.Fill(new Rect(0f, 0f, PrototypeUITheme.Width, PrototypeUITheme.Height), new Color(0f, 0f, 0f, 0.45f));
-        PrototypeUITheme.DrawPanel(new Rect(panelX, panelY, panelWidth, panelHeight));
-        PrototypeUITheme.DrawIcon(new Rect(panelX + 24f, panelY + 20f, 36f, 36f), PrototypeUITheme.Bag);
-        PrototypeUITheme.Label(new Rect(panelX + 68f, panelY + 20f, 220f, 36f), "Inventory", 24, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
-        PrototypeUITheme.Label(new Rect(panelX + 24f, panelY + 58f, panelWidth - 48f, 22f),
-            targetingScroll >= 0 ? "Select a target  -  Esc cancels" : "Top row: equipped", 13,
-            targetingScroll >= 0 ? PrototypeUITheme.Gold : PrototypeUITheme.Muted);
+        GUI.Box(new Rect(panelX, panelY, panelWidth, panelHeight), "Inventory");
+        GUI.Label(new Rect(panelX + 16f, panelY + 28f, panelWidth - 32f, 24f),
+            targetingScroll >= 0 ? "Select a target; Esc cancels" : "Top row: equipped");
+        if (inventorySlotStyle == null) inventorySlotStyle = new GUIStyle(GUI.skin.button) { wordWrap = true };
 
+        var wasEnabled = GUI.enabled;
+        GUI.enabled = wasEnabled && !itemActionsOpen;
         for (var slotIndex = 0; slotIndex < PrototypeInventory.SlotCount; slotIndex++)
         {
             var column = slotIndex % 4;
             var row = slotIndex / 4;
-            var rect = new Rect(panelX + 24f + column * cell, panelY + 86f + row * cell, cell - 8f, cell - 8f);
+            var x = panelX + 16f + column * cellWidth;
+            var y = panelY + 54f + row * cellHeight;
             var item = inventory?.GetSlot(slotIndex);
-            PrototypeUITheme.DrawSlot(rect, row == 0, slotIndex == inventoryCursor);
-            var iconRect = new Rect(rect.center.x - 22f, rect.y + 10f, 44f, 44f);
+            var label = item == null
+                ? (row == 0 ? EquipmentLabels[column] : $"Slot {slotIndex + 1}")
+                : scrolls != null ? scrolls.DisplayName(item) : item.ItemId.Replace('_', ' ');
 
-            if (item == null)
-            {
-                if (row == 0)
-                {
-                    PrototypeUITheme.DrawIcon(iconRect, PrototypeUITheme.EquipmentPlaceholder(column), 0.25f);
-                    PrototypeUITheme.Label(new Rect(rect.x + 6f, rect.yMax - 32f, rect.width - 12f, 26f), EquipmentLabels[column], 11, PrototypeUITheme.Muted, TextAnchor.MiddleCenter);
-                }
-                continue;
-            }
-
-            var icon = PrototypeUITheme.ItemIcon(item.ItemId);
-            if (icon != null) PrototypeUITheme.DrawIcon(iconRect, icon);
-            else PrototypeUITheme.DrawIcon(iconRect, PrototypeUITheme.Exclamation, 0.6f);
-            var name = scrolls != null ? scrolls.DisplayName(item) : item.ItemId.Replace('_', ' ');
-            var nameColor = item.IsIdentified && item.IsCursed ? PrototypeUITheme.Danger : PrototypeUITheme.Parchment;
-            PrototypeUITheme.Label(new Rect(rect.x + 6f, rect.yMax - 34f, rect.width - 12f, 30f), name, 11, nameColor, TextAnchor.MiddleCenter, false, true);
-
-            if (!itemActionsOpen && GUI.Button(rect, GUIContent.none, GUIStyle.none))
+            var previousBackground = GUI.backgroundColor;
+            if (slotIndex == inventoryCursor) GUI.backgroundColor = new Color(1f, 0.8f, 0.3f);
+            if (GUI.Button(new Rect(x, y, cellWidth - 8f, cellHeight - 8f), label, inventorySlotStyle) && item != null && !itemActionsOpen)
             {
                 if (targetingScroll >= 0) SelectScrollTarget(slotIndex);
                 else OpenItemActions(slotIndex);
             }
+            GUI.backgroundColor = previousBackground;
         }
+        GUI.enabled = wasEnabled;
 
-        PrototypeUITheme.Label(new Rect(panelX + 24f, panelY + panelHeight - 52f, panelWidth - 48f, 30f),
-            inventoryMessage ?? "WASD / arrows: move    J: select    Esc: back", 13,
-            inventoryMessage != null ? PrototypeUITheme.Parchment : PrototypeUITheme.Muted, TextAnchor.MiddleCenter, false, true);
+        GUI.Label(new Rect(panelX + 16f, panelY + panelHeight - 30f, panelWidth - 32f, 24f),
+            inventoryMessage ?? "WASD / arrows: move   J: select   Esc: back");
         if (itemActionsOpen) DrawItemActions();
     }
 
@@ -324,44 +272,39 @@ public sealed class PrototypeGameUI : MonoBehaviour
         var item = inventory.GetSlot(inventoryCursor);
         if (item == null) { itemActionsOpen = false; return; }
         var count = ActionCount(item, inventoryCursor);
-        const float width = 360f;
-        var height = 190f + Mathf.Max(1, count) * 50f;
-        var x = (PrototypeUITheme.Width - width) * 0.5f;
-        var y = (PrototypeUITheme.Height - height) * 0.5f;
-
-        PrototypeUITheme.Fill(new Rect(0f, 0f, PrototypeUITheme.Width, PrototypeUITheme.Height), new Color(0f, 0f, 0f, 0.35f));
-        PrototypeUITheme.DrawPanel(new Rect(x, y, width, height));
-        PrototypeUITheme.DrawIcon(new Rect(x + 24f, y + 22f, 44f, 44f), PrototypeUITheme.ItemIcon(item.ItemId));
-        PrototypeUITheme.Label(new Rect(x + 78f, y + 22f, width - 102f, 44f),
-            scrolls != null ? scrolls.DisplayName(item) : item.ItemId.Replace('_', ' '), 18, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true, true);
-
-        string info = null;
+        const float width = 290f;
+        const float height = 185f;
+        var x = (Screen.width - width) * 0.5f;
+        var y = (Screen.height - height) * 0.5f;
+        var oldColor = GUI.color;
+        GUI.color = new Color(0.12f, 0.12f, 0.14f, 1f);
+        GUI.DrawTexture(new Rect(x, y, width, height), Texture2D.whiteTexture);
+        GUI.color = oldColor;
+        GUI.Box(new Rect(x, y, width, height), scrolls != null ? scrolls.DisplayName(item) : item.ItemId.Replace('_', ' '));
         if (count == 0)
-            info = item.ItemId == "ranger_bow" ? "Always available with J in gameplay." : "No actions available.";
-        else if (scrolls != null && PrototypeScrolls.IsScroll(item.ItemId))
-            info = scrolls.Description(item.ItemId);
-        else if (PrototypeMeleeWeapons.TryGet(item.ItemId, out var weapon))
-            info = $"Damage {weapon.Damage + item.UpgradeLevel}    Reach {weapon.Range:0} tile{(weapon.Range > 1f ? "s" : "")}    Delay {weapon.Cooldown:0.00}s";
-        else if (PrototypeArmors.TryGet(item.ItemId, out _))
-            info = $"Absorbs 0-{PrototypeArmors.MaxAbsorb(item)} damage per enemy hit";
-        else if (item.ItemId == "health_potion")
-            info = "Restores 8 health.";
-        else if (item.ItemId == "food")
-            info = "Restores hunger.";
-        PrototypeUITheme.Label(new Rect(x + 24f, y + 76f, width - 48f, 56f), info, 13, PrototypeUITheme.Parchment, TextAnchor.UpperLeft, false, true);
-
+            GUI.Label(new Rect(x + 20f, y + 40f, width - 40f, 25f), item.ItemId == "ranger_bow" ? "Always available with J in gameplay." : "No actions available.");
+        if (scrolls != null && PrototypeScrolls.IsScroll(item.ItemId))
+        {
+            if (descriptionStyle == null) descriptionStyle = new GUIStyle(GUI.skin.label) { wordWrap = true };
+            GUI.Label(new Rect(x + 20f, y + 80f, width - 40f, 62f), scrolls.Description(item.ItemId), descriptionStyle);
+        }
+        if (PrototypeMeleeWeapons.TryGet(item.ItemId, out var weapon))
+            GUI.Label(new Rect(x + 20f, y + 112f, width - 40f, 20f), $"Damage {weapon.Damage + item.UpgradeLevel}   Reach {weapon.Range:0} tile{(weapon.Range > 1f ? "s" : "")}   Delay {weapon.Cooldown:0.00}s");
+        if (PrototypeArmors.TryGet(item.ItemId, out _))
+            GUI.Label(new Rect(x + 20f, y + 112f, width - 40f, 20f), $"Absorbs 0-{PrototypeArmors.MaxAbsorb(item)} damage per enemy hit");
         for (var i = 0; i < count; i++)
         {
             var label = inventoryCursor < 4 ? "Unequip" : item.ItemId == "health_potion" ? "Consume" : item.ItemId == "food" ? "Eat" : PrototypeScrolls.IsScroll(item.ItemId) ? "Read" : count == 2 ? $"Equip: Artifact/Ring {i + 1}" : "Equip";
-            if (PrototypeUITheme.Button(new Rect(x + 32f, y + 138f + i * 50f, width - 64f, 42f), label, i == actionCursor))
+            var oldBackground = GUI.backgroundColor;
+            if (i == actionCursor) GUI.backgroundColor = new Color(1f, 0.8f, 0.3f);
+            if (GUI.Button(new Rect(x + 25f, y + 38f + i * 39f, width - 50f, 34f), label))
             {
                 actionCursor = i;
                 ExecuteItemAction();
             }
+            GUI.backgroundColor = oldBackground;
         }
-        PrototypeUITheme.Label(new Rect(x + 24f, y + height - 46f, width - 48f, 28f),
-            inventoryMessage ?? "J: confirm    Esc: back", 13,
-            inventoryMessage != null ? PrototypeUITheme.Warning : PrototypeUITheme.Muted, TextAnchor.MiddleCenter, false, true);
+        GUI.Label(new Rect(x + 20f, y + 150f, width - 40f, 20f), inventoryMessage ?? "J: confirm    Esc: deselect");
     }
 
     private void ExecuteItemAction()
