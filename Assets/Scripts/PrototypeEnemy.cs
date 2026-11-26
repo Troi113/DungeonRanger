@@ -36,16 +36,24 @@ public sealed class PrototypeEnemy : MonoBehaviour
     private float slowRemaining;
     private bool isBoss;
     private PrototypeGooCharge charge;
+    private int maxHealth;
+    private bool hasTakenDamage;
     public event Action Defeated;
 
     public bool IsAlive => health > 0 && this != null;
     public bool IsAwake { get; private set; }
     public bool IsSlowed => slowRemaining > 0f;
+    public int CurrentHealth => health;
+    public int MaxHealth => maxHealth;
+    public bool HasTakenDamage => hasTakenDamage;
 
     private void Awake()
     {
         enemyRenderer = GetComponent<Renderer>();
+        health = Mathf.Max(1, health);
+        maxHealth = health;
         ApplySleepVisual();
+        gameObject.AddComponent<PrototypeEnemyHealthBar>();
     }
 
     public void Initialize(
@@ -133,7 +141,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
     public void TakeDamage(int damage, bool slowOnHit = false)
     {
-        if (!IsAlive)
+        if (!IsAlive || damage <= 0)
         {
             return;
         }
@@ -146,7 +154,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
             lastSeenPlayer = PrototypeLevelGenerator.WorldToGrid(player.transform.position);
             RebuildPath(PrototypeLevelGenerator.WorldToGrid(transform.position), lastSeenPlayer);
         }
-        health -= damage;
+        health = (int)Math.Max(0L, (long)health - damage);
+        hasTakenDamage = true;
         if (health <= 0)
         {
             Defeated?.Invoke();
@@ -157,7 +166,9 @@ public sealed class PrototypeEnemy : MonoBehaviour
     public void ConfigureBoss(int bossHealth)
     {
         isBoss = true;
-        health = bossHealth;
+        health = Mathf.Max(1, bossHealth);
+        maxHealth = health;
+        hasTakenDamage = false;
         awakeColor = new Color(0.2f, 0.75f, 0.35f);
         patrolSpeed = 2.5f;
         chaseSpeed = 3f;
@@ -193,6 +204,16 @@ public sealed class PrototypeEnemy : MonoBehaviour
         {
             enemyRenderer.material.color = awakeColor;
         }
+    }
+
+    public void AlertTo(PrototypePlayerMovement target)
+    {
+        if (!IsAlive || target == null) return;
+        player = target;
+        WakeUp();
+        noticedPlayer = true;
+        lastSeenPlayer = PrototypeLevelGenerator.WorldToGrid(target.transform.position);
+        RebuildPath(PrototypeLevelGenerator.WorldToGrid(transform.position), lastSeenPlayer);
     }
 
     private void AttackPlayer()

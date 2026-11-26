@@ -67,7 +67,8 @@ public sealed class PrototypeCombat : MonoBehaviour
             PerformMeleeAttack(new PrototypeMeleeWeapons.WeaponData("punch", "Punch", punchDamage, punchReach, punchCooldown, Color.white));
         else if (weapon.EquipmentSlot == PrototypeEquipmentSlot.Weapon && PrototypeMeleeWeapons.TryGet(weapon.ItemId, out var meleeWeapon))
         {
-            PerformMeleeAttack(meleeWeapon);
+            PerformMeleeAttack(new PrototypeMeleeWeapons.WeaponData(meleeWeapon.Id, meleeWeapon.Name,
+                meleeWeapon.Damage + weapon.UpgradeLevel, meleeWeapon.Range, meleeWeapon.Cooldown, meleeWeapon.Color));
         }
     }
 

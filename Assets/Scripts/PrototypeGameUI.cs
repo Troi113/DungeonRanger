@@ -22,11 +22,15 @@ public sealed class PrototypeGameUI : MonoBehaviour
     private PrototypeHunger hunger;
     private PrototypePlayerInteraction interaction;
     private PrototypeCombat combat;
+    private PrototypeScrolls scrolls;
     private PrototypeDungeonRun run;
     private int inventoryCursor;
     private int actionCursor;
     private bool itemActionsOpen;
     private string inventoryMessage;
+    private int targetingScroll = -1;
+    private GUIStyle inventorySlotStyle;
+    private GUIStyle descriptionStyle;
     public static bool IsInventoryOpen { get; private set; }
     public static bool IsPauseMenuOpen { get; private set; }
     public static bool IsGamePaused => IsInventoryOpen || IsPauseMenuOpen;
@@ -38,6 +42,8 @@ public sealed class PrototypeGameUI : MonoBehaviour
         hunger = player.GetComponent<PrototypeHunger>();
         interaction = player.GetComponent<PrototypePlayerInteraction>();
         combat = player.GetComponent<PrototypeCombat>();
+        scrolls = player.GetComponent<PrototypeScrolls>();
+        targetingScroll = -1;
         run = GetComponent<PrototypeDungeonRun>();
     }
 
@@ -47,7 +53,13 @@ public sealed class PrototypeGameUI : MonoBehaviour
 
         if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            if (IsInventoryOpen && itemActionsOpen)
+            if (IsInventoryOpen && targetingScroll >= 0)
+            {
+                inventoryCursor = targetingScroll;
+                targetingScroll = -1;
+                inventoryMessage = "Scroll use canceled.";
+            }
+            else if (IsInventoryOpen && itemActionsOpen)
             {
                 itemActionsOpen = false;
                 inventoryMessage = null;
@@ -66,6 +78,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         {
             IsInventoryOpen = !IsInventoryOpen;
             itemActionsOpen = false;
+            targetingScroll = -1;
             inventoryMessage = null;
             ApplyPause();
         }
@@ -108,7 +121,11 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (right && inventoryCursor % 4 < 3) inventoryCursor++;
         if (up && inventoryCursor >= 4) inventoryCursor -= 4;
         if (down && inventoryCursor < PrototypeInventory.SlotCount - 4) inventoryCursor += 4;
-        if (keyboard.jKey.wasPressedThisFrame && inventory.GetSlot(inventoryCursor) != null) OpenItemActions(inventoryCursor);
+        if (keyboard.jKey.wasPressedThisFrame && inventory.GetSlot(inventoryCursor) != null)
+        {
+            if (targetingScroll >= 0) SelectScrollTarget(inventoryCursor);
+            else OpenItemActions(inventoryCursor);
+        }
     }
 
     private void OpenItemActions(int index)
@@ -134,9 +151,10 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (combat != null && combat.OneHitBowEnabled)
             GUI.Box(new Rect(16f, 96f, 240f, 30f), "One-hit bow cheat ON");
 
-        if (interaction?.CurrentTarget != null)
+        var currentTarget = interaction != null ? interaction.CurrentTarget : null;
+        if (currentTarget != null && currentTarget.isActiveAndEnabled)
         {
-            var prompt = interaction.CurrentTarget.InteractionPrompt;
+            var prompt = currentTarget.InteractionPrompt;
             GUI.Box(new Rect(Screen.width * 0.5f - 170f, Screen.height - 72f, 340f, 36f), prompt);
         }
 
@@ -207,7 +225,9 @@ public sealed class PrototypeGameUI : MonoBehaviour
         var panelY = Screen.height * 0.5f - panelHeight * 0.5f;
 
         GUI.Box(new Rect(panelX, panelY, panelWidth, panelHeight), "Inventory");
-        GUI.Label(new Rect(panelX + 16f, panelY + 28f, panelWidth - 32f, 24f), "Top row: equipped");
+        GUI.Label(new Rect(panelX + 16f, panelY + 28f, panelWidth - 32f, 24f),
+            targetingScroll >= 0 ? "Select a target; Esc cancels" : "Top row: equipped");
+        if (inventorySlotStyle == null) inventorySlotStyle = new GUIStyle(GUI.skin.button) { wordWrap = true };
 
         var wasEnabled = GUI.enabled;
         GUI.enabled = wasEnabled && !itemActionsOpen;
@@ -220,20 +240,21 @@ public sealed class PrototypeGameUI : MonoBehaviour
             var item = inventory?.GetSlot(slotIndex);
             var label = item == null
                 ? (row == 0 ? EquipmentLabels[column] : $"Slot {slotIndex + 1}")
-                : item.ItemId.Replace('_', ' ');
+                : scrolls != null ? scrolls.DisplayName(item) : item.ItemId.Replace('_', ' ');
 
             var previousBackground = GUI.backgroundColor;
             if (slotIndex == inventoryCursor) GUI.backgroundColor = new Color(1f, 0.8f, 0.3f);
-            if (GUI.Button(new Rect(x, y, cellWidth - 8f, cellHeight - 8f), label) && item != null && !itemActionsOpen)
+            if (GUI.Button(new Rect(x, y, cellWidth - 8f, cellHeight - 8f), label, inventorySlotStyle) && item != null && !itemActionsOpen)
             {
-                OpenItemActions(slotIndex);
+                if (targetingScroll >= 0) SelectScrollTarget(slotIndex);
+                else OpenItemActions(slotIndex);
             }
             GUI.backgroundColor = previousBackground;
         }
         GUI.enabled = wasEnabled;
 
         GUI.Label(new Rect(panelX + 16f, panelY + panelHeight - 30f, panelWidth - 32f, 24f),
-            "WASD / arrows: move   J: select   Esc: back");
+            inventoryMessage ?? "WASD / arrows: move   J: select   Esc: back");
         if (itemActionsOpen) DrawItemActions();
     }
 
@@ -241,7 +262,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
     {
         if (item == null) return 0;
         if (index < 4) return 1;
-        if (item.ItemId == "health_potion" || item.ItemId == "food") return 1;
+        if (item.ItemId == "health_potion" || item.ItemId == "food" || PrototypeScrolls.IsScroll(item.ItemId)) return 1;
         if (item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingA || item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingB) return 2;
         return item.EquipmentSlot == PrototypeEquipmentSlot.None ? 0 : 1;
     }
@@ -259,14 +280,19 @@ public sealed class PrototypeGameUI : MonoBehaviour
         GUI.color = new Color(0.12f, 0.12f, 0.14f, 1f);
         GUI.DrawTexture(new Rect(x, y, width, height), Texture2D.whiteTexture);
         GUI.color = oldColor;
-        GUI.Box(new Rect(x, y, width, height), item.ItemId.Replace('_', ' '));
+        GUI.Box(new Rect(x, y, width, height), scrolls != null ? scrolls.DisplayName(item) : item.ItemId.Replace('_', ' '));
         if (count == 0)
             GUI.Label(new Rect(x + 20f, y + 40f, width - 40f, 25f), item.ItemId == "ranger_bow" ? "Always available with J in gameplay." : "No actions available.");
+        if (scrolls != null && PrototypeScrolls.IsScroll(item.ItemId))
+        {
+            if (descriptionStyle == null) descriptionStyle = new GUIStyle(GUI.skin.label) { wordWrap = true };
+            GUI.Label(new Rect(x + 20f, y + 80f, width - 40f, 62f), scrolls.Description(item.ItemId), descriptionStyle);
+        }
         if (PrototypeMeleeWeapons.TryGet(item.ItemId, out var weapon))
-            GUI.Label(new Rect(x + 20f, y + 112f, width - 40f, 20f), $"Damage {weapon.Damage}   Reach {weapon.Range:0.0}   Delay {weapon.Cooldown:0.00}s");
+            GUI.Label(new Rect(x + 20f, y + 112f, width - 40f, 20f), $"Damage {weapon.Damage + item.UpgradeLevel}   Reach {weapon.Range:0.0}   Delay {weapon.Cooldown:0.00}s");
         for (var i = 0; i < count; i++)
         {
-            var label = inventoryCursor < 4 ? "Unequip" : item.ItemId == "health_potion" ? "Consume" : item.ItemId == "food" ? "Eat" : count == 2 ? $"Equip: Artifact/Ring {i + 1}" : "Equip";
+            var label = inventoryCursor < 4 ? "Unequip" : item.ItemId == "health_potion" ? "Consume" : item.ItemId == "food" ? "Eat" : PrototypeScrolls.IsScroll(item.ItemId) ? "Read" : count == 2 ? $"Equip: Artifact/Ring {i + 1}" : "Equip";
             var oldBackground = GUI.backgroundColor;
             if (i == actionCursor) GUI.backgroundColor = new Color(1f, 0.8f, 0.3f);
             if (GUI.Button(new Rect(x + 25f, y + 38f + i * 39f, width - 50f, 34f), label))
@@ -285,7 +311,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (item == null) { itemActionsOpen = false; return; }
         if (inventoryCursor < 4)
         {
-            if (!inventory.TryUnequip(inventoryCursor)) { inventoryMessage = "Inventory is full."; return; }
+            if (!inventory.TryUnequip(inventoryCursor)) { inventoryMessage = item.IsCursed ? "Cursed equipment cannot be removed." : "Inventory is full."; return; }
         }
         else if (item.ItemId == "health_potion")
         {
@@ -298,15 +324,30 @@ public sealed class PrototypeGameUI : MonoBehaviour
             inventory.RemoveAt(inventoryCursor);
             hunger.Eat(60f);
         }
+        else if (PrototypeScrolls.IsScroll(item.ItemId))
+        {
+            if (scrolls == null || !scrolls.Read(inventoryCursor, out var selectTarget, out inventoryMessage)) return;
+            itemActionsOpen = false;
+            if (selectTarget) targetingScroll = inventoryCursor;
+            return;
+        }
         else
         {
             var slot = item.EquipmentSlot;
             if (slot == PrototypeEquipmentSlot.ArtifactOrRingA || slot == PrototypeEquipmentSlot.ArtifactOrRingB)
                 slot = actionCursor == 0 ? PrototypeEquipmentSlot.ArtifactOrRingA : PrototypeEquipmentSlot.ArtifactOrRingB;
-            if (!inventory.TryEquip(inventoryCursor, slot)) { inventoryMessage = "Cannot equip this item."; return; }
+            if (!inventory.TryEquip(inventoryCursor, slot)) { inventoryMessage = "Cannot equip: slot may be cursed."; return; }
         }
         itemActionsOpen = false;
         inventoryMessage = null;
+    }
+
+    private void SelectScrollTarget(int index)
+    {
+        if (scrolls == null || targetingScroll < 0) return;
+        inventoryCursor = index;
+        if (!scrolls.ReadOnTarget(targetingScroll, index, out inventoryMessage)) return;
+        targetingScroll = -1;
     }
 
     private void OnDestroy()

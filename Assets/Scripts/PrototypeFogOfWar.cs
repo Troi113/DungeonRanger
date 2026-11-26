@@ -33,6 +33,7 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
 
     private PrototypePlayerMovement player;
     private HashSet<Vector2Int> walkableCells;
+    private List<Vector2Int> teleportCells;
     private HashSet<long> blockedEdges;
     private readonly HashSet<Vector2Int> visibleCells = new();
     private readonly HashSet<Vector2Int> visitedCells = new();
@@ -53,6 +54,7 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
     {
         player = targetPlayer;
         walkableCells = new HashSet<Vector2Int>(generatedWalkableCells);
+        teleportCells = new List<Vector2Int>(generatedWalkableCells);
         blockedEdges = blockedRoomEdges != null ? new HashSet<long>(blockedRoomEdges) : new HashSet<long>();
         enemies.AddRange(FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude));
 
@@ -176,6 +178,47 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
         }
 
         RefreshVisibility();
+    }
+
+    public void RevealEntireMap()
+    {
+        if (walkableCells == null) return;
+        RevealMappedCells(walkableCells);
+        foreach (var trap in GetComponentsInChildren<PrototypeTrap>(true)) trap.Reveal();
+    }
+
+    public bool TryTeleportPlayer(System.Random random)
+    {
+        if (player == null || teleportCells == null || teleportCells.Count == 0) return false;
+        var startingIndex = random.Next(teleportCells.Count);
+        var currentCell = PrototypeLevelGenerator.WorldToGrid(player.transform.position);
+        for (var i = 0; i < teleportCells.Count; i++)
+        {
+            var cell = teleportCells[(startingIndex + i) % teleportCells.Count];
+            if (cell == currentCell) continue;
+            var position = PrototypeLevelGenerator.GridToWorld(cell, 1f);
+            var safe = true;
+            foreach (var collider in Physics.OverlapSphere(position, 0.7f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide))
+            {
+                if (collider.GetComponentInParent<PrototypeEnemy>() != null ||
+                    collider.GetComponentInParent<PrototypeTrap>() != null ||
+                    collider.GetComponentInParent<PrototypeDoor>() != null ||
+                    collider.name.StartsWith("Wall_"))
+                {
+                    safe = false;
+                    break;
+                }
+            }
+            if (!safe) continue;
+            var controller = player.GetComponent<CharacterController>();
+            controller.enabled = false;
+            player.transform.position = position;
+            controller.enabled = true;
+            Physics.SyncTransforms();
+            RefreshNow();
+            return true;
+        }
+        return false;
     }
 
     private bool HasLineOfSight(Vector2Int start, Vector2Int target)

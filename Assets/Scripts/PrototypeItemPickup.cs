@@ -8,6 +8,8 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
     private string itemId;
     private string displayName;
     private PrototypeEquipmentSlot equipmentSlot;
+    private bool cursed;
+    private bool identified = true;
 
     public string ItemId => itemId;
     public string DisplayName => displayName;
@@ -24,12 +26,20 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
     public override void Interact(PrototypePlayerMovement player)
     {
         var inventory = player != null ? player.GetComponent<PrototypeInventory>() : null;
-        if (inventory == null || !inventory.TryAdd(new PrototypeInventoryItem(itemId, equipmentSlot)))
+        var item = new PrototypeInventoryItem(itemId, equipmentSlot) { IsCursed = cursed, IsIdentified = identified };
+        if (!gameObject.activeInHierarchy || inventory == null || !inventory.TryAdd(item))
         {
             return;
         }
 
+        gameObject.SetActive(false);
         Destroy(gameObject);
+    }
+
+    public void SetEquipmentTraits(bool isCursed, bool isIdentified)
+    {
+        cursed = isCursed;
+        identified = isIdentified;
     }
 
     public static PrototypeItemPickup CreateRuntime(
@@ -50,6 +60,11 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
         visual.transform.SetParent(itemObject.transform, false);
         visual.transform.localPosition = new Vector3(0f, 0.55f, 0f);
         visual.transform.localScale = new Vector3(0.7f, 1.1f, 0.7f);
+        if (PrototypeScrolls.IsScroll(id))
+        {
+            visual.transform.localPosition = new Vector3(0f, 0.32f, 0f);
+            visual.transform.localScale = new Vector3(0.8f, 0.4f, 1.1f);
+        }
         visual.GetComponent<Renderer>().sharedMaterial = CreateMaterial($"{label} Material", color);
         var visualCollider = visual.GetComponent<Collider>();
         if (visualCollider != null)

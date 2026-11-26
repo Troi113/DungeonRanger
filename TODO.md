@@ -34,7 +34,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Test that projectiles disappear on walls and closed doors and pass through open doors.
 - [ ] Test room-boundary collision from every direction.
 - [ ] Add simple hit feedback to enemies.
-- [ ] Add a simple enemy health indicator or temporary damage flash.
+- [x] Add an enemy health bar that appears after damage and respects fog of war.
+- [ ] Add temporary damage flashes or other hit feedback.
 - [x] Add two sleeping enemies that wake when hit.
 - [x] Add a simple player health value with a 20-health prototype default.
 - [x] Add player death and restart behavior.
@@ -220,6 +221,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Add Space-bar item pickup interaction.
 - [x] Add a key pickup and locked chest interaction.
 - [x] Add generated prototype items to LevelTest.
+- [x] Add stackable Challenge, Upgrade, Remove Curse, Teleportation, Identify, and Magic Mapping scrolls.
+- [x] Add per-run unidentified rune labels, item selection, curse removal, and melee weapon upgrades.
+- [ ] Add a real-time scroll-reading animation or delay if desired; scroll effects currently apply from the paused inventory.
+- [ ] Extend upgrade and identification effects to armor, rings, and wands when those systems exist.
 - [x] Make health potions usable from the inventory.
 - [ ] Make equipment slots affect combat or player stats.
 - [ ] Add item stack counts and duplicate-item behavior.

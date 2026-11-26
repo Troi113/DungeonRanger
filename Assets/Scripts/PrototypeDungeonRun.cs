@@ -22,6 +22,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     {
         player = ranger;
         runSeed = Random.Range(1, 1000000);
+        player.GetComponent<PrototypeScrolls>().Initialize(runSeed);
         Floor = 1;
         EnterFloor(false);
     }
@@ -50,6 +51,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var follow = Camera.main != null ? Camera.main.GetComponent<PrototypeCameraFollow>() : null;
         if (follow != null) follow.Target = player.transform;
         runSeed = Random.Range(1, 1000000);
+        player.GetComponent<PrototypeScrolls>().Initialize(runSeed);
         Floor = 1;
         Victory = false;
         foreach (var state in floors.Values)

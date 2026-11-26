@@ -114,7 +114,7 @@ public sealed class PrototypeLevelGenerator
         BuildFloor(floorRoot, occupied, floorMaterial);
         BuildWalls(wallRoot, occupied, connectedDoors, wallMaterial, blockedEdges);
         BuildDoors(doorRoot, connectedDoors, doorMaterial, seed);
-        BuildTraps(root, occupied, seed);
+        BuildTraps(root, occupied, seed, rooms);
         BuildItemsAndChests(root, rooms, seed);
 
         var entranceCell = rooms[0].Center;
@@ -606,17 +606,39 @@ public sealed class PrototypeLevelGenerator
             maximum.z + TileSize * 0.5f);
     }
 
-    private static void BuildTraps(Transform root, bool[,] occupied, int seed)
+    private static void BuildTraps(Transform root, bool[,] occupied, int seed, List<Room> rooms)
     {
         var trapRoot = CreateChild(root, "Level_Traps");
         var trapCells = new List<Vector2Int>();
         var candidates = new List<Vector2Int>();
+        var reserved = new HashSet<Vector2Int>();
+        foreach (var room in rooms) reserved.Add(room.Center);
+        reserved.Add(OffsetRoomCell(rooms[0], 1, 0));
+        reserved.Add(OffsetRoomCell(rooms[0], -1, 0));
+        if (rooms.Count >= 2) reserved.Add(OffsetRoomCell(rooms[1], -1, -1));
+        if (rooms.Count >= 3)
+        {
+            reserved.Add(OffsetRoomCell(rooms[2], -1, 0));
+            reserved.Add(OffsetRoomCell(rooms[2], 1, 1));
+            reserved.Add(OffsetRoomCell(rooms[2], -2, 2));
+        }
+        if (rooms.Count >= 4)
+        {
+            reserved.Add(OffsetRoomCell(rooms[3], -1, 1));
+            reserved.Add(OffsetRoomCell(rooms[3], 1, -1));
+        }
+        if (rooms.Count >= 5)
+        {
+            reserved.Add(OffsetRoomCell(rooms[4], 1, -1));
+            reserved.Add(OffsetRoomCell(rooms[4], -2, -2));
+        }
 
         for (var x = 1; x < Width - 1; x++)
         {
             for (var y = 1; y < Height - 1; y++)
             {
-                if (occupied[x, y]) candidates.Add(new Vector2Int(x, y));
+                var cell = new Vector2Int(x, y);
+                if (occupied[x, y] && !reserved.Contains(cell)) candidates.Add(cell);
             }
         }
 
@@ -676,6 +698,13 @@ public sealed class PrototypeLevelGenerator
         SpawnWeapon(itemRoot, OffsetRoomCell(rooms[0], 1, 0), random, availableWeapons);
         if (rooms.Count >= 3) SpawnWeapon(itemRoot, OffsetRoomCell(rooms[2], -1, 0), random, availableWeapons);
         if (rooms.Count >= 5) SpawnWeapon(itemRoot, OffsetRoomCell(rooms[4], 1, -1), random, availableWeapons);
+
+        var scrollRandom = new System.Random(seed + 733);
+        var availableScrolls = new List<int>();
+        for (var i = 0; i < PrototypeScrolls.Count; i++) availableScrolls.Add(i);
+        SpawnScroll(itemRoot, OffsetRoomCell(rooms[0], -1, 0), scrollRandom, availableScrolls);
+        if (rooms.Count >= 3) SpawnScroll(itemRoot, OffsetRoomCell(rooms[2], -2, 2), scrollRandom, availableScrolls);
+        if (rooms.Count >= 5) SpawnScroll(itemRoot, OffsetRoomCell(rooms[4], -2, -2), scrollRandom, availableScrolls);
 
         if (rooms.Count < 2) return;
 
@@ -745,8 +774,18 @@ public sealed class PrototypeLevelGenerator
         var choice = random.Next(available.Count);
         var weapon = PrototypeMeleeWeapons.Get(available[choice]);
         available.RemoveAt(choice);
-        PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{weapon.Id}",
+        var pickup = PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{weapon.Id}",
             weapon.Id, weapon.Name, PrototypeEquipmentSlot.Weapon, weapon.Color);
+        pickup.SetEquipmentTraits(random.Next(5) == 0, false);
+    }
+
+    private static void SpawnScroll(Transform parent, Vector2Int cell, System.Random random, List<int> available)
+    {
+        var choice = random.Next(available.Count);
+        var id = PrototypeScrolls.GetId(available[choice]);
+        available.RemoveAt(choice);
+        PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{id}", id,
+            "Scroll", PrototypeEquipmentSlot.None, new Color(0.9f, 0.82f, 0.57f));
     }
 
     private static Vector2Int OffsetRoomCell(Room room, int xOffset, int yOffset)

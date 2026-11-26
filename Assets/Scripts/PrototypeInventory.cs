@@ -15,6 +15,10 @@ public sealed class PrototypeInventoryItem
 {
     public string ItemId;
     public PrototypeEquipmentSlot EquipmentSlot;
+    public int UpgradeLevel;
+    public bool IsCursed;
+    public bool IsIdentified = true;
+    public int Quantity = 1;
 
     public PrototypeInventoryItem(string itemId, PrototypeEquipmentSlot equipmentSlot = PrototypeEquipmentSlot.None)
     {
@@ -54,6 +58,17 @@ public sealed class PrototypeInventory : MonoBehaviour
             return false;
         }
 
+        if (PrototypeScrolls.IsScroll(item.ItemId))
+        {
+            for (var index = EquipmentSlotCount; index < SlotCount; index++)
+            {
+                if (slots[index] == null || slots[index].ItemId != item.ItemId) continue;
+                slots[index].Quantity += item.Quantity;
+                InventoryChanged?.Invoke();
+                return true;
+            }
+        }
+
         for (var index = EquipmentSlotCount; index < SlotCount; index++)
         {
             if (slots[index] == null)
@@ -83,16 +98,18 @@ public sealed class PrototypeInventory : MonoBehaviour
         }
 
         var targetIndex = (int)equipmentSlot - 1;
+        if (slots[targetIndex] != null && slots[targetIndex].IsCursed) return false;
         // Swapping keeps the replaced equipment in the original backpack slot.
         slots[inventoryIndex] = slots[targetIndex];
         slots[targetIndex] = item;
+        if (item.IsCursed) item.IsIdentified = true;
         InventoryChanged?.Invoke();
         return true;
     }
 
     public bool TryUnequip(int equipmentIndex)
     {
-        if (equipmentIndex < 0 || equipmentIndex >= EquipmentSlotCount || slots[equipmentIndex] == null) return false;
+        if (equipmentIndex < 0 || equipmentIndex >= EquipmentSlotCount || slots[equipmentIndex] == null || slots[equipmentIndex].IsCursed) return false;
         for (var index = EquipmentSlotCount; index < SlotCount; index++)
         {
             if (slots[index] != null) continue;
@@ -129,6 +146,19 @@ public sealed class PrototypeInventory : MonoBehaviour
         return item;
     }
 
+    public bool ConsumeOneAt(int index)
+    {
+        var item = GetSlot(index);
+        if (item == null) return false;
+        if (item.Quantity > 1)
+        {
+            item.Quantity--;
+            InventoryChanged?.Invoke();
+        }
+        else RemoveAt(index);
+        return true;
+    }
+
     public bool HasItem(string itemId)
     {
         if (string.IsNullOrWhiteSpace(itemId))
@@ -162,9 +192,7 @@ public sealed class PrototypeInventory : MonoBehaviour
                 continue;
             }
 
-            slots[index] = null;
-            InventoryChanged?.Invoke();
-            return true;
+            return ConsumeOneAt(index);
         }
 
         return false;

@@ -46,7 +46,8 @@ public sealed class PrototypePlayerInteraction : MonoBehaviour
 
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
-            currentTarget?.Interact(movement);
+            if (currentTarget != null && currentTarget.isActiveAndEnabled && currentTarget.CanInteract(movement))
+                currentTarget.Interact(movement);
             currentTarget = FindTarget();
         }
     }

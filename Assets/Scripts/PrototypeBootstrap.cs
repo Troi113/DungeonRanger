@@ -114,6 +114,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         player.AddComponent<PrototypeHunger>();
         player.AddComponent<PrototypePlayerInteraction>();
         player.AddComponent<PrototypeCombat>();
+        player.AddComponent<PrototypeScrolls>();
         return movement;
     }
 

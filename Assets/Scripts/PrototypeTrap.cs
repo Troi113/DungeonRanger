@@ -36,6 +36,12 @@ public sealed class PrototypeTrap : MonoBehaviour
         SetVisualState(!hidden, false);
     }
 
+    public void Reveal()
+    {
+        isHidden = false;
+        SetVisualState(true, IsActivated);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (IsActivated || other.GetComponentInParent<PrototypePlayerStats>() == null)
