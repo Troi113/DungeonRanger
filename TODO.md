@@ -195,6 +195,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Playtest and balance Goo's charge attack during a full run.
 - [x] Lengthen and speed up Goo's charge (18 units at 4.5x speed) and knock the ranger back on hit.
 - [ ] Playtest Goo's knockback distance and the longer charge.
+- [x] Give Goo an original slime look with silly hit faces, triple its size, and add a slowing slime trail that blocks tumbling.
+- [ ] Playtest giant Goo in the boss arena (fit, charge against walls, slime trail strength).
 - [x] Scale traps to four times their width (full tile).
 - [ ] With full-tile traps, avoid trapping one-cell corridors and doorways so traps stay avoidable.
 - [x] Show armed traps bright and glowing, spent traps dark.

@@ -12,6 +12,7 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
     [SerializeField] private float tumbleDistance = 4f;
     [SerializeField] private float tumbleDuration = 0.2f;
     [SerializeField] private float tumbleCooldown = 0.65f;
+    [SerializeField, Range(0f, 1f)] private float slimeSpeedMultiplier = 0.45f;
 
     private CharacterController characterController;
     private float verticalVelocity;
@@ -62,7 +63,9 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
             return;
         }
 
-        if (!IsTumbling && Time.time >= nextTumbleTime && IsShiftPressedThisFrame())
+        // Goo's slime slows the ranger and prevents tumbling.
+        var slimed = PrototypeSlimeTrail.IsSlimed(transform.position);
+        if (!slimed && !IsTumbling && Time.time >= nextTumbleTime && IsShiftPressedThisFrame())
         {
             BeginTumble();
         }
@@ -88,7 +91,7 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
         }
 
         IsMoving = input.sqrMagnitude > 0.01f;
-        var movement = new Vector3(input.x, 0f, input.y) * moveSpeed;
+        var movement = new Vector3(input.x, 0f, input.y) * moveSpeed * (slimed ? slimeSpeedMultiplier : 1f);
 
         if (input.sqrMagnitude > 0.01f)
         {

@@ -47,6 +47,16 @@ public sealed class PrototypeEnemy : MonoBehaviour
     private PrototypeMobs.MobData mob;
     private bool hasMobData;
     public event Action Defeated;
+    /// <summary>Raised whenever the enemy takes damage and survives or dies.</summary>
+    public event Action Damaged;
+    private Renderer[] extraRenderers;
+
+    /// <summary>Extra renderers (e.g. a face) that follow this enemy's fog visibility.</summary>
+    public void AttachExtraRenderers(Renderer[] renderers)
+    {
+        extraRenderers = renderers;
+        SetVisible(IsVisible);
+    }
 
     public bool IsAlive => health > 0 && this != null;
     public bool IsAwake { get; private set; }
@@ -199,6 +209,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
         health = (int)Math.Max(0L, (long)health - damage);
         hasTakenDamage = true;
+        Damaged?.Invoke();
         if (health <= 0)
         {
             Defeated?.Invoke();
@@ -312,6 +323,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
     public void SetVisible(bool visible)
     {
         IsVisible = visible;
+        if (extraRenderers != null)
+            foreach (var renderer in extraRenderers) if (renderer != null) renderer.enabled = visible;
         if (modelRenderers != null)
         {
             foreach (var renderer in modelRenderers) renderer.enabled = visible;

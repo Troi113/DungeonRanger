@@ -24,6 +24,12 @@ Status of the KayKit asset integration (Ranger hero + sewer dungeon dressing). R
 1. Play-test running/death clips and facing while moving (if the model faces backwards, add a 180° yaw to the Hero_Model holder).
 2. Check wall pieces line up at corners and do not block the camera view; adjust `WallDepth` or height.
 3. Torch lights: performance with many point lights on large floors; URP per-object light limit may hide some.
-4. Doors, stairs, chest, items, and the boss arena are still primitive shapes; KayKit has `stairs`, `chest`, `barrel`, `key`, `torch_lit`, `wall_doorway` that could replace them.
+4. Stairs use KayKit `stairs.fbx`: yellow up stairs rise; blue down stairs sink into a pit (`BuildStairPit`, `PrototypeDungeonDressing.ClearFloorAt`). Not yet seen in Play mode. Doors, chest, items, and the boss arena are still primitive shapes; KayKit has `stairs`, `chest`, `barrel`, `key`, `torch_lit`, `wall_doorway` that could replace them.
 5. Traps: user will decide; `floor_tile_big_spikes` exists in the pack.
 6. Docs (`STATE.md`, `CREDITS.md`, `TODO.md`) were updated for this work.
+
+## Goo update (latest session)
+
+- Done, compiles, NOT seen in Play mode: `PrototypeGooFace.cs` (original primitive slime face, squash and random silly faces on hit via new `PrototypeEnemy.Damaged` event; face renderers follow fog via `PrototypeEnemy.AttachExtraRenderers`), `PrototypeSlimeTrail.cs` (puddles; `PrototypePlayerMovement` slows to 45% and blocks tumble while `IsSlimed`), Goo scale 9×6×9 in `PrototypeMobs`, Goo now spawns at half its height (`PrototypeDungeonRun.CreateEnemy`).
+- The user's Poring model (`~/Downloads/poring-ragnarok-online.zip`) was intentionally NOT used: it is Ragnarok Online's character art.
+- Next: check Goo fits the boss arena at 3x, face placement on the sphere, charge/knockback at the new size, slime trail balance.

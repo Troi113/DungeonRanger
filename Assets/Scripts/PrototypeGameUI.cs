@@ -29,6 +29,16 @@ public sealed class PrototypeGameUI : MonoBehaviour
     private bool itemActionsOpen;
     private string inventoryMessage;
     private int targetingScroll = -1;
+    private static string noticeText;
+    private static float noticeUntil;
+
+    /// <summary>Shows a short message above the interaction prompt (uses unscaled time).</summary>
+    public static void ShowNotice(string text, float seconds = 2.5f)
+    {
+        noticeText = text;
+        noticeUntil = Time.unscaledTime + seconds;
+    }
+
     public static bool IsInventoryOpen { get; private set; }
     public static bool IsPauseMenuOpen { get; private set; }
     public static bool IsGamePaused => IsInventoryOpen || IsPauseMenuOpen;
@@ -157,6 +167,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (!IsGamePaused && !stats.IsDead)
         {
             if (searchProgress > 0f) DrawSearchProgress(searchProgress);
+            else if (noticeText != null && Time.unscaledTime < noticeUntil) DrawPrompt(noticeText);
             else if (searchMessage != null) DrawPrompt(searchMessage);
             else if (currentTarget != null && currentTarget.isActiveAndEnabled) DrawPrompt(currentTarget.InteractionPrompt);
         }

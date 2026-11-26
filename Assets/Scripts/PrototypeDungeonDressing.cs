@@ -51,6 +51,7 @@ public static class PrototypeDungeonDressing
         var size = Mathf.Max(bounds.size.x, bounds.size.z);
         var scale = size > 0.001f ? floor.lossyScale.x / size : 1f;
         var piece = PrototypeKayKit.Spawn(prefab, parent, material).transform;
+        piece.name = "Dress_" + floor.name;
         piece.localScale = Vector3.one * scale;
         piece.rotation = Quaternion.Euler(0f, 90f * random.Next(4), 0f);
         // Top of the tile sits at the floor cube's top (y = 0).
@@ -109,6 +110,17 @@ public static class PrototypeDungeonDressing
         light.range = 9f;
         light.intensity = 2.2f;
         light.shadows = LightShadows.None;
+    }
+
+    /// <summary>Removes the dressed floor tile (and hides the floor cube) at a cell, e.g. to open a stair pit.</summary>
+    public static void ClearFloorAt(Transform floorRoot, Vector2Int cell)
+    {
+        var name = $"Floor_{cell.x}_{cell.y}";
+        foreach (var child in floorRoot.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name == "Dress_" + name) Object.Destroy(child.gameObject);
+            else if (child.name == name) HideCube(child);
+        }
     }
 
     private static void HideCube(Transform cube)

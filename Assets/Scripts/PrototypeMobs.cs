@@ -54,7 +54,7 @@ public static class PrototypeMobs
 
     // Goo keeps its existing health, size, and charge; these add a damage range, defense, and ooze.
     public static readonly MobData Goo = new("goo", "Goo", 18, 1, 3, 1,
-        new Color(0.2f, 0.75f, 0.35f), new Vector3(3f, 2f, 3f),
+        new Color(0.2f, 0.75f, 0.35f), new Vector3(9f, 6f, 9f),
         true, PrototypeStatusEffectType.Oozed, 0.33f, 5f);
 
     /// <summary>Bell-curved roll like Pixel Dungeon's NormalIntRange: the average of two uniform rolls.</summary>
