@@ -290,8 +290,6 @@ public sealed class PrototypeGameUI : MonoBehaviour
         }
         if (PrototypeMeleeWeapons.TryGet(item.ItemId, out var weapon))
             GUI.Label(new Rect(x + 20f, y + 112f, width - 40f, 20f), $"Damage {weapon.Damage + item.UpgradeLevel}   Reach {weapon.Range:0.0}   Delay {weapon.Cooldown:0.00}s");
-        if (PrototypeArmor.TryGet(item.ItemId, out _))
-            GUI.Label(new Rect(x + 20f, y + 112f, width - 40f, 20f), $"Physical protection: {PrototypeArmor.Protection(item) * 100f:0}%");
         for (var i = 0; i < count; i++)
         {
             var label = inventoryCursor < 4 ? "Unequip" : item.ItemId == "health_potion" ? "Consume" : item.ItemId == "food" ? "Eat" : PrototypeScrolls.IsScroll(item.ItemId) ? "Read" : count == 2 ? $"Equip: Artifact/Ring {i + 1}" : "Equip";
@@ -339,12 +337,6 @@ public sealed class PrototypeGameUI : MonoBehaviour
             if (slot == PrototypeEquipmentSlot.ArtifactOrRingA || slot == PrototypeEquipmentSlot.ArtifactOrRingB)
                 slot = actionCursor == 0 ? PrototypeEquipmentSlot.ArtifactOrRingA : PrototypeEquipmentSlot.ArtifactOrRingB;
             if (!inventory.TryEquip(inventoryCursor, slot)) { inventoryMessage = "Cannot equip: slot may be cursed."; return; }
-            if (item.IsCursed)
-            {
-                itemActionsOpen = false;
-                inventoryMessage = "Cursed! Use a scroll to remove it.";
-                return;
-            }
         }
         itemActionsOpen = false;
         inventoryMessage = null;

@@ -225,7 +225,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
         nextAttackTime = Time.time + attackCooldown;
         var stats = player.GetComponent<PrototypePlayerStats>();
-        stats?.TakePhysicalDamage(attackDamage);
+        stats?.TakeDamage(attackDamage);
     }
 
     public void SetVisible(bool visible)

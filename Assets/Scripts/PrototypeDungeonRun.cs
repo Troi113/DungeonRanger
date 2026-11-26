@@ -23,8 +23,6 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         player = ranger;
         runSeed = Random.Range(1, 1000000);
         player.GetComponent<PrototypeScrolls>().Initialize(runSeed);
-        player.GetComponent<PrototypeInventory>().InitializeCurseRandom(unchecked(runSeed + 137));
-        player.GetComponent<PrototypePlayerStats>().InitializeProtectionRandom(unchecked(runSeed + 271));
         Floor = 1;
         EnterFloor(false);
     }
@@ -54,8 +52,6 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         if (follow != null) follow.Target = player.transform;
         runSeed = Random.Range(1, 1000000);
         player.GetComponent<PrototypeScrolls>().Initialize(runSeed);
-        player.GetComponent<PrototypeInventory>().InitializeCurseRandom(unchecked(runSeed + 137));
-        player.GetComponent<PrototypePlayerStats>().InitializeProtectionRandom(unchecked(runSeed + 271));
         Floor = 1;
         Victory = false;
         foreach (var state in floors.Values)
