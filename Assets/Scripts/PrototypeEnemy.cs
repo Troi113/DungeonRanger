@@ -66,6 +66,12 @@ public sealed class PrototypeEnemy : MonoBehaviour
     public int MaxHealth => maxHealth;
     public bool HasTakenDamage => hasTakenDamage;
     public bool IsVisible { get; private set; } = true;
+    public bool IsBoss => isBoss;
+    private float paralyzedUntil;
+
+    /// <summary>Paralyzes the enemy (paralytic gas); refreshing extends it.</summary>
+    public void Paralyze(float seconds) => paralyzedUntil = Mathf.Max(paralyzedUntil, Time.time + seconds);
+
     public bool IsWalkableCell(Vector2Int cell) => walkableLookup != null && walkableLookup.Contains(cell);
 
     /// <summary>World bounds of whatever represents this enemy on screen.</summary>
@@ -132,6 +138,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
 
         if (slowRemaining > 0f) slowRemaining = Mathf.Max(0f, slowRemaining - Time.deltaTime);
+        // Paralytic gas: no moving, charging, or attacking.
+        if (Time.time < paralyzedUntil) return;
         if (charge != null && charge.IsActive) return;
 
         var sightRangeWorld = sightRangeCells * PrototypeLevelGenerator.TileSize;
@@ -328,7 +336,12 @@ public sealed class PrototypeEnemy : MonoBehaviour
         if (stats == null) return;
         var dealt = stats.TakeAttackDamage(PrototypeMobs.RollDamage(minAttackDamage, maxAttackDamage));
         if (dealt > 0 && hasMobData && mob.HasOnHitEffect && UnityEngine.Random.value < mob.OnHitChance)
-            player.GetComponent<PrototypeStatusEffects>()?.Apply(mob.OnHitEffect, mob.OnHitDuration);
+        {
+            var statuses = player.GetComponent<PrototypeStatusEffects>();
+            // Bleeding.set(damage), like the albino rat in Pixel Dungeon.
+            if (mob.OnHitEffect == PrototypeStatusEffectType.Bleeding) statuses?.Bleed(dealt);
+            else statuses?.Apply(mob.OnHitEffect, mob.OnHitDuration);
+        }
     }
 
     public void SetVisible(bool visible)

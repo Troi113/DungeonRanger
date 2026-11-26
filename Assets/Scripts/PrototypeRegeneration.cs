@@ -1,9 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// Natural healing, after Pixel Dungeon's Regeneration buff: while the ranger is Satiated and
-/// hurt, 1 health returns every `secondsPerHealth` of game time. Hungry or Famished rangers
-/// do not regenerate. Pausing (timeScale 0) stops the timer.
+/// Natural healing, after Pixel Dungeon's Regeneration buff: while the ranger is not starving and
+/// hurt, 1 health returns every `secondsPerHealth` of game time. Like PD, only a starving
+/// ranger stops regenerating. Pausing (timeScale 0) stops the timer.
 /// </summary>
 [RequireComponent(typeof(PrototypePlayerStats), typeof(PrototypeHunger))]
 public sealed class PrototypeRegeneration : MonoBehaviour
@@ -22,7 +22,7 @@ public sealed class PrototypeRegeneration : MonoBehaviour
 
     private void Update()
     {
-        if (stats.IsDead || stats.CurrentHealth >= stats.MaxHealth || hunger.State != PrototypeHungerState.Satiated)
+        if (stats.IsDead || stats.CurrentHealth >= stats.MaxHealth || hunger.IsStarving)
         {
             timer = 0f;
             return;

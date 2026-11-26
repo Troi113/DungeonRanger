@@ -35,7 +35,6 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
 
     [Tooltip("Below this height the ranger is returned to the last safe floor position.")]
     [SerializeField] private float fallLimitY = -3f;
-    [SerializeField, Range(0f, 1f)] private float slowedSpeedMultiplier = 0.5f;
     private Vector3 lastSafePosition;
     private bool hasSafePosition;
 
@@ -98,9 +97,10 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
         }
 
         IsMoving = input.sqrMagnitude > 0.01f;
-        var slowed = statusEffects != null && statusEffects.Has(PrototypeStatusEffectType.Slowed);
+        // Cripple and Slow each halve movement (Pixel Dungeon buffs).
+        var buffSpeed = statusEffects != null ? statusEffects.MoveSpeedMultiplier : 1f;
         var movement = new Vector3(input.x, 0f, input.y) * moveSpeed * (slimed ? slimeSpeedMultiplier : 1f)
-                       * (slowed ? slowedSpeedMultiplier : 1f) * ArmorSpeedMultiplier();
+                       * buffSpeed * ArmorSpeedMultiplier();
 
         if (input.sqrMagnitude > 0.01f)
         {

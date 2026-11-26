@@ -107,7 +107,27 @@ public sealed class PrototypeTrap : MonoBehaviour
         SetVisualState(true, true);
         if (trapType == PrototypeTrapType.Alarm) WakeAllEnemies();
         else if (trapType == PrototypeTrapType.Summoning) WakeOneEnemy();
+        else SeedBlob();
         return true;
+    }
+
+    /// <summary>
+    /// Gas and fire traps release Pixel Dungeon blobs on their cell (amounts from PD's traps):
+    /// toxic gas 300 + 20 x floor, paralytic gas 80 + 5 x floor, fire on the cell and its neighbors.
+    /// Returns false when this trap type does not release a blob or no blob grid exists.
+    /// </summary>
+    private bool SeedBlob()
+    {
+        var blobs = PrototypeBlobs.Active;
+        if (blobs == null) return false;
+        var floor = FindAnyObjectByType<PrototypeDungeonRun>()?.Floor ?? 1;
+        switch (trapType)
+        {
+            case PrototypeTrapType.ToxicGas: blobs.Seed(PrototypeBlobs.Kind.ToxicGas, transform.position, 300 + 20 * floor); return true;
+            case PrototypeTrapType.ParalyticGas: blobs.Seed(PrototypeBlobs.Kind.ParalyticGas, transform.position, 80 + 5 * floor); return true;
+            case PrototypeTrapType.Fire: blobs.SeedFireArea(transform.position, 4); return true;
+            default: return false;
+        }
     }
 
     /// <summary>Restores a saved trap state without triggering any effect.</summary>
@@ -126,17 +146,19 @@ public sealed class PrototypeTrap : MonoBehaviour
         var statuses = stats.GetComponent<PrototypeStatusEffects>();
         switch (trapType)
         {
+            // Gas and fire traps release spreading blobs; the old instant effects are fallbacks.
             case PrototypeTrapType.ToxicGas:
-                statuses?.Apply(PrototypeStatusEffectType.Toxic, 6f);
+                if (!SeedBlob()) statuses?.Apply(PrototypeStatusEffectType.Toxic, 6f);
                 break;
             case PrototypeTrapType.Fire:
-                stats.TakeDamage(3);
+                if (!SeedBlob()) stats.TakeDamage(3);
                 break;
             case PrototypeTrapType.ParalyticGas:
-                statuses?.Apply(PrototypeStatusEffectType.Paralyzed, 4f);
+                if (!SeedBlob()) statuses?.Apply(PrototypeStatusEffectType.Paralyzed, PrototypeStatusEffects.ParalysisDuration);
                 break;
             case PrototypeTrapType.PoisonDart:
-                statuses?.Apply(PrototypeStatusEffectType.Poisoned, 6f);
+                // PD poison dart: poison for 4 + floor/2 turns.
+                statuses?.Poison(4f + (FindAnyObjectByType<PrototypeDungeonRun>()?.Floor ?? 1) / 2f);
                 break;
             case PrototypeTrapType.Alarm:
                 WakeAllEnemies();

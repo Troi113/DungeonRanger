@@ -276,6 +276,8 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
             var director = floorRoot.AddComponent<PrototypeEnemyWakeDirector>();
             director.Initialize(state.Enemies, seed + 500);
         }
+        // Pixel Dungeon blobs (gas and fire) live on this floor's grid.
+        floorRoot.AddComponent<PrototypeBlobs>().Initialize(layout.WalkableCells, layout.BlockedEdges, floorNumber);
         state.Fog = floorRoot.AddComponent<PrototypeFogOfWar>();
         state.Fog.Initialize(player, layout.WalkableCells, floorRoot.transform, layout.BlockedEdges);
         if (saved != null) state.Fog.RestoreExplored(DecodeCells(saved.VisitedCells), DecodeCells(saved.MappedCells));

@@ -50,6 +50,10 @@ public sealed class PrototypeCombat : MonoBehaviour
             return;
         }
 
+        // Paralyzed rangers cannot attack.
+        var paralyzed = GetComponent<PrototypeStatusEffects>();
+        if (paralyzed != null && paralyzed.IsParalyzed) return;
+
         HandleCheatInput(Keyboard.current);
 
         if (Keyboard.current.jKey.wasPressedThisFrame && Time.time >= nextBowTime)
@@ -100,7 +104,7 @@ public sealed class PrototypeCombat : MonoBehaviour
 
     private void FireBow()
     {
-        nextBowTime = Time.time + bowCooldown;
+        nextBowTime = Time.time + bowCooldown * (GetComponent<PrototypeStatusEffects>()?.ActionDelayMultiplier ?? 1f);
         EndInvisibility();
         var direction = movement.FacingDirection;
 
@@ -136,7 +140,8 @@ public sealed class PrototypeCombat : MonoBehaviour
     private void PerformMeleeAttack(PrototypeMeleeWeapons.WeaponData weapon)
     {
         EndInvisibility();
-        nextMeleeTime = Time.time + weapon.Cooldown;
+        // Slowed: attacks take twice as long (Pixel Dungeon Slow).
+        nextMeleeTime = Time.time + weapon.Cooldown * (GetComponent<PrototypeStatusEffects>()?.ActionDelayMultiplier ?? 1f);
         var facing = movement.FacingDirection;
         facing.y = 0f;
         facing.Normalize();

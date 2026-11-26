@@ -180,7 +180,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add grass or concealment patches.
 - [ ] Add decorations after the gameplay layout works.
 - [ ] Improve functional visible and secret traps with fair telegraphing.
-- [ ] Add real-time fire, gas, or hazard behavior only after the core game works.
+- [x] Add Pixel Dungeon blobs: spreading toxic and paralytic gas, fire; traps and Liquid Flame use them.
+- [x] Rebuild status effects as Pixel Dungeon buffs (Burning, Bleeding, Poison, Cripple, Slow, Paralysis, Invisibility) with a HUD buff indicator; hunger is a Hungry/Starving debuff.
+- [ ] Playtest buff damage in real time (Burning is deadly at 1–4 per second); save active buffs with the run.
+- [ ] Playtest gas damage and paralysis in real time; consider saving blobs and adding flammable terrain.
 - [ ] Add line-of-sight and visibility data for walls and obstacles.
 
 ## Level progression

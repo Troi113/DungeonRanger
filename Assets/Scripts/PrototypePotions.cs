@@ -23,6 +23,8 @@ public sealed class PrototypePotions : MonoBehaviour
     public const string LiquidFlame = "potion_liquid_flame";
 
     [SerializeField] private float invisibilitySeconds = 15f;
+    // Liquid Flame lights its cell and the 8 around it; each burns this many ticks (0.5 s each).
+    private const int LiquidFlameFire = 8;
 
     private static readonly string[] Ids = { Healing, Strength, Experience, Invisibility, LiquidFlame };
     private static readonly string[] Names = { "Potion of Healing", "Potion of Strength", "Potion of Experience", "Potion of Invisibility", "Potion of Liquid Flame" };
@@ -127,7 +129,7 @@ public sealed class PrototypePotions : MonoBehaviour
                 statuses?.Apply(PrototypeStatusEffectType.Invisible, invisibilitySeconds);
                 return "You see your hands turn invisible!";
             case LiquidFlame:
-                PrototypeFireArea.Ignite(transform.parent, transform.position);
+                PrototypeBlobs.Active?.SeedFireArea(transform.position, LiquidFlameFire);
                 return "The potion bursts into flame around you!";
             default:
                 return "";
@@ -140,7 +142,8 @@ public sealed class PrototypePotions : MonoBehaviour
         if (id == LiquidFlame)
         {
             SetKnown(id);
-            PrototypeFireArea.Ignite(floor, position);
+            PrototypeBlobs.Active?.SeedFireArea(position, LiquidFlameFire);
+            PrototypeGameFeel.Shake(0.25f, 0.2f);
             return "The flask shatters and bursts into flame!";
         }
         PrototypeGameFeel.Sparks(new Vector3(position.x, 0.6f, position.z), TintOf(id), 12);

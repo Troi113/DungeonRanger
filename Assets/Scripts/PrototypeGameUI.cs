@@ -229,7 +229,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         PrototypeUITheme.Label(bar, $"{stats.CurrentHealth} / {stats.MaxHealth}", 14, PrototypeUITheme.Parchment, TextAnchor.MiddleCenter, true);
 
         var hungerState = hunger != null ? hunger.State : PrototypeHungerState.Satiated;
-        var hungerColor = hungerState == PrototypeHungerState.Famished ? PrototypeUITheme.Danger
+        var hungerColor = hungerState == PrototypeHungerState.Starving ? PrototypeUITheme.Danger
             : hungerState == PrototypeHungerState.Hungry ? PrototypeUITheme.Warning : PrototypeUITheme.Parchment;
         PrototypeUITheme.DrawIcon(new Rect(left.x + 18f, left.y + 54f, 32f, 32f), PrototypeUITheme.Bread);
         PrototypeUITheme.Label(new Rect(left.x + 58f, left.y + 54f, left.width - 76f, 32f), hungerState.ToString(), 16, hungerColor, TextAnchor.MiddleLeft, true);
@@ -238,9 +238,10 @@ public sealed class PrototypeGameUI : MonoBehaviour
         PrototypeUITheme.DrawBar(new Rect(left.x + 12f, left.yMax - 10f, left.width - 24f, 8f),
             stats.ExperienceToLevel > 0 ? (float)stats.Experience / stats.ExperienceToLevel : 0f, new Color(0.35f, 0.75f, 1f));
 
+        var buffsBottom = DrawBuffIndicator(left.yMax + 6f);
         if (combat != null && combat.OneHitBowEnabled)
         {
-            var cheat = new Rect(16f, left.yMax + 6f, 290f, 48f);
+            var cheat = new Rect(16f, buffsBottom, 290f, 48f);
             PrototypeUITheme.DrawPanel(cheat);
             PrototypeUITheme.DrawIcon(new Rect(cheat.x + 16f, cheat.y + 10f, 28f, 28f), PrototypeUITheme.Star);
             PrototypeUITheme.Label(new Rect(cheat.x + 52f, cheat.y, cheat.width - 64f, cheat.height), "One-hit bow cheat ON", 14, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
@@ -266,6 +267,76 @@ public sealed class PrototypeGameUI : MonoBehaviour
         PrototypeUITheme.DrawIcon(new Rect(right.x + 120f, right.y + 88f, 24f, 24f), PrototypeUITheme.Pause);
         PrototypeUITheme.Label(new Rect(right.x + 148f, right.y + 86f, 70f, 28f), "Esc  Pause", 13, PrototypeUITheme.Muted);
     }
+
+    private readonly System.Collections.Generic.List<PrototypeStatusEffectType> activeBuffs = new();
+
+    /// <summary>
+    /// Pixel Dungeon's buff indicator: one small tag per active buff or debuff (and the Hungry /
+    /// Starving hunger debuffs) with its time left. Returns the y below the row.
+    /// </summary>
+    private float DrawBuffIndicator(float y)
+    {
+        var statuses = stats.GetComponent<PrototypeStatusEffects>();
+        activeBuffs.Clear();
+        statuses?.GetActive(activeBuffs);
+        var hungerState = hunger != null ? hunger.State : PrototypeHungerState.Satiated;
+        var count = activeBuffs.Count + (hungerState != PrototypeHungerState.Satiated ? 1 : 0);
+        if (count == 0) return y;
+
+        const float tagWidth = 138f;
+        const float tagHeight = 30f;
+        var x = 16f;
+        var rowY = y;
+        void Tag(Texture2D icon, string text, Color color)
+        {
+            if (x + tagWidth > 16f + tagWidth * 2f + 4f) { x = 16f; rowY += tagHeight + 4f; }
+            var rect = new Rect(x, rowY, tagWidth, tagHeight);
+            PrototypeUITheme.Fill(rect, new Color(0.08f, 0.05f, 0.04f, 0.8f));
+            PrototypeUITheme.DrawIcon(new Rect(rect.x + 4f, rect.y + 3f, 24f, 24f), icon);
+            PrototypeUITheme.Label(new Rect(rect.x + 32f, rect.y, rect.width - 36f, rect.height), text, 13, color, TextAnchor.MiddleLeft, true);
+            x += tagWidth + 4f;
+        }
+
+        if (hungerState == PrototypeHungerState.Starving) Tag(PrototypeUITheme.Skull, "Starving", PrototypeUITheme.Danger);
+        else if (hungerState == PrototypeHungerState.Hungry) Tag(PrototypeUITheme.Bread, "Hungry", PrototypeUITheme.Warning);
+        foreach (var type in activeBuffs)
+        {
+            var remaining = statuses.Remaining(type);
+            var debuff = type != PrototypeStatusEffectType.Invisible && type != PrototypeStatusEffectType.Barkskin;
+            var label = type == PrototypeStatusEffectType.Bleeding ? $"{BuffName(type)} {remaining:0}" : $"{BuffName(type)} {Mathf.CeilToInt(remaining)}s";
+            Tag(BuffIcon(type), label, debuff ? PrototypeUITheme.Danger : new Color(0.55f, 0.85f, 1f));
+        }
+        return rowY + tagHeight + 6f;
+    }
+
+    private static string BuffName(PrototypeStatusEffectType type) => type switch
+    {
+        PrototypeStatusEffectType.Poisoned => "Poisoned",
+        PrototypeStatusEffectType.Toxic => "Toxic",
+        PrototypeStatusEffectType.Paralyzed => "Paralysed",
+        PrototypeStatusEffectType.Gripped => "Rooted",
+        PrototypeStatusEffectType.Bleeding => "Bleeding",
+        PrototypeStatusEffectType.Oozed => "Ooze",
+        PrototypeStatusEffectType.Slowed => "Slowed",
+        PrototypeStatusEffectType.Invisible => "Invisible",
+        PrototypeStatusEffectType.Burning => "Burning",
+        PrototypeStatusEffectType.Barkskin => "Barkskin",
+        PrototypeStatusEffectType.Crippled => "Crippled",
+        _ => type.ToString()
+    };
+
+    private static Texture2D BuffIcon(PrototypeStatusEffectType type) => type switch
+    {
+        PrototypeStatusEffectType.Burning => PrototypeUITheme.Icon(3, 22),
+        PrototypeStatusEffectType.Bleeding => PrototypeUITheme.BrokenHeart,
+        PrototypeStatusEffectType.Poisoned or PrototypeStatusEffectType.Toxic or PrototypeStatusEffectType.Oozed => PrototypeUITheme.Icon(3, 19),
+        PrototypeStatusEffectType.Paralyzed => PrototypeUITheme.Icon(3, 24),
+        PrototypeStatusEffectType.Slowed or PrototypeStatusEffectType.Crippled => PrototypeUITheme.Icon(3, 59),
+        PrototypeStatusEffectType.Invisible => PrototypeUITheme.Icon(3, 36),
+        PrototypeStatusEffectType.Barkskin => PrototypeUITheme.Icon(3, 44),
+        PrototypeStatusEffectType.Gripped => PrototypeUITheme.Icon(3, 31),
+        _ => PrototypeUITheme.Exclamation
+    };
 
     private static void DrawPrompt(string prompt)
     {
@@ -555,13 +626,13 @@ public sealed class PrototypeGameUI : MonoBehaviour
                 if (item.ItemId == PrototypeItemCatalog.Berry)
                 {
                     inventory.ConsumeOneAt(inventoryCursor);
-                    hunger.Eat(25f);
+                    hunger.Eat(PrototypeHunger.HungryLevel / 3f);
                     stats.Heal(2);
                 }
                 else
                 {
                     inventory.RemoveAt(inventoryCursor);
-                    hunger.Eat(60f);
+                    hunger.Eat(PrototypeHunger.HungryLevel);
                 }
                 stats.GetComponent<PrototypeTalents>()?.OnConsumed();
                 break;
