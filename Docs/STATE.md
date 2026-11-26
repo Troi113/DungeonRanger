@@ -53,6 +53,7 @@ Update this file at the end of each milestone.
 - No stairs or cliffs.
 - Eight possible trap types using the source-inspired names: Toxic Gas, Fire, Paralytic Gas, Poison Dart, Alarm, Lightning, Gripping, and Summoning.
 - Trap colors: bright green, orange, yellow, purple, red, blue, grey, and light blue respectively.
+- Searching follows Pixel Dungeon's `Hero.search()`, adapted to real time (`PrototypePlayerSearch`). Deliberate search: hold Space for 1.5 s, standing still, with nothing to interact with (walking restarts the timer); it always reveals every hidden, unsprung trap in the square of 6 tiles around the ranger. Passive noticing: on entering each new cell, every hidden trap in the 8 surrounding cells has a 10% (`awareness`) chance to be revealed. Both only reach cells currently visible through fog. The HUD shows a Searching bar, then "You noticed something." or "You search but find nothing."
 - Hidden trap visuals reveal when the trap is activated. Visible, armed traps show their bright type color with a glow; once activated (by the ranger or a thrown item) the plate turns a dark, unlit shade of that color (`spentShade` 0.3, `armedGlow` 0.6 on `PrototypeTrap`).
 - Enemies are stationary and wake visually when hit by the player.
 
@@ -117,6 +118,7 @@ Current prototype movement speed is 8 Unity world units per second.
 | `WASD` / arrows, `J`, `Esc` | Navigate inventory, select/confirm an action, and deselect |
 | `Esc` | Close an item action menu or cancel scroll targeting; otherwise close the inventory and resume. With the inventory closed, open/close the pause menu |
 | `Space` | Pick up a nearby item, open a chest while facing it with a key, or travel using stairs |
+| Hold `Space` | Standing still with nothing to interact with, hold 1.5 s to search: reveals visible hidden traps within 6 tiles |
 | `L` | Reserved for a future inventory/quick-slot action. Do not implement until defined. |
 
 Auto-targeting is intentionally deferred. Bow shots travel straight.

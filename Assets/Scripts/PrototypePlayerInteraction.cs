@@ -11,16 +11,25 @@ public sealed class PrototypePlayerInteraction : MonoBehaviour
     [SerializeField] private float interactionDistance = 4.5f;
     [SerializeField, Range(0f, 1f)] private float facingDot = 0.2f;
     [SerializeField] private float targetRefreshInterval = 0.1f;
+    [Tooltip("Seconds Space must be held, standing still, with nothing to interact with to search.")]
+    [SerializeField] private float searchHoldSeconds = 1.5f;
 
     private PrototypePlayerMovement movement;
     private PrototypeInteractable currentTarget;
     private float nextTargetRefresh;
+    private PrototypePlayerSearch search;
+    private float searchHeld;
+    private bool searchEligible;
 
     public PrototypeInteractable CurrentTarget => currentTarget;
+    /// <summary>0 when not searching, rising to 1 while Space is held, standing still, with nothing nearby.</summary>
+    public float SearchProgress => searchEligible ? Mathf.Clamp01(searchHeld / searchHoldSeconds) : 0f;
+    public string SearchMessage => search != null ? search.Message : null;
 
     private void Awake()
     {
         movement = GetComponent<PrototypePlayerMovement>();
+        search = GetComponent<PrototypePlayerSearch>();
     }
 
     private void Update()
@@ -28,6 +37,7 @@ public sealed class PrototypePlayerInteraction : MonoBehaviour
         if (PrototypeGameUI.IsGamePaused)
         {
             currentTarget = null;
+            searchEligible = false;
             return;
         }
 
@@ -35,6 +45,7 @@ public sealed class PrototypePlayerInteraction : MonoBehaviour
         if (stats != null && stats.IsDead)
         {
             currentTarget = null;
+            searchEligible = false;
             return;
         }
 
@@ -44,11 +55,33 @@ public sealed class PrototypePlayerInteraction : MonoBehaviour
             currentTarget = FindTarget();
         }
 
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Keyboard.current == null) return;
+        var space = Keyboard.current.spaceKey;
+        if (space.wasPressedThisFrame)
         {
-            if (currentTarget != null && currentTarget.isActiveAndEnabled && currentTarget.CanInteract(movement))
-                currentTarget.Interact(movement);
+            var hasTarget = currentTarget != null && currentTarget.isActiveAndEnabled && currentTarget.CanInteract(movement);
+            if (hasTarget) currentTarget.Interact(movement);
+            // A press with nothing to interact with starts a search if Space stays held.
+            searchEligible = !hasTarget;
+            searchHeld = 0f;
             currentTarget = FindTarget();
+        }
+
+        if (!space.isPressed)
+        {
+            searchEligible = false;
+            searchHeld = 0f;
+        }
+        else if (searchEligible)
+        {
+            // Like Pixel Dungeon, searching takes time spent in place; walking restarts it.
+            searchHeld = movement.IsMoving ? 0f : searchHeld + Time.deltaTime;
+            if (searchHeld >= searchHoldSeconds)
+            {
+                searchEligible = false;
+                if (search == null) search = GetComponent<PrototypePlayerSearch>();
+                search?.Search();
+            }
         }
     }
 

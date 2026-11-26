@@ -82,6 +82,7 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
     }
 
     public IReadOnlyCollection<Vector2Int> VisitedCells => visitedCells;
+    public bool IsCellVisible(Vector2Int cell) => visibleCells.Contains(cell);
     public IReadOnlyCollection<Vector2Int> MappedCells => mappedCells;
 
     /// <summary>Restores saved exploration; call after Initialize.</summary>

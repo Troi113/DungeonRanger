@@ -48,6 +48,27 @@ public sealed class PrototypeTrap : MonoBehaviour
 
     public static bool TryGetAt(Vector2Int gridCell, out PrototypeTrap trap) => ActiveByCell.TryGetValue(gridCell, out trap);
 
+    /// <summary>
+    /// Pixel Dungeon-style search: each hidden, unsprung trap in the square of `distance` cells
+    /// around `center` (Chebyshev distance) is revealed with probability `chance`, but only on
+    /// cells `isVisible` accepts. Returns how many were revealed.
+    /// </summary>
+    public static int SearchAround(Vector2Int center, int distance, float chance, System.Func<Vector2Int, bool> isVisible)
+    {
+        var found = 0;
+        foreach (var pair in ActiveByCell)
+        {
+            var trap = pair.Value;
+            var offset = pair.Key - center;
+            if (trap == null || !trap.IsHidden || Mathf.Max(Mathf.Abs(offset.x), Mathf.Abs(offset.y)) > distance) continue;
+            if (isVisible != null && !isVisible(pair.Key)) continue;
+            if (chance < 1f && Random.value >= chance) continue;
+            trap.Reveal();
+            found++;
+        }
+        return found;
+    }
+
     private void OnEnable()
     {
         cell = PrototypeLevelGenerator.WorldToGrid(transform.position);

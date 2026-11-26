@@ -152,8 +152,14 @@ public sealed class PrototypeGameUI : MonoBehaviour
         DrawHud();
 
         var currentTarget = interaction != null ? interaction.CurrentTarget : null;
-        if (currentTarget != null && currentTarget.isActiveAndEnabled && !IsGamePaused && !stats.IsDead)
-            DrawPrompt(currentTarget.InteractionPrompt);
+        var searchProgress = interaction != null ? interaction.SearchProgress : 0f;
+        var searchMessage = interaction != null ? interaction.SearchMessage : null;
+        if (!IsGamePaused && !stats.IsDead)
+        {
+            if (searchProgress > 0f) DrawSearchProgress(searchProgress);
+            else if (searchMessage != null) DrawPrompt(searchMessage);
+            else if (currentTarget != null && currentTarget.isActiveAndEnabled) DrawPrompt(currentTarget.InteractionPrompt);
+        }
 
         if (IsPauseMenuOpen)
         {
@@ -218,6 +224,14 @@ public sealed class PrototypeGameUI : MonoBehaviour
         var rect = new Rect(PrototypeUITheme.Width * 0.5f - 200f, PrototypeUITheme.Height - 86f, 400f, 54f);
         PrototypeUITheme.DrawPanel(rect);
         PrototypeUITheme.Label(rect, prompt, 16, PrototypeUITheme.Parchment, TextAnchor.MiddleCenter, true);
+    }
+
+    private static void DrawSearchProgress(float progress)
+    {
+        var rect = new Rect(PrototypeUITheme.Width * 0.5f - 200f, PrototypeUITheme.Height - 96f, 400f, 64f);
+        PrototypeUITheme.DrawPanel(rect);
+        PrototypeUITheme.Label(new Rect(rect.x, rect.y + 8f, rect.width, 24f), "Searching...", 15, PrototypeUITheme.Parchment, TextAnchor.MiddleCenter, true);
+        PrototypeUITheme.DrawBar(new Rect(rect.x + 40f, rect.y + 36f, rect.width - 80f, 14f), progress, PrototypeUITheme.Gold);
     }
 
     private static void DrawDeathScreen()
