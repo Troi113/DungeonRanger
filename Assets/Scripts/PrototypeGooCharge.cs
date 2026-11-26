@@ -96,7 +96,7 @@ public sealed class PrototypeGooCharge : MonoBehaviour
         if (!hitPlayer && PlayerTouchesSegment(start, end))
         {
             hitPlayer = true;
-            player.GetComponent<PrototypePlayerStats>()?.TakeDamage(damage);
+            player.GetComponent<PrototypePlayerStats>()?.TakePhysicalDamage(damage);
         }
         transform.position = end;
         distanceRemaining -= wallDistance;

@@ -615,7 +615,11 @@ public sealed class PrototypeLevelGenerator
         foreach (var room in rooms) reserved.Add(room.Center);
         reserved.Add(OffsetRoomCell(rooms[0], 1, 0));
         reserved.Add(OffsetRoomCell(rooms[0], -1, 0));
-        if (rooms.Count >= 2) reserved.Add(OffsetRoomCell(rooms[1], -1, -1));
+        if (rooms.Count >= 2)
+        {
+            reserved.Add(OffsetRoomCell(rooms[1], -1, -1));
+            reserved.Add(OffsetRoomCell(rooms[1], 1, 0));
+        }
         if (rooms.Count >= 3)
         {
             reserved.Add(OffsetRoomCell(rooms[2], -1, 0));
@@ -626,6 +630,7 @@ public sealed class PrototypeLevelGenerator
         {
             reserved.Add(OffsetRoomCell(rooms[3], -1, 1));
             reserved.Add(OffsetRoomCell(rooms[3], 1, -1));
+            reserved.Add(OffsetRoomCell(rooms[3], -2, -2));
         }
         if (rooms.Count >= 5)
         {
@@ -698,6 +703,19 @@ public sealed class PrototypeLevelGenerator
         SpawnWeapon(itemRoot, OffsetRoomCell(rooms[0], 1, 0), random, availableWeapons);
         if (rooms.Count >= 3) SpawnWeapon(itemRoot, OffsetRoomCell(rooms[2], -1, 0), random, availableWeapons);
         if (rooms.Count >= 5) SpawnWeapon(itemRoot, OffsetRoomCell(rooms[4], 1, -1), random, availableWeapons);
+
+        var armorRandom = new System.Random(seed + 997);
+        if (rooms.Count >= 2)
+        {
+            var firstArmor = armorRandom.Next(2);
+            SpawnArmor(itemRoot, OffsetRoomCell(rooms[1], 1, 0), firstArmor);
+            if (rooms.Count >= 4)
+            {
+                var otherArmor = armorRandom.Next(PrototypeArmor.Count - 1);
+                if (otherArmor >= firstArmor) otherArmor++;
+                SpawnArmor(itemRoot, OffsetRoomCell(rooms[3], -2, -2), otherArmor);
+            }
+        }
 
         var scrollRandom = new System.Random(seed + 733);
         var availableScrolls = new List<int>();
@@ -776,7 +794,15 @@ public sealed class PrototypeLevelGenerator
         available.RemoveAt(choice);
         var pickup = PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{weapon.Id}",
             weapon.Id, weapon.Name, PrototypeEquipmentSlot.Weapon, weapon.Color);
-        pickup.SetEquipmentTraits(random.Next(5) == 0, false);
+        pickup.SetEquipmentTraits(false, false);
+    }
+
+    private static void SpawnArmor(Transform parent, Vector2Int cell, int index)
+    {
+        var armor = PrototypeArmor.Get(index);
+        var pickup = PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{armor.Id}",
+            armor.Id, armor.Name, PrototypeEquipmentSlot.Armor, armor.Color);
+        pickup.SetEquipmentTraits(false, false);
     }
 
     private static void SpawnScroll(Transform parent, Vector2Int cell, System.Random random, List<int> available)

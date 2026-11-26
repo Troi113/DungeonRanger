@@ -65,6 +65,11 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
             visual.transform.localPosition = new Vector3(0f, 0.32f, 0f);
             visual.transform.localScale = new Vector3(0.8f, 0.4f, 1.1f);
         }
+        else if (slot == PrototypeEquipmentSlot.Armor)
+        {
+            visual.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+            visual.transform.localScale = new Vector3(0.95f, 1f, 0.45f);
+        }
         visual.GetComponent<Renderer>().sharedMaterial = CreateMaterial($"{label} Material", color);
         var visualCollider = visual.GetComponent<Collider>();
         if (visualCollider != null)
