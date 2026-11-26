@@ -92,6 +92,7 @@ public sealed class PrototypeSaveData
     public float PlayerX;
     public float PlayerZ;
     public int Health;
+    public int Strength;
     public float HungerMovingTime;
     public int Score;
     public float ElapsedSeconds;

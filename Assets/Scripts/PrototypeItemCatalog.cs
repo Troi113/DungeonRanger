@@ -29,8 +29,12 @@ public static class PrototypeItemCatalog
         switch (itemId)
         {
             case "health_potion":
-                name = "Health Potion";
+                name = "Potion of Healing";
                 color = new Color(0.9f, 0.15f, 0.2f);
+                return;
+            case "strength_potion":
+                name = "Potion of Strength";
+                color = new Color(0.25f, 0.45f, 0.95f);
                 return;
             case "food":
                 name = "Food Ration";

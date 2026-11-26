@@ -102,6 +102,7 @@ public static class PrototypeUITheme
         {
             "ranger_bow" => Bow,
             "health_potion" => Icon(3, 17),
+            "strength_potion" => Icon(3, 18),
             "food" => Bread,
             "key" => Icon(3, 29),
             "knuckleduster" => Icon(3, 14),

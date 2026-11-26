@@ -82,7 +82,7 @@ public sealed class PrototypeScrolls : MonoBehaviour
             var scrollName = known.Contains(item.ItemId) ? Names[index] : $"Scroll '{labels[item.ItemId]}'";
             return item.Quantity > 1 ? $"{scrollName} x{item.Quantity}" : scrollName;
         }
-        var label = item.ItemId.Replace('_', ' ');
+        PrototypeItemCatalog.Describe(item.ItemId, out var label, out _);
         if (item.UpgradeLevel > 0) label += $" +{item.UpgradeLevel}";
         if (item.EquipmentSlot != PrototypeEquipmentSlot.None)
             label += item.IsIdentified ? (item.IsCursed ? " (cursed)" : string.Empty) : " (?)";

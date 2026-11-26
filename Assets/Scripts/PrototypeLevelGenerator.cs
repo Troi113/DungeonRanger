@@ -97,7 +97,9 @@ public sealed class PrototypeLevelGenerator
         public readonly HashSet<long> BlockedEdges = new();
     }
 
-    public Layout Build(Transform root, int seed = Seed, bool showExitMarker = true)
+    /// <param name="floor">Dungeon floor (1-5); drives which items are generated.</param>
+    /// <param name="runSeed">Run seed for run-wide item quotas (0 = use the floor seed).</param>
+    public Layout Build(Transform root, int seed = Seed, bool showExitMarker = true, int floor = 1, int runSeed = 0)
     {
         var plan = GenerateFloorPlan(seed);
         var occupied = plan.Occupied;
@@ -116,8 +118,8 @@ public sealed class PrototypeLevelGenerator
         BuildFloor(floorRoot, occupied, floorMaterial);
         BuildWalls(wallRoot, occupied, connectedDoors, wallMaterial, blockedEdges);
         BuildDoors(doorRoot, connectedDoors, doorMaterial, seed);
-        BuildTraps(root, occupied, seed, rooms);
-        BuildItemsAndChests(root, rooms, seed);
+        var trapCells = BuildTraps(root, occupied, seed, rooms);
+        BuildItemsAndChests(root, rooms, seed, occupied, trapCells, floor, runSeed != 0 ? runSeed : seed);
 
         var entranceCell = rooms[0].Center;
         var exitCell = rooms[rooms.Count - 1].Center;
@@ -608,7 +610,7 @@ public sealed class PrototypeLevelGenerator
             maximum.z + TileSize * 0.5f);
     }
 
-    private static void BuildTraps(Transform root, bool[,] occupied, int seed, List<Room> rooms)
+    private static List<Vector2Int> BuildTraps(Transform root, bool[,] occupied, int seed, List<Room> rooms)
     {
         var trapRoot = CreateChild(root, "Level_Traps");
         var trapCells = new List<Vector2Int>();
@@ -690,115 +692,74 @@ public sealed class PrototypeLevelGenerator
             var trap = trapObject.AddComponent<PrototypeTrap>();
             trap.Initialize(trapType, hidden, color, visualRoot);
         }
+        return trapCells;
     }
 
-    private static void BuildItemsAndChests(Transform root, List<Room> rooms, int seed)
+    /// <summary>
+    /// Places the floor's items (planned by PrototypeItemGenerator, after Pixel Dungeon) on random
+    /// room cells away from traps and stairs, plus the key and locked chest. Floor 1 also gets a
+    /// light starter weapon in the entrance room, since the ranger starts with only a bow.
+    /// </summary>
+    private static void BuildItemsAndChests(Transform root, List<Room> rooms, int seed, bool[,] occupied,
+        List<Vector2Int> trapCells, int floor, int runSeed)
     {
         var itemRoot = CreateChild(root, "Level_Items");
         var random = new System.Random(seed + 321);
-        var availableWeapons = new List<int>();
-        for (var i = 0; i < PrototypeMeleeWeapons.Count; i++) availableWeapons.Add(i);
-        SpawnWeapon(itemRoot, OffsetRoomCell(rooms[0], 1, 0), random, availableWeapons);
-        if (rooms.Count >= 3) SpawnWeapon(itemRoot, OffsetRoomCell(rooms[2], -1, 0), random, availableWeapons);
-        if (rooms.Count >= 5) SpawnWeapon(itemRoot, OffsetRoomCell(rooms[4], 1, -1), random, availableWeapons);
 
-        var scrollRandom = new System.Random(seed + 733);
-        var availableScrolls = new List<int>();
-        for (var i = 0; i < PrototypeScrolls.Count; i++) availableScrolls.Add(i);
-        SpawnScroll(itemRoot, OffsetRoomCell(rooms[0], -1, 0), scrollRandom, availableScrolls);
-        if (rooms.Count >= 3) SpawnScroll(itemRoot, OffsetRoomCell(rooms[2], -2, 2), scrollRandom, availableScrolls);
-        if (rooms.Count >= 5) SpawnScroll(itemRoot, OffsetRoomCell(rooms[4], -2, -2), scrollRandom, availableScrolls);
+        // Drop cells: room floor cells, not traps, not the stand points of the stairs or their
+        // neighbors (the stairs extend into a neighboring cell), not where the chest and key sit.
+        var blocked = new HashSet<Vector2Int>(trapCells);
+        foreach (var stand in new[] { rooms[0].Center, rooms[rooms.Count - 1].Center })
+            for (var dx = -1; dx <= 1; dx++)
+            for (var dy = -1; dy <= 1; dy++)
+                blocked.Add(stand + new Vector2Int(dx, dy));
+        var keyCell = rooms.Count >= 2 ? OffsetRoomCell(rooms[1], -1, -1) : new Vector2Int(-1, -1);
+        var chestCell = rooms.Count >= 3 ? OffsetRoomCell(rooms[2], 1, 1) : new Vector2Int(-1, -1);
+        blocked.Add(keyCell);
+        blocked.Add(chestCell);
+        var cells = new List<Vector2Int>();
+        foreach (var room in rooms)
+            for (var x = room.Bounds.xMin; x < room.Bounds.xMax; x++)
+            for (var y = room.Bounds.yMin; y < room.Bounds.yMax; y++)
+            {
+                var cell = new Vector2Int(x, y);
+                if (x >= 0 && y >= 0 && x < Width && y < Height && occupied[x, y] && !blocked.Contains(cell)) cells.Add(cell);
+            }
+
+        if (floor == 1)
+        {
+            var starter = new PrototypeInventoryItem(random.Next(2) == 0 ? "knife" : "knuckleduster", PrototypeEquipmentSlot.Weapon);
+            PrototypeItemPickup.CreateForItem(itemRoot, GridToWorld(OffsetRoomCell(rooms[0], 2, 0), 0f), starter);
+        }
+
+        foreach (var item in PrototypeItemGenerator.PlanFloor(runSeed, floor, random))
+        {
+            if (cells.Count == 0) break;
+            var index = random.Next(cells.Count);
+            var cell = cells[index];
+            cells.RemoveAt(index);
+            PrototypeItemPickup.CreateForItem(itemRoot, GridToWorld(cell, 0f), item);
+        }
 
         if (rooms.Count < 2) return;
-
-        SpawnArmor(itemRoot, OffsetRoomCell(rooms[1], 1, 1), new System.Random(seed + 911));
-
-        var keyCell = OffsetRoomCell(rooms[1], -1, -1);
-        PrototypeItemPickup.CreateRuntime(
-            itemRoot,
-            GridToWorld(keyCell, 0f),
-            "Item_Key",
-            "key",
-            "Key",
-            PrototypeEquipmentSlot.None,
-            new Color(1f, 0.82f, 0.1f));
+        PrototypeItemPickup.CreateRuntime(itemRoot, GridToWorld(keyCell, 0f), "Item_Key", "key", "Key",
+            PrototypeEquipmentSlot.None, new Color(1f, 0.82f, 0.1f));
 
         if (rooms.Count >= 3)
         {
-            var chestCell = OffsetRoomCell(rooms[2], 1, 1);
             var chestObject = new GameObject("Chest_Locked_01");
             chestObject.transform.SetParent(itemRoot, false);
             chestObject.transform.position = GridToWorld(chestCell, 0f);
             chestObject.transform.rotation = Quaternion.LookRotation(Vector3.forward);
-
             var chestMaterial = CreateMaterial("Locked Chest Material", new Color(0.42f, 0.2f, 0.08f));
-            var chestVisual = CreateCube(
-                "Chest_Visual",
-                chestObject.transform,
-                new Vector3(0f, 0.55f, 0f),
-                new Vector3(1.8f, 1.1f, 1.3f),
-                chestMaterial);
+            var chestVisual = CreateCube("Chest_Visual", chestObject.transform, new Vector3(0f, 0.55f, 0f), new Vector3(1.8f, 1.1f, 1.3f), chestMaterial);
             DisableCollider(chestVisual);
-
-            var chest = chestObject.AddComponent<PrototypeChest>();
-            chest.Initialize(
-                chestVisual.GetComponent<Renderer>(),
-                "health_potion",
-                "Health Potion",
-                PrototypeEquipmentSlot.None,
-                new Color(0.9f, 0.15f, 0.2f));
+            // A random item from the same generator, like Pixel Dungeon's chest heaps.
+            var reward = PrototypeItemGenerator.RandomItem(random);
+            PrototypeItemCatalog.Describe(reward.ItemId, out var rewardName, out var rewardColor);
+            chestObject.AddComponent<PrototypeChest>().Initialize(chestVisual.GetComponent<Renderer>(), reward.ItemId, rewardName,
+                reward.EquipmentSlot, rewardColor);
         }
-
-        if (rooms.Count >= 4)
-        {
-            var potionCell = OffsetRoomCell(rooms[3], -1, 1);
-            PrototypeItemPickup.CreateRuntime(
-                itemRoot,
-                GridToWorld(potionCell, 0f),
-                "Item_HealthPotion",
-                "health_potion",
-                "Health Potion",
-                PrototypeEquipmentSlot.None,
-                new Color(0.9f, 0.15f, 0.2f));
-
-            var foodCell = OffsetRoomCell(rooms[3], 1, -1);
-            PrototypeItemPickup.CreateRuntime(
-                itemRoot,
-                GridToWorld(foodCell, 0f),
-                "Item_Food",
-                "food",
-                "Food Ration",
-                PrototypeEquipmentSlot.None,
-                new Color(0.72f, 0.48f, 0.2f));
-        }
-
-    }
-
-    private static void SpawnWeapon(Transform parent, Vector2Int cell, System.Random random, List<int> available)
-    {
-        var choice = random.Next(available.Count);
-        var weapon = PrototypeMeleeWeapons.Get(available[choice]);
-        available.RemoveAt(choice);
-        var pickup = PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{weapon.Id}",
-            weapon.Id, weapon.Name, PrototypeEquipmentSlot.Weapon, weapon.Color);
-        pickup.SetEquipmentTraits(random.Next(5) == 0, false);
-    }
-
-    private static void SpawnArmor(Transform parent, Vector2Int cell, System.Random random)
-    {
-        var armor = PrototypeArmors.PickRandom(random);
-        var pickup = PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{armor.Id}",
-            armor.Id, armor.Name, PrototypeEquipmentSlot.Armor, armor.Color);
-        pickup.SetEquipmentTraits(random.Next(5) == 0, false);
-    }
-
-    private static void SpawnScroll(Transform parent, Vector2Int cell, System.Random random, List<int> available)
-    {
-        var choice = random.Next(available.Count);
-        var id = PrototypeScrolls.GetId(available[choice]);
-        available.RemoveAt(choice);
-        PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{id}", id,
-            "Scroll", PrototypeEquipmentSlot.None, new Color(0.9f, 0.82f, 0.57f));
     }
 
     private static Vector2Int OffsetRoomCell(Room room, int xOffset, int yOffset)

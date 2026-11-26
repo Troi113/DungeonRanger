@@ -202,6 +202,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
             : hungerState == PrototypeHungerState.Hungry ? PrototypeUITheme.Warning : PrototypeUITheme.Parchment;
         PrototypeUITheme.DrawIcon(new Rect(left.x + 18f, left.y + 54f, 32f, 32f), PrototypeUITheme.Bread);
         PrototypeUITheme.Label(new Rect(left.x + 58f, left.y + 54f, left.width - 76f, 32f), hungerState.ToString(), 16, hungerColor, TextAnchor.MiddleLeft, true);
+        PrototypeUITheme.Label(new Rect(left.x + 58f, left.y + 54f, left.width - 76f, 32f), $"STR {stats.Strength}", 16, PrototypeUITheme.Gold, TextAnchor.MiddleRight, true);
 
         if (combat != null && combat.OneHitBowEnabled)
         {
@@ -372,7 +373,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (itemActionsOpen) DrawItemActions();
     }
 
-    private enum ItemAction { Unequip, Consume, Eat, Read, Equip, EquipRingA, EquipRingB, Drop, Throw }
+    private enum ItemAction { Unequip, Consume, Drink, Eat, Read, Equip, EquipRingA, EquipRingB, Drop, Throw }
 
     private readonly System.Collections.Generic.List<ItemAction> actionBuffer = new();
 
@@ -383,6 +384,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (item == null) return actionBuffer;
         if (index < 4) actionBuffer.Add(ItemAction.Unequip);
         else if (item.ItemId == "health_potion") actionBuffer.Add(ItemAction.Consume);
+        else if (item.ItemId == PrototypeItemGenerator.StrengthPotion) actionBuffer.Add(ItemAction.Drink);
         else if (item.ItemId == "food") actionBuffer.Add(ItemAction.Eat);
         else if (PrototypeScrolls.IsScroll(item.ItemId)) actionBuffer.Add(ItemAction.Read);
         else if (item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingA || item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingB)
@@ -406,6 +408,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
     {
         ItemAction.Unequip => "Unequip",
         ItemAction.Consume => "Consume",
+        ItemAction.Drink => "Drink",
         ItemAction.Eat => "Eat",
         ItemAction.Read => "Read",
         ItemAction.Equip => "Equip",
@@ -433,6 +436,12 @@ public sealed class PrototypeGameUI : MonoBehaviour
                 inventory.RemoveAt(inventoryCursor);
                 stats.Heal(8);
                 break;
+            case ItemAction.Drink:
+                inventory.ConsumeOneAt(inventoryCursor);
+                stats.AddStrength(1);
+                inventoryMessage = $"Newfound strength surges through you! Strength is now {stats.Strength}.";
+                itemActionsOpen = false;
+                return;
             case ItemAction.Eat:
                 inventory.RemoveAt(inventoryCursor);
                 hunger.Eat(60f);
@@ -510,6 +519,15 @@ public sealed class PrototypeGameUI : MonoBehaviour
         else if (PrototypeArmors.TryGet(item.ItemId, out _))
             info = $"Absorbs 0-{PrototypeArmors.MaxAbsorb(item)} damage per enemy hit";
         else if (item.ItemId == "health_potion") info = "Restores 8 health.";
+        else if (item.ItemId == PrototypeItemGenerator.StrengthPotion) info = "Permanently increases your Strength by 1.";
+        var required = PrototypeStrength.Required(item);
+        if (required > 0)
+        {
+            var shortfall = PrototypeStrength.Shortfall(item, stats.Strength);
+            info += shortfall > 0
+                ? $"\nNeeds {required} Strength (you have {stats.Strength}): " + (item.EquipmentSlot == PrototypeEquipmentSlot.Armor ? "slows you down." : "attacks slower.")
+                : $"\nNeeds {required} Strength." + (item.EquipmentSlot == PrototypeEquipmentSlot.Weapon && stats.Strength > required ? " Extra Strength adds bonus damage." : "");
+        }
         else if (item.ItemId == "food") info = "Restores hunger.";
         if (count == 0 && info == null) info = "No actions available.";
         PrototypeUITheme.Label(new Rect(x + 24f, y + 76f, width - 48f, 56f), info, 13, PrototypeUITheme.Parchment, TextAnchor.UpperLeft, false, true);

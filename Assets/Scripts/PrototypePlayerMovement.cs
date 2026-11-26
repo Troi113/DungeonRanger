@@ -91,7 +91,7 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
         }
 
         IsMoving = input.sqrMagnitude > 0.01f;
-        var movement = new Vector3(input.x, 0f, input.y) * moveSpeed * (slimed ? slimeSpeedMultiplier : 1f);
+        var movement = new Vector3(input.x, 0f, input.y) * moveSpeed * (slimed ? slimeSpeedMultiplier : 1f) * ArmorSpeedMultiplier();
 
         if (input.sqrMagnitude > 0.01f)
         {
@@ -152,6 +152,18 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
             IsTumbling = false;
             transform.rotation = tumbleStartRotation;
         }
+    }
+
+    private PrototypeInventory inventory;
+    private PrototypePlayerStats playerStats;
+
+    /// <summary>Armor the ranger is too weak for slows them down (Pixel Dungeon Strength rule).</summary>
+    private float ArmorSpeedMultiplier()
+    {
+        if (inventory == null) inventory = GetComponent<PrototypeInventory>();
+        if (playerStats == null) playerStats = GetComponent<PrototypePlayerStats>();
+        if (inventory == null || playerStats == null) return 1f;
+        return PrototypeStrength.ArmorSpeedMultiplier(PrototypeStrength.Shortfall(inventory.GetSlot(1), playerStats.Strength));
     }
 
     private static bool IsShiftPressedThisFrame()

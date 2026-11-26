@@ -10,6 +10,8 @@ public static class PrototypeArmors
         public readonly int Tier;
         public readonly int SpawnWeight;
         public readonly Color Color;
+        /// <summary>Strength needed to wear it without slowing down (Pixel Dungeon: 7 + 2 x tier).</summary>
+        public int Strength => 7 + Tier * 2;
 
         public ArmorData(string id, string name, int tier, int spawnWeight, Color color)
         {

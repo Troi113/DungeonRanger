@@ -7,8 +7,12 @@ using UnityEngine;
 public sealed class PrototypePlayerStats : MonoBehaviour
 {
     [SerializeField] private int maxHealth = 20;
+    [Tooltip("Pixel Dungeon heroes start with 10 Strength.")]
+    [SerializeField] private int startingStrength = 10;
 
     public int MaxHealth => maxHealth;
+    /// <summary>Strength: equipment needs enough of it (see PrototypeStrength); Potions of Strength raise it.</summary>
+    public int Strength { get; private set; }
     public int CurrentHealth { get; private set; }
     public bool IsDead => CurrentHealth <= 0;
 
@@ -21,6 +25,7 @@ public sealed class PrototypePlayerStats : MonoBehaviour
     {
         maxHealth = Mathf.Max(1, maxHealth);
         CurrentHealth = maxHealth;
+        Strength = startingStrength;
     }
 
     /// <summary>Enemy attack damage; equipped armor absorbs a random 0..max amount per hit. Returns damage dealt.</summary>
@@ -49,6 +54,10 @@ public sealed class PrototypePlayerStats : MonoBehaviour
             Died?.Invoke();
         }
     }
+
+    public void AddStrength(int amount) => Strength += amount;
+
+    public void RestoreStrength(int value) => Strength = Mathf.Max(1, value);
 
     /// <summary>Sets health directly when restoring a saved game.</summary>
     public void RestoreHealth(int value)

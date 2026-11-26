@@ -197,7 +197,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var generator = new PrototypeLevelGenerator();
         // Floor 5 follows Pixel Dungeon's SewerBossLevel: a normal sewer layout (entrance room,
         // tunnels, boss room at the far end) rather than a bare arena.
-        var layout = generator.Build(floorRoot.transform, seed, false);
+        var layout = generator.Build(floorRoot.transform, seed, false, floorNumber, runSeed);
 
         PrototypeDungeonDressing.Apply(floorRoot.transform, seed);
         var state = new FloorState { Root = floorRoot, UpPosition = layout.PlayerSpawn, DownPosition = layout.ExitSpawn };
@@ -287,6 +287,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
             PlayerX = player.transform.position.x,
             PlayerZ = player.transform.position.z,
             Health = stats.CurrentHealth,
+            Strength = stats.Strength,
             HungerMovingTime = player.GetComponent<PrototypeHunger>()?.MovingTime ?? 0f,
             Score = Score,
             ElapsedSeconds = ElapsedSeconds,
@@ -370,6 +371,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         for (var i = 0; i < inventory.Capacity; i++)
             inventory.SetSlot(i, i < data.Inventory.Count ? data.Inventory[i].ToItem() : null);
         player.GetComponent<PrototypePlayerStats>().RestoreHealth(data.Health);
+        if (data.Strength > 0) player.GetComponent<PrototypePlayerStats>().RestoreStrength(data.Strength);
         player.GetComponent<PrototypeHunger>()?.RestoreMovingTime(data.HungerMovingTime);
         Score = data.Score;
         ElapsedSeconds = data.ElapsedSeconds;

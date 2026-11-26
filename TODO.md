@@ -251,6 +251,9 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Extend upgrade and identification effects to rings and wands when those systems exist.
 - [x] Make health potions usable from the inventory.
 - [ ] Make equipment slots affect combat or player stats.
+- [x] Generate floor items like Pixel Dungeon (food, Strength/Upgrade quotas, weighted random categories with halving).
+- [x] Add Strength as a stat and Potion of Strength; weapons and armor have Strength requirements.
+- [ ] Playtest item counts per floor, Strength requirements, and encumbrance penalties.
 - [ ] Add item stack counts and duplicate-item behavior.
 - [x] Add Drop and Throw inventory actions; thrown items open doors, trigger traps, and land before walls.
 - [x] Detect traps for thrown items by grid cell instead of physics; make traps one flat plate with a taller trigger.

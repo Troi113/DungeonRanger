@@ -68,8 +68,13 @@ public sealed class PrototypeCombat : MonoBehaviour
             PerformMeleeAttack(new PrototypeMeleeWeapons.WeaponData("punch", "Punch", punchDamage, punchReach, punchCooldown, Color.white));
         else if (weapon.EquipmentSlot == PrototypeEquipmentSlot.Weapon && PrototypeMeleeWeapons.TryGet(weapon.ItemId, out var meleeWeapon))
         {
+            // Strength (Pixel Dungeon rules): too weak = slower attacks; extra Strength = bonus damage.
+            var strength = GetComponent<PrototypePlayerStats>()?.Strength ?? 10;
+            var shortfall = PrototypeStrength.Shortfall(weapon, strength);
+            var bonus = Random.Range(0, PrototypeStrength.Excess(weapon, strength) + 1);
             PerformMeleeAttack(new PrototypeMeleeWeapons.WeaponData(meleeWeapon.Id, meleeWeapon.Name,
-                meleeWeapon.Damage + weapon.UpgradeLevel, meleeWeapon.Range, meleeWeapon.Cooldown, meleeWeapon.Color));
+                meleeWeapon.Damage + weapon.UpgradeLevel + bonus, meleeWeapon.Range,
+                meleeWeapon.Cooldown * PrototypeStrength.WeaponDelayMultiplier(shortfall), meleeWeapon.Color));
         }
     }
 

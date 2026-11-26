@@ -89,6 +89,12 @@ Update this file at the end of each milestone.
 - Floors are regenerated from the run seed on load, then their saved changes are applied: picked-up generated items, dropped/thrown/chest items, enemy health/position/awake state and deaths, triggered and revealed traps, opened chest, explored fog, and a dropped amulet. Player health, hunger, inventory, known scrolls, floor, and position are restored. Status effects, door positions, the bow cheat, and enemy wake timers are not saved.
 - Death is permanent: dying deletes the saved run immediately, and any later save attempt for a dead run deletes instead of writing.
 
+## Items and Strength (after Pixel Dungeon)
+
+- `PrototypeItemGenerator` plans each floor's items like PD's Level/RegularLevel/Generator: every regular floor (1–4) gets a food ration; quota items are 2 Potions of Strength and 3 Scrolls of Upgrade over floors 1–4 (the floors are chosen once from the run seed); then 3 random items plus one more per 40% roll, each picking a category by weight (potion 50, scroll 40, weapon 15, armor 10) with that weight halving afterwards. Random potions are Healing; random scrolls are Identify 30, Remove Curse 15, Teleportation 10, Magic Mapping 10, Challenge 8 (Upgrade and Strength only come from the quota). Random weapons and armor are unidentified with a 20% chance of +1/+2 and a 20% chance of a curse. The boss floor gets random items only.
+- Items are placed on random room cells, avoiding traps and the stairs. Floor 1 also has a starter knife or knuckleduster in the entrance room. The locked chest holds one random item from the same generator.
+- Strength: the ranger starts with 10 (shown as STR on the HUD and saved with the run). Potion of Strength (Drink) gives +1 permanently. Weapons need 10 (knuckleduster, knife), 11 (sickle), 12 (sword, spear), or 13 (axe); armor needs 7 + 2 × tier (cloth 9, leather 11, mail 13). Each upgrade lowers the need by 1. Too weak for a weapon: +25% attack delay per missing point. Extra Strength over a weapon's need: 0..excess bonus damage per hit. Too weak for armor: movement divided by 1.3 per missing point. Item info shows the requirement (`PrototypeStrength`).
+
 ## Score, high scores, and settings
 
 - Score: 10 per Rat, 30 per Albino Rat, 500 for Goo, 100 for each new floor reached, and on victory 1000 plus a time bonus of max(0, 900 − seconds played). The run clock counts unpaused play time. Score, time, and deepest floor are saved with the run.
