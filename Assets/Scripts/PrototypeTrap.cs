@@ -22,6 +22,9 @@ public sealed class PrototypeTrap : MonoBehaviour
     // Traps on the active floor by grid cell; floors that are switched off unregister their traps.
     private static readonly Dictionary<Vector2Int, PrototypeTrap> ActiveByCell = new();
 
+    [SerializeField, Range(0f, 1f)] private float spentShade = 0.3f;
+    [SerializeField, Range(0f, 2f)] private float armedGlow = 0.6f;
+
     private Vector2Int cell;
     private PrototypeTrapType trapType;
     private bool isHidden;
@@ -136,13 +139,18 @@ public sealed class PrototypeTrap : MonoBehaviour
             return;
         }
 
+        // Armed traps glow in their bright color; spent traps turn a dark, unlit shade.
+        var color = activated ? trapColor * spentShade : trapColor;
+        color.a = 1f;
+        var glow = activated ? Color.black : trapColor * armedGlow;
         foreach (var renderer in visualRenderers)
         {
             renderer.enabled = visible;
-            if (activated)
-            {
-                renderer.material.color = Color.Lerp(trapColor, Color.white, 0.35f);
-            }
+            var material = renderer.material;
+            material.color = color;
+            if (!material.HasProperty("_EmissionColor")) continue;
+            material.EnableKeyword("_EMISSION");
+            material.SetColor("_EmissionColor", glow);
         }
     }
 

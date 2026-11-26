@@ -18,7 +18,7 @@ Update this file at the end of each milestone.
 - Floors 1–4 use different per-run seeds and generated rooms, corridors, doors, traps and loot. Press Space near blue down stairs to descend or yellow up stairs to return to the previous floor; floor 1 has no previous floor. Each staircase occupies a 2×2 world-unit footprint.
 - Explored floors stay in memory during a run, preserving fog discovery and the state of enemies, traps, doors, chests and pickups. Their enemy wake timers pause while the player is on another floor. Restarting clears the run.
 - Floors 1–4 spawn rats only (stats in `PrototypeMobs`, scaled down from Pixel Dungeon). Rat: 4 health, 1–2 damage, brown. Albino Rat: 8 health, 1–2 damage, white, and a 50% chance per damaging bite to cause Bleeding (1 damage/second for 3 seconds). Each rat has a seeded `albinoRatChance` (default 1/30, as in Pixel Dungeon) to be albino. All mobs have 1 defense: each hit on them is reduced by 0–1, never below 1.
-- Rats use 3D models from the Rat Pack (`Assets/ThirdParty/Resources/RatPack/`): Rat uses the brown model (`Rat3`), Albino Rat the white one (`Rat1`). `PrototypeMobModels` loads the FBX, applies the palette texture, scales each model to 1.4x its hit-box length, and turns it to face the direction of travel. Each rat keeps an invisible box collider (same size as before) for hits; sleeping rats are drawn darker. Goo is still a green sphere.
+- Rats use 3D models from the Rat Pack (`Assets/ThirdParty/Resources/RatPack/`): Rat uses the brown model (`Rat3`), Albino Rat the white one (`Rat1`). `PrototypeMobModels` loads the FBX, applies the palette texture, scales each model to 2.8x its hit-box length (about 4 world units for a Rat), and turns it to face the direction of travel. Each rat keeps an invisible box collider (same size as before) for hits; sleeping rats are drawn darker. The pack has no animation or skeleton, so `PrototypeMobWalkMotion` fakes a walk: while a rat moves it bobs and rocks side to side at a rate tied to its speed, and settles when it stops. Goo is still a green sphere.
 - Enemy contact damage rolls a bell-curved range like Pixel Dungeon's `NormalIntRange`. Goo keeps its 18 health, size, and charge (fixed 2 damage), and its normal attacks now roll 1–3 damage with a 33% chance to cause Ooze (1 damage/second for 5 seconds). Bleeding and Ooze bypass armor.
 - Floor 5 generates a rectangular arena with a placeholder Goo boss. Defeating Goo drops the Amulet of Glory at its position. Press Space nearby to collect it, even with a full inventory, and enter the dedicated runtime `Victory` scene. The congratulations screen offers a return to the main menu.
 - The same player object carries health, inventory, hunger and status effects between floors. Press R after death to restart the run.
@@ -53,7 +53,7 @@ Update this file at the end of each milestone.
 - No stairs or cliffs.
 - Eight possible trap types using the source-inspired names: Toxic Gas, Fire, Paralytic Gas, Poison Dart, Alarm, Lightning, Gripping, and Summoning.
 - Trap colors: bright green, orange, yellow, purple, red, blue, grey, and light blue respectively.
-- Hidden trap visuals reveal when the trap is activated; visible traps use their type color from spawn.
+- Hidden trap visuals reveal when the trap is activated. Visible, armed traps show their bright type color with a glow; once activated (by the ranger or a thrown item) the plate turns a dark, unlit shade of that color (`spentShade` 0.3, `armedGlow` 0.6 on `PrototypeTrap`).
 - Enemies are stationary and wake visually when hit by the player.
 
 ## Player systems
@@ -76,7 +76,7 @@ Update this file at the end of each milestone.
 - In inventory, use WASD or arrow keys to select a slot, `J` to open or confirm an item action, and `Esc` to close its action menu. Potions heal 8 health, food restores 60 moving-seconds of hunger, and equipment can be equipped or unequipped. Both artifact/ring slots are selectable. Artifact/ring stat effects remain unimplemented.
 - Enemies now attack the player at close range with a cooldown. Death displays a restart prompt; `R` reloads the active scene.
 - Enemies, including Goo, show a health bar above their visual after taking damage. The bar tracks remaining health, stays hidden for undamaged enemies, and follows the enemy's fog-of-war visibility.
-- Opening the inventory pauses game time. Escape opens a pause menu with Continue and Quit to Main Menu; Continue resumes the run and quitting discards it. Exit Game closes a standalone build (Unity ignores application quit in the editor).
+- Opening the inventory pauses game time; closing it with `I` or `Esc` resumes play (with an item action menu or scroll targeting open, `Esc` backs out of that first). With the inventory closed, Escape opens a pause menu with Continue and Quit to Main Menu; Continue resumes the run and quitting saves it as a game in progress. Exit Game closes a standalone build (Unity ignores application quit in the editor).
 - The build scene list starts with MainMenu, followed by DungeonGameplay; opening MainMenu in the editor and pressing Play starts at the title screen.
 
 ## Menus and saving

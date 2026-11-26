@@ -19,8 +19,8 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         public PrototypeFogOfWar Fog;
     }
 
-    // Rat models are drawn a bit longer than their hit box so they read clearly from the camera.
-    private const float ModelLengthScale = 1.4f;
+    // Rat models are drawn well beyond their hit box (2x the earlier 1.4x) so they read clearly from the camera.
+    private const float ModelLengthScale = 2.8f;
 
     [Tooltip("Chance that a generated rat is an albino rat (Pixel Dungeon uses 1 in 30).")]
     [SerializeField, Range(0f, 1f)] private float albinoRatChance = 1f / 30f;

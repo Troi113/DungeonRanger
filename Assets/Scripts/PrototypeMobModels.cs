@@ -52,6 +52,8 @@ public static class PrototypeMobModels
         var scale = longest > 0.0001f ? length / longest : 1f;
         model.transform.localScale = Vector3.one * scale;
         model.transform.localPosition = new Vector3(-bounds.center.x * scale, floorY - bounds.min.y * scale, -bounds.center.z * scale);
+        // The pack has no animation, so a code-driven walk bobs and rocks the model while it moves.
+        holder.AddComponent<PrototypeMobWalkMotion>();
         return holder;
     }
 

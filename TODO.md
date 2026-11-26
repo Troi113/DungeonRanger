@@ -197,6 +197,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Playtest Goo's knockback distance and the longer charge.
 - [x] Scale traps to four times their width (full tile).
 - [ ] With full-tile traps, avoid trapping one-cell corridors and doorways so traps stay avoidable.
+- [x] Show armed traps bright and glowing, spent traps dark.
+- [ ] Check the armed-trap glow in a standalone build (URP may strip the emission variant for runtime-made materials; the bright vs dark color still shows).
 - [ ] Create a four-level procedural progression.
 - [ ] Create a fifth boss level.
 - [ ] Decide whether the first four levels share a sewer theme or use different themes.
@@ -306,7 +308,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Replace primitive enemies with original enemy assets.
 - [x] Use Rat Pack models for Rat (brown) and Albino Rat (white).
 - [ ] Confirm the Rat Pack's author and license and record them in Docs/CREDITS.md.
-- [ ] Playtest rat model size, facing, and visibility in fog; consider a walk animation.
+- [x] Add a code-driven walk motion (bob and rock) for the rat models.
+- [ ] Playtest rat model size, facing, walk motion, and visibility in fog.
 - [ ] Create dungeon floor and wall assets.
 - [ ] Create bow, arrow, and melee visual assets.
 - [ ] Improve slash animation.
