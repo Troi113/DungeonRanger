@@ -217,14 +217,19 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Start with a permanent bow in a general inventory slot; shooting does not require equipping it.
 - [x] Generate melee weapon pickups and allow equipping, swapping, and unequipping them.
 - [ ] Playtest and balance melee weapon damage, reach, and cooldown across the generated floors.
-- [ ] Add combat or stat effects for armor, artifacts, and rings.
+- [x] Add cloth, leather, and mail armor pickups (one per floor) that absorb a random 0–(tier + upgrades) damage per enemy hit.
+- [x] Give unidentified weapons and armor a chance (default 15%) to become cursed when equipped.
+- [ ] Playtest and balance armor absorption against enemy and Goo damage; enemies deal 1, so armor blocks many hits outright.
+- [ ] Decide whether heavier armor needs a drawback (Pixel Dungeon uses Strength requirements; DungeonRanger has no Strength yet).
+- [ ] Add combat or stat effects for artifacts and rings.
 - [x] Add Space-bar item pickup interaction.
 - [x] Add a key pickup and locked chest interaction.
 - [x] Add generated prototype items to LevelTest.
 - [x] Add stackable Challenge, Upgrade, Remove Curse, Teleportation, Identify, and Magic Mapping scrolls.
 - [x] Add per-run unidentified rune labels, item selection, curse removal, and melee weapon upgrades.
 - [ ] Add a real-time scroll-reading animation or delay if desired; scroll effects currently apply from the paused inventory.
-- [ ] Extend upgrade and identification effects to armor, rings, and wands when those systems exist.
+- [x] Extend Upgrade scrolls to armor.
+- [ ] Extend upgrade and identification effects to rings and wands when those systems exist.
 - [x] Make health potions usable from the inventory.
 - [ ] Make equipment slots affect combat or player stats.
 - [ ] Add item stack counts and duplicate-item behavior.

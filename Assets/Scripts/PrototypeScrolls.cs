@@ -57,7 +57,7 @@ public sealed class PrototypeScrolls : MonoBehaviour
         return id switch
         {
             "scroll_challenge" => "Alerts all enemies on this floor to your location.",
-            "scroll_upgrade" => "Choose a melee weapon to increase its damage and remove its curse.",
+            "scroll_upgrade" => "Choose a melee weapon or armor to improve it and remove its curse.",
             "scroll_remove_curse" => "Removes curses from carried and equipped items.",
             "scroll_teleportation" => "Teleports you to another safe cell on this floor.",
             "scroll_identify" => "Choose an unidentified scroll or equipment item to reveal it.",
@@ -86,7 +86,8 @@ public sealed class PrototypeScrolls : MonoBehaviour
     {
         if (item == null) return false;
         if (scrollId == "scroll_upgrade")
-            return item.EquipmentSlot == PrototypeEquipmentSlot.Weapon && PrototypeMeleeWeapons.TryGet(item.ItemId, out _);
+            return (item.EquipmentSlot == PrototypeEquipmentSlot.Weapon && PrototypeMeleeWeapons.TryGet(item.ItemId, out _)) ||
+                   (item.EquipmentSlot == PrototypeEquipmentSlot.Armor && PrototypeArmors.TryGet(item.ItemId, out _));
         if (scrollId == "scroll_identify")
             return IsScroll(item.ItemId) ? !IsKnown(item.ItemId) : item.EquipmentSlot != PrototypeEquipmentSlot.None && !item.IsIdentified;
         return false;
@@ -104,10 +105,10 @@ public sealed class PrototypeScrolls : MonoBehaviour
                 if (i != scrollIndex && CanTarget(scroll.ItemId, inventory.GetSlot(i)))
                 {
                     selectTarget = true;
-                    message = scroll.ItemId == "scroll_upgrade" ? "Select a melee weapon to upgrade." : "Select an unidentified item.";
+                    message = scroll.ItemId == "scroll_upgrade" ? "Select a melee weapon or armor to upgrade." : "Select an unidentified item.";
                     return true;
                 }
-            message = scroll.ItemId == "scroll_upgrade" ? "No melee weapon to upgrade." : "No unidentified item to identify.";
+            message = scroll.ItemId == "scroll_upgrade" ? "No melee weapon or armor to upgrade." : "No unidentified item to identify.";
             return false;
         }
 

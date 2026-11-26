@@ -708,6 +708,8 @@ public sealed class PrototypeLevelGenerator
 
         if (rooms.Count < 2) return;
 
+        SpawnArmor(itemRoot, OffsetRoomCell(rooms[1], 1, 1), new System.Random(seed + 911));
+
         var keyCell = OffsetRoomCell(rooms[1], -1, -1);
         PrototypeItemPickup.CreateRuntime(
             itemRoot,
@@ -776,6 +778,14 @@ public sealed class PrototypeLevelGenerator
         available.RemoveAt(choice);
         var pickup = PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{weapon.Id}",
             weapon.Id, weapon.Name, PrototypeEquipmentSlot.Weapon, weapon.Color);
+        pickup.SetEquipmentTraits(random.Next(5) == 0, false);
+    }
+
+    private static void SpawnArmor(Transform parent, Vector2Int cell, System.Random random)
+    {
+        var armor = PrototypeArmors.PickRandom(random);
+        var pickup = PrototypeItemPickup.CreateRuntime(parent, GridToWorld(cell, 0f), $"Item_{armor.Id}",
+            armor.Id, armor.Name, PrototypeEquipmentSlot.Armor, armor.Color);
         pickup.SetEquipmentTraits(random.Next(5) == 0, false);
     }
 

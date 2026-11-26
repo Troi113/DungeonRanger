@@ -36,6 +36,8 @@ public sealed class PrototypeInventory : MonoBehaviour
     public const int SlotCount = 20;
     private const int EquipmentSlotCount = 4;
 
+    [SerializeField, Range(0f, 1f)] private float equipCurseChance = 0.15f;
+
     private PrototypeInventoryItem[] slots;
 
     public int Capacity => SlotCount;
@@ -102,6 +104,8 @@ public sealed class PrototypeInventory : MonoBehaviour
         // Swapping keeps the replaced equipment in the original backpack slot.
         slots[inventoryIndex] = slots[targetIndex];
         slots[targetIndex] = item;
+        // Unidentified equipment may turn out cursed when worn; identifying it first makes it safe.
+        if (!item.IsIdentified && !item.IsCursed && UnityEngine.Random.value < equipCurseChance) item.IsCursed = true;
         if (item.IsCursed) item.IsIdentified = true;
         InventoryChanged?.Invoke();
         return true;
