@@ -11,6 +11,9 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         public Vector3 DownPosition;
     }
 
+    [Tooltip("Chance that a generated rat is an albino rat (Pixel Dungeon uses 1 in 30).")]
+    [SerializeField, Range(0f, 1f)] private float albinoRatChance = 1f / 30f;
+
     private PrototypePlayerMovement player;
     private GameObject floorRoot;
     private readonly Dictionary<int, FloorState> floors = new();
@@ -94,14 +97,18 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var enemies = new List<PrototypeEnemy>();
         if (Floor < 5)
         {
+            var mobRandom = new System.Random(seed + 77);
             foreach (var position in layout.EnemySpawns)
-                enemies.Add(CreateEnemy(position, layout, seed + enemies.Count, false));
+            {
+                var data = mobRandom.NextDouble() < albinoRatChance ? PrototypeMobs.AlbinoRat : PrototypeMobs.Rat;
+                enemies.Add(CreateEnemy(position, layout, seed + enemies.Count, false, data));
+            }
             var director = floorRoot.AddComponent<PrototypeEnemyWakeDirector>();
             director.Initialize(enemies, seed + 500);
         }
         else
         {
-            var goo = CreateEnemy(layout.ExitSpawn, layout, seed + 500, true);
+            var goo = CreateEnemy(layout.ExitSpawn, layout, seed + 500, true, PrototypeMobs.Goo);
             var bossFloor = floorRoot.transform;
             goo.Defeated += () => PrototypeVictoryAmulet.Create(bossFloor, goo.transform.position, this);
             enemies.Add(goo);
@@ -125,16 +132,18 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         controller.enabled = true;
     }
 
-    private PrototypeEnemy CreateEnemy(Vector3 position, PrototypeLevelGenerator.Layout layout, int seed, bool boss)
+    private PrototypeEnemy CreateEnemy(Vector3 position, PrototypeLevelGenerator.Layout layout, int seed, bool boss, PrototypeMobs.MobData data)
     {
         var obj = GameObject.CreatePrimitive(boss ? PrimitiveType.Sphere : PrimitiveType.Cube);
-        obj.name = boss ? "Goo_Boss" : "Enemy_Sleeping";
+        obj.name = boss ? "Goo_Boss" : $"Enemy_{data.Name.Replace(' ', '_')}";
         obj.transform.SetParent(floorRoot.transform, false);
-        obj.transform.position = position;
-        obj.transform.localScale = boss ? new Vector3(3f, 2f, 3f) : new Vector3(0.9f, 2f, 0.9f);
+        // Regular mobs stand on the floor; their height stays above the ranger's arrow height.
+        obj.transform.position = boss ? position : new Vector3(position.x, data.Scale.y * 0.5f, position.z);
+        obj.transform.localScale = data.Scale;
         var enemy = obj.AddComponent<PrototypeEnemy>();
         enemy.Initialize(player, layout.WalkableCells, seed, layout.BlockedEdges);
-        if (boss) enemy.ConfigureBoss(18);
+        if (boss) enemy.ConfigureBoss(data.Health);
+        else enemy.Configure(data);
         return enemy;
     }
 

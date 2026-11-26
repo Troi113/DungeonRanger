@@ -94,7 +94,11 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add enemy attack windup and cooldown.
 - [ ] Add enemy hit reactions.
 - [ ] Add enemy death feedback and cleanup.
-- [ ] Add a simple melee enemy.
+- [x] Add rat and albino rat mobs for floors 1–4, plus Goo damage range, defense, and ooze.
+- [ ] Show active status effects (bleeding, ooze, poison) on the HUD.
+- [ ] Playtest and balance rat/albino/Goo health, damage, defense, and the 1/30 albino chance.
+- [ ] Consider Pixel Dungeon-style hit/miss accuracy once there is hit feedback to show misses.
+- [ ] TrapsSleep and LevelTest still spawn the old generic enemy (via `PrototypeBootstrap`).
 - [ ] Add a simple ranged enemy.
 - [ ] Add at least one enemy that creates a positioning challenge for the ranger.
 - [ ] Add enemy experience or score rewards.

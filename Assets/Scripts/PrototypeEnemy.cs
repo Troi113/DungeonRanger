@@ -17,6 +17,10 @@ public sealed class PrototypeEnemy : MonoBehaviour
     [SerializeField] private float attackRange = 2.4f;
     [SerializeField] private float attackCooldown = 1.2f;
     [SerializeField] private int attackDamage = 1;
+    [SerializeField] private int minAttackDamage = 1;
+    [SerializeField] private int maxAttackDamage = 1;
+    [Tooltip("Hits on this enemy are reduced by a random 0..defense, never below 1.")]
+    [SerializeField] private int defense;
     [SerializeField] private float hitSlowDuration = 1.5f;
     [SerializeField, Range(0f, 1f)] private float hitSpeedMultiplier = 0.5f;
 
@@ -38,6 +42,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
     private PrototypeGooCharge charge;
     private int maxHealth;
     private bool hasTakenDamage;
+    private PrototypeMobs.MobData mob;
+    private bool hasMobData;
     public event Action Defeated;
 
     public bool IsAlive => health > 0 && this != null;
@@ -46,6 +52,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
     public int CurrentHealth => health;
     public int MaxHealth => maxHealth;
     public bool HasTakenDamage => hasTakenDamage;
+    public string MobName => hasMobData ? mob.Name : "Enemy";
 
     private void Awake()
     {
@@ -147,6 +154,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
 
         WakeUp();
+        if (defense > 0) damage = Mathf.Max(1, damage - UnityEngine.Random.Range(0, defense + 1));
         if (slowOnHit && !isBoss && damage > 0) slowRemaining = hitSlowDuration;
         if (player != null)
         {
@@ -163,8 +171,30 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
     }
 
+    /// <summary>Applies a regular mob's stats; call right after Initialize.</summary>
+    public void Configure(PrototypeMobs.MobData data)
+    {
+        ApplyMobData(data);
+        health = maxHealth = Mathf.Max(1, data.Health);
+        hasTakenDamage = false;
+        awakeColor = data.Color;
+        sleepingColor = data.Color * 0.4f;
+        sleepingColor.a = 1f;
+        if (!IsAwake) ApplySleepVisual();
+    }
+
+    private void ApplyMobData(PrototypeMobs.MobData data)
+    {
+        mob = data;
+        hasMobData = true;
+        minAttackDamage = data.MinDamage;
+        maxAttackDamage = Mathf.Max(data.MinDamage, data.MaxDamage);
+        defense = Mathf.Max(0, data.Defense);
+    }
+
     public void ConfigureBoss(int bossHealth)
     {
+        ApplyMobData(PrototypeMobs.Goo);
         isBoss = true;
         health = Mathf.Max(1, bossHealth);
         maxHealth = health;
@@ -173,6 +203,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
         patrolSpeed = 2.5f;
         chaseSpeed = 3f;
         attackRange = 3f;
+        // Charge damage stays fixed at 2; normal contact attacks roll Goo's damage range.
         attackDamage = 2;
         attackCooldown = 1.8f;
         WakeUp();
@@ -225,7 +256,10 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
         nextAttackTime = Time.time + attackCooldown;
         var stats = player.GetComponent<PrototypePlayerStats>();
-        stats?.TakeAttackDamage(attackDamage);
+        if (stats == null) return;
+        var dealt = stats.TakeAttackDamage(PrototypeMobs.RollDamage(minAttackDamage, maxAttackDamage));
+        if (dealt > 0 && hasMobData && mob.HasOnHitEffect && UnityEngine.Random.value < mob.OnHitChance)
+            player.GetComponent<PrototypeStatusEffects>()?.Apply(mob.OnHitEffect, mob.OnHitDuration);
     }
 
     public void SetVisible(bool visible)

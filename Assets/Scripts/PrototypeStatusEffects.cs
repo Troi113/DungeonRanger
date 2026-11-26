@@ -6,7 +6,9 @@ public enum PrototypeStatusEffectType
     Poisoned,
     Toxic,
     Paralyzed,
-    Gripped
+    Gripped,
+    Bleeding,
+    Oozed
 }
 
 /// <summary>
@@ -47,7 +49,7 @@ public sealed class PrototypeStatusEffects : MonoBehaviour
 
         ListPool<PrototypeStatusEffectType>.Release(expired);
 
-        if ((Has(PrototypeStatusEffectType.Poisoned) || Has(PrototypeStatusEffectType.Toxic)) &&
+        if (IsDamageOverTimeActive() &&
             Time.time >= nextDamageTick)
         {
             nextDamageTick = Time.time + damageTickInterval;
@@ -61,7 +63,7 @@ public sealed class PrototypeStatusEffects : MonoBehaviour
             expirationTimes.TryGetValue(effect, out var currentExpiration) ? currentExpiration : 0f,
             Time.time + Mathf.Max(0.1f, duration));
 
-        if (effect == PrototypeStatusEffectType.Poisoned || effect == PrototypeStatusEffectType.Toxic)
+        if (IsDamageOverTime(effect))
         {
             if (nextDamageTick <= Time.time)
             {
@@ -69,6 +71,14 @@ public sealed class PrototypeStatusEffects : MonoBehaviour
             }
         }
     }
+
+    private static bool IsDamageOverTime(PrototypeStatusEffectType effect) =>
+        effect == PrototypeStatusEffectType.Poisoned || effect == PrototypeStatusEffectType.Toxic ||
+        effect == PrototypeStatusEffectType.Bleeding || effect == PrototypeStatusEffectType.Oozed;
+
+    private bool IsDamageOverTimeActive() =>
+        Has(PrototypeStatusEffectType.Poisoned) || Has(PrototypeStatusEffectType.Toxic) ||
+        Has(PrototypeStatusEffectType.Bleeding) || Has(PrototypeStatusEffectType.Oozed);
 
     public bool Has(PrototypeStatusEffectType effect)
     {

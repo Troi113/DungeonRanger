@@ -23,13 +23,15 @@ public sealed class PrototypePlayerStats : MonoBehaviour
         CurrentHealth = maxHealth;
     }
 
-    /// <summary>Enemy attack damage; equipped armor absorbs a random 0..max amount per hit.</summary>
-    public void TakeAttackDamage(int amount)
+    /// <summary>Enemy attack damage; equipped armor absorbs a random 0..max amount per hit. Returns damage dealt.</summary>
+    public int TakeAttackDamage(int amount)
     {
         if (inventory == null) inventory = GetComponent<PrototypeInventory>();
         var armor = inventory != null ? inventory.GetSlot(1) : null;
         var maxAbsorb = PrototypeArmors.MaxAbsorb(armor);
+        var before = CurrentHealth;
         TakeDamage(amount - UnityEngine.Random.Range(0, maxAbsorb + 1));
+        return before - CurrentHealth;
     }
 
     public void TakeDamage(int amount)
