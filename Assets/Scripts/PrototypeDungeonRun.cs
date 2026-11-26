@@ -19,6 +19,9 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         public PrototypeFogOfWar Fog;
     }
 
+    // Rat models are drawn a bit longer than their hit box so they read clearly from the camera.
+    private const float ModelLengthScale = 1.4f;
+
     [Tooltip("Chance that a generated rat is an albino rat (Pixel Dungeon uses 1 in 30).")]
     [SerializeField, Range(0f, 1f)] private float albinoRatChance = 1f / 30f;
 
@@ -379,13 +382,18 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
 
     private PrototypeEnemy CreateEnemy(Vector3 position, PrototypeLevelGenerator.Layout layout, int seed, bool boss, PrototypeMobs.MobData data)
     {
-        var obj = GameObject.CreatePrimitive(boss ? PrimitiveType.Sphere : PrimitiveType.Cube);
+        var useModel = !boss && !string.IsNullOrEmpty(data.ModelName);
+        // Modeled mobs get an unscaled root with a box collider; others are a scaled primitive.
+        var obj = useModel ? new GameObject() : GameObject.CreatePrimitive(boss ? PrimitiveType.Sphere : PrimitiveType.Cube);
         obj.name = boss ? "Goo_Boss" : $"Enemy_{data.Name.Replace(' ', '_')}";
         obj.transform.SetParent(floorRoot.transform, false);
-        // Regular mobs stand on the floor; their height stays above the ranger's arrow height.
+        // Regular mobs stand on the floor; their hit box stays above the ranger's arrow height.
         obj.transform.position = boss ? position : new Vector3(position.x, data.Scale.y * 0.5f, position.z);
-        obj.transform.localScale = data.Scale;
+        if (useModel) obj.AddComponent<BoxCollider>().size = data.Scale;
+        else obj.transform.localScale = data.Scale;
         var enemy = obj.AddComponent<PrototypeEnemy>();
+        if (useModel)
+            enemy.UseModel(PrototypeMobModels.Create(data.ModelName, obj.transform, data.Scale.z * ModelLengthScale, -data.Scale.y * 0.5f));
         enemy.Initialize(player, layout.WalkableCells, seed, layout.BlockedEdges);
         if (boss) enemy.ConfigureBoss(data.Health);
         else enemy.Configure(data);

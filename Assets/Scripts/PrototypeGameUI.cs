@@ -64,6 +64,13 @@ public sealed class PrototypeGameUI : MonoBehaviour
             }
             else if (IsPauseMenuOpen)
                 ResumeGame();
+            else if (IsInventoryOpen)
+            {
+                // Esc on the inventory grid closes it and resumes play.
+                IsInventoryOpen = false;
+                inventoryMessage = null;
+                ApplyPause();
+            }
             else
             {
                 IsInventoryOpen = false;
@@ -307,7 +314,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         }
 
         PrototypeUITheme.Label(new Rect(panelX + 24f, panelY + panelHeight - 52f, panelWidth - 48f, 30f),
-            inventoryMessage ?? "WASD / arrows: move    J: select    Esc: back", 13,
+            inventoryMessage ?? "WASD / arrows: move    J: select    Esc / I: close", 13,
             inventoryMessage != null ? PrototypeUITheme.Parchment : PrototypeUITheme.Muted, TextAnchor.MiddleCenter, false, true);
         if (itemActionsOpen) DrawItemActions();
     }

@@ -304,6 +304,9 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Create a consistent palette.
 - [ ] Replace primitive player model with an original ranger asset.
 - [ ] Replace primitive enemies with original enemy assets.
+- [x] Use Rat Pack models for Rat (brown) and Albino Rat (white).
+- [ ] Confirm the Rat Pack's author and license and record them in Docs/CREDITS.md.
+- [ ] Playtest rat model size, facing, and visibility in fog; consider a walk animation.
 - [ ] Create dungeon floor and wall assets.
 - [ ] Create bow, arrow, and melee visual assets.
 - [ ] Improve slash animation.

@@ -18,6 +18,7 @@ Update this file at the end of each milestone.
 - Floors 1–4 use different per-run seeds and generated rooms, corridors, doors, traps and loot. Press Space near blue down stairs to descend or yellow up stairs to return to the previous floor; floor 1 has no previous floor. Each staircase occupies a 2×2 world-unit footprint.
 - Explored floors stay in memory during a run, preserving fog discovery and the state of enemies, traps, doors, chests and pickups. Their enemy wake timers pause while the player is on another floor. Restarting clears the run.
 - Floors 1–4 spawn rats only (stats in `PrototypeMobs`, scaled down from Pixel Dungeon). Rat: 4 health, 1–2 damage, brown. Albino Rat: 8 health, 1–2 damage, white, and a 50% chance per damaging bite to cause Bleeding (1 damage/second for 3 seconds). Each rat has a seeded `albinoRatChance` (default 1/30, as in Pixel Dungeon) to be albino. All mobs have 1 defense: each hit on them is reduced by 0–1, never below 1.
+- Rats use 3D models from the Rat Pack (`Assets/ThirdParty/Resources/RatPack/`): Rat uses the brown model (`Rat3`), Albino Rat the white one (`Rat1`). `PrototypeMobModels` loads the FBX, applies the palette texture, scales each model to 1.4x its hit-box length, and turns it to face the direction of travel. Each rat keeps an invisible box collider (same size as before) for hits; sleeping rats are drawn darker. Goo is still a green sphere.
 - Enemy contact damage rolls a bell-curved range like Pixel Dungeon's `NormalIntRange`. Goo keeps its 18 health, size, and charge (fixed 2 damage), and its normal attacks now roll 1–3 damage with a 33% chance to cause Ooze (1 damage/second for 5 seconds). Bleeding and Ooze bypass armor.
 - Floor 5 generates a rectangular arena with a placeholder Goo boss. Defeating Goo drops the Amulet of Glory at its position. Press Space nearby to collect it, even with a full inventory, and enter the dedicated runtime `Victory` scene. The congratulations screen offers a return to the main menu.
 - The same player object carries health, inventory, hunger and status effects between floors. Press R after death to restart the run.
@@ -114,7 +115,7 @@ Current prototype movement speed is 8 Unity world units per second.
 | `K` | Punch or attack with an equipped melee weapon in the facing direction |
 | `I` | Open/close the 4x5 inventory grid |
 | `WASD` / arrows, `J`, `Esc` | Navigate inventory, select/confirm an action, and deselect |
-| `Esc` | Open/close the pause menu when no inventory item action is open |
+| `Esc` | Close an item action menu or cancel scroll targeting; otherwise close the inventory and resume. With the inventory closed, open/close the pause menu |
 | `Space` | Pick up a nearby item, open a chest while facing it with a key, or travel using stairs |
 | `L` | Reserved for a future inventory/quick-slot action. Do not implement until defined. |
 

@@ -25,6 +25,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float hitSpeedMultiplier = 0.5f;
 
     private Renderer enemyRenderer;
+    private Renderer[] modelRenderers;
+    private MaterialPropertyBlock tintBlock;
     private PrototypePlayerMovement player;
     private List<Vector2Int> walkableCells;
     private HashSet<Vector2Int> walkableLookup;
@@ -52,6 +54,39 @@ public sealed class PrototypeEnemy : MonoBehaviour
     public int CurrentHealth => health;
     public int MaxHealth => maxHealth;
     public bool HasTakenDamage => hasTakenDamage;
+    public bool IsVisible { get; private set; } = true;
+
+    /// <summary>World bounds of whatever represents this enemy on screen.</summary>
+    public Bounds VisualBounds
+    {
+        get
+        {
+            if (modelRenderers == null || modelRenderers.Length == 0)
+                return enemyRenderer != null ? enemyRenderer.bounds : new Bounds(transform.position, Vector3.one);
+            var bounds = modelRenderers[0].bounds;
+            for (var i = 1; i < modelRenderers.Length; i++) bounds.Encapsulate(modelRenderers[i].bounds);
+            return bounds;
+        }
+    }
+
+    /// <summary>Shows a 3D model instead of a colored shape; sleeping models are drawn darker.</summary>
+    public void UseModel(GameObject model)
+    {
+        if (model == null) return;
+        modelRenderers = model.GetComponentsInChildren<Renderer>(true);
+        tintBlock ??= new MaterialPropertyBlock();
+        if (IsAwake) ApplyModelTint(Color.white);
+        else ApplySleepVisual();
+        SetVisible(IsVisible);
+    }
+
+    private void ApplyModelTint(Color tint)
+    {
+        if (modelRenderers == null) return;
+        tintBlock.SetColor("_BaseColor", tint);
+        tintBlock.SetColor("_Color", tint);
+        foreach (var renderer in modelRenderers) renderer.SetPropertyBlock(tintBlock);
+    }
     public string MobName => hasMobData ? mob.Name : "Enemy";
 
     private void Awake()
@@ -242,7 +277,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
 
         IsAwake = true;
-        if (enemyRenderer != null)
+        if (modelRenderers != null) ApplyModelTint(Color.white);
+        else if (enemyRenderer != null)
         {
             enemyRenderer.material.color = awakeColor;
         }
@@ -275,7 +311,12 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
     public void SetVisible(bool visible)
     {
-        if (enemyRenderer != null)
+        IsVisible = visible;
+        if (modelRenderers != null)
+        {
+            foreach (var renderer in modelRenderers) renderer.enabled = visible;
+        }
+        else if (enemyRenderer != null)
         {
             enemyRenderer.enabled = visible;
         }
@@ -404,7 +445,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
     private void ApplySleepVisual()
     {
-        if (enemyRenderer != null)
+        if (modelRenderers != null) ApplyModelTint(new Color(0.45f, 0.45f, 0.5f));
+        else if (enemyRenderer != null)
         {
             enemyRenderer.material.color = sleepingColor;
         }

@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>Screen-facing health bar positioned above a damaged enemy.</summary>
-[RequireComponent(typeof(PrototypeEnemy), typeof(Renderer))]
+[RequireComponent(typeof(PrototypeEnemy))]
 public sealed class PrototypeEnemyHealthBar : MonoBehaviour
 {
     [SerializeField] private float widthPixels = 56f;
@@ -9,24 +9,22 @@ public sealed class PrototypeEnemyHealthBar : MonoBehaviour
     [SerializeField] private float heightOffset = 0.4f;
 
     private PrototypeEnemy enemy;
-    private Renderer enemyRenderer;
     private Camera viewCamera;
 
     private void Awake()
     {
         enemy = GetComponent<PrototypeEnemy>();
-        enemyRenderer = GetComponent<Renderer>();
     }
 
     private void OnGUI()
     {
         if (Event.current.type != EventType.Repaint || PrototypeGameUI.IsGamePaused ||
-            !enemy.IsAlive || !enemy.HasTakenDamage || !enemyRenderer.enabled) return;
+            !enemy.IsAlive || !enemy.HasTakenDamage || !enemy.IsVisible) return;
 
         if (viewCamera == null) viewCamera = Camera.main;
         if (viewCamera == null) return;
 
-        var bounds = enemyRenderer.bounds;
+        var bounds = enemy.VisualBounds;
         var worldPosition = new Vector3(bounds.center.x, bounds.max.y + heightOffset, bounds.center.z);
         var position = viewCamera.WorldToScreenPoint(worldPosition);
         if (position.z <= 0f || position.x < 0f || position.x > Screen.width || position.y < 0f || position.y > Screen.height) return;
