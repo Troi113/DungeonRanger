@@ -23,6 +23,7 @@ public sealed class PrototypeStairs : PrototypeInteractable
     public override void Interact(PrototypePlayerMovement player)
     {
         if (run == null) return;
+        if (!leadsDown && run.IsBossSealed) { PrototypeGameUI.ShowNotice("The way back is sealed!"); return; }
         if (leadsDown) run.Descend();
         else if (run.Floor <= 1) PrototypeGameUI.ShowNotice("You cannot leave the dungeon!");
         else run.Ascend();

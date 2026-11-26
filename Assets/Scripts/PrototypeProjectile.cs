@@ -48,7 +48,12 @@ public sealed class PrototypeProjectile : MonoBehaviour
             hitObstacle = wall && enemy == null;
         }
 
-        if (target != null) target.TakeDamage(damage, true);
+        if (target != null)
+        {
+            target.TakeDamage(damage, true);
+            PrototypeGameFeel.Sparks(transform.position, new Color(0.8f, 0.95f, 1f), 8);
+            PrototypeGameFeel.Shake(0.1f, 0.1f);
+        }
         if (target != null || hitObstacle) { Destroy(gameObject); return; }
         transform.position += direction * distance;
         remainingDistance -= distance;

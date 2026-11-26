@@ -238,6 +238,12 @@ public sealed class PrototypeEnemy : MonoBehaviour
         defense = Mathf.Max(0, data.Defense);
     }
 
+    public void Heal(int amount)
+    {
+        if (!IsAlive || amount <= 0) return;
+        health = Mathf.Min(maxHealth, health + amount);
+    }
+
     /// <summary>Restores saved health, position, and wake state without triggering events.</summary>
     public void RestoreState(int savedHealth, Vector3 position, bool awake)
     {

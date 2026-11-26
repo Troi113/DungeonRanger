@@ -18,7 +18,7 @@ public sealed class PrototypeMainMenu : MonoBehaviour
         new GameObject("MainMenuUI").AddComponent<PrototypeMainMenu>();
     }
 
-    private enum MenuView { Main, GamesInProgress, ConfirmNewGame, Leaderboards }
+    private enum MenuView { Main, GamesInProgress, ConfirmNewGame, Leaderboards, Settings }
 
     private MenuView view = MenuView.Main;
     private PrototypeSaveData savedGame;
@@ -33,6 +33,7 @@ public sealed class PrototypeMainMenu : MonoBehaviour
             case MenuView.GamesInProgress: DrawGamesInProgress(); break;
             case MenuView.ConfirmNewGame: DrawConfirmNewGame(); break;
             case MenuView.Leaderboards: DrawLeaderboards(); break;
+            case MenuView.Settings: DrawSettings(); break;
         }
     }
 
@@ -48,7 +49,7 @@ public sealed class PrototypeMainMenu : MonoBehaviour
     private void DrawMain()
     {
         const float width = 440f;
-        const float height = 470f;
+        const float height = 530f;
         var x = (PrototypeUITheme.Width - width) * 0.5f;
         var y = (PrototypeUITheme.Height - height) * 0.5f;
         PrototypeUITheme.DrawPanel(new Rect(x, y, width, height));
@@ -65,7 +66,8 @@ public sealed class PrototypeMainMenu : MonoBehaviour
             view = MenuView.GamesInProgress;
         }
         if (PrototypeUITheme.Button(new Rect(x + 70f, y + 256f, width - 140f, 48f), "Leaderboards")) view = MenuView.Leaderboards;
-        if (PrototypeUITheme.ImageButton(new Rect(x + width * 0.5f - 96f, y + 320f, 192f, 96f), PrototypeUITheme.MenuButton(13)))
+        if (PrototypeUITheme.Button(new Rect(x + 70f, y + 314f, width - 140f, 48f), "Settings")) view = MenuView.Settings;
+        if (PrototypeUITheme.ImageButton(new Rect(x + width * 0.5f - 96f, y + 380f, 192f, 96f), PrototypeUITheme.MenuButton(13)))
             Application.Quit();
     }
 
@@ -120,9 +122,46 @@ public sealed class PrototypeMainMenu : MonoBehaviour
 
     private void DrawLeaderboards()
     {
-        var panel = Panel(460f, 300f, "Leaderboards", PrototypeUITheme.Trophy);
-        PrototypeUITheme.Label(new Rect(panel.x + 36f, panel.y + 90f, panel.width - 72f, 40f), "No entries yet.", 15, PrototypeUITheme.Muted, TextAnchor.MiddleCenter);
-        if (PrototypeUITheme.Button(new Rect(panel.x + 40f, panel.y + 210f, panel.width - 80f, 48f), "Back")) view = MenuView.Main;
+        var entries = PrototypeLeaderboard.Entries;
+        var rows = Mathf.Max(1, entries.Count);
+        var panel = Panel(520f, 190f + rows * 30f, "Leaderboards", PrototypeUITheme.Trophy);
+        var x = panel.x + 36f;
+        var y = panel.y + 74f;
+        if (entries.Count == 0)
+            PrototypeUITheme.Label(new Rect(x, y, panel.width - 72f, 30f), "No runs recorded yet.", 15, PrototypeUITheme.Muted, TextAnchor.MiddleCenter);
+        else
+        {
+            PrototypeUITheme.Label(new Rect(x, y, 40f, 24f), "#", 13, PrototypeUITheme.Muted);
+            PrototypeUITheme.Label(new Rect(x + 40f, y, 90f, 24f), "Score", 13, PrototypeUITheme.Muted);
+            PrototypeUITheme.Label(new Rect(x + 130f, y, 110f, 24f), "Result", 13, PrototypeUITheme.Muted);
+            PrototypeUITheme.Label(new Rect(x + 240f, y, 70f, 24f), "Time", 13, PrototypeUITheme.Muted);
+            PrototypeUITheme.Label(new Rect(x + 310f, y, 140f, 24f), "Date", 13, PrototypeUITheme.Muted);
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                var rowY = y + 26f + i * 30f;
+                var color = i == 0 ? PrototypeUITheme.Gold : PrototypeUITheme.Parchment;
+                PrototypeUITheme.Label(new Rect(x, rowY, 40f, 28f), (i + 1).ToString(), 15, color, TextAnchor.MiddleLeft, true);
+                PrototypeUITheme.Label(new Rect(x + 40f, rowY, 90f, 28f), e.Score.ToString(), 15, color, TextAnchor.MiddleLeft, true);
+                PrototypeUITheme.Label(new Rect(x + 130f, rowY, 110f, 28f), e.Victory ? "Victory" : $"Floor {e.Floor}", 14, e.Victory ? PrototypeUITheme.Gold : PrototypeUITheme.Parchment);
+                PrototypeUITheme.Label(new Rect(x + 240f, rowY, 70f, 28f), PrototypeLeaderboard.FormatTime(e.Seconds), 14, PrototypeUITheme.Parchment);
+                PrototypeUITheme.Label(new Rect(x + 310f, rowY, 140f, 28f), e.DateText, 13, PrototypeUITheme.Muted);
+            }
+        }
+        if (PrototypeUITheme.Button(new Rect(panel.x + 40f, panel.yMax - 72f, panel.width - 80f, 48f), "Back")) view = MenuView.Main;
+    }
+
+    private void DrawSettings()
+    {
+        var panel = Panel(460f, 330f, "Settings", PrototypeUITheme.Icon(1, 3));
+        var x = panel.x + 40f;
+        var width = panel.width - 80f;
+        PrototypeUITheme.Label(new Rect(x, panel.y + 80f, width, 26f), $"Volume  {Mathf.RoundToInt(PrototypeSettings.Volume * 100f)}%", 16, PrototypeUITheme.Parchment, TextAnchor.MiddleLeft, true);
+        var volume = GUI.HorizontalSlider(new Rect(x, panel.y + 114f, width, 20f), PrototypeSettings.Volume, 0f, 1f);
+        if (!Mathf.Approximately(volume, PrototypeSettings.Volume)) PrototypeSettings.SetVolume(volume);
+        if (PrototypeUITheme.Button(new Rect(x, panel.y + 152f, width, 46f), PrototypeSettings.Fullscreen ? "Fullscreen: On" : "Fullscreen: Off"))
+            PrototypeSettings.SetFullscreen(!PrototypeSettings.Fullscreen);
+        if (PrototypeUITheme.Button(new Rect(x, panel.y + 250f, width, 46f), "Back")) view = MenuView.Main;
     }
 
     private static void StartNewGame()

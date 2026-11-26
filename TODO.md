@@ -36,7 +36,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Test room-boundary collision from every direction.
 - [ ] Add simple hit feedback to enemies.
 - [x] Add an enemy health bar that appears after damage and respects fog of war.
-- [ ] Add temporary damage flashes or other hit feedback.
+- [x] Add hit feedback: hit-stop, camera shake, sparks, enemy white flash and squash.
 - [x] Add two sleeping enemies that wake when hit.
 - [x] Add a simple player health value with a 20-health prototype default.
 - [x] Add player death and restart behavior.
@@ -196,7 +196,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Lengthen and speed up Goo's charge (18 units at 4.5x speed) and knock the ranger back on hit.
 - [ ] Playtest Goo's knockback distance and the longer charge.
 - [x] Give Goo an original slime look with silly hit faces, triple its size, and add a slowing slime trail that blocks tumbling.
-- [ ] Playtest giant Goo in the boss arena (fit, charge against walls, slime trail strength).
+- [ ] Playtest giant Goo: hit faces, slime trail slowdown/no-tumble, charge and knockback at the new size (look and arena fit checked).
 - [x] Scale traps to four times their width (full tile).
 - [ ] With full-tile traps, avoid trapping one-cell corridors and doorways so traps stay avoidable.
 - [x] Show armed traps bright and glowing, spent traps dark.
@@ -205,7 +205,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Playtest search hold time, 6-tile range, and passive awareness; consider a Ring of Detection or awareness growth later.
 - [ ] Check the armed-trap glow in a standalone build (URP may strip the emission variant for runtime-made materials; the bright vs dark color still shows).
 - [ ] Create a four-level procedural progression.
-- [ ] Create a fifth boss level.
+- [x] Create a fifth boss level (Pixel Dungeon SewerBossLevel style: sewer layout, water patches, Goo's room, sealed stairs).
+- [ ] Playtest floor 5: Goo room size for the 3x Goo, water healing rate, seal/unseal; save/restore does not keep the seal.
 - [ ] Decide whether the first four levels share a sewer theme or use different themes.
 - [ ] Level 1: tutorial layout and basic enemies.
 - [ ] Level 2: denser encounters and more environmental variation.
@@ -272,17 +273,17 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 - [x] Create a title screen.
 - [x] Add a start game button.
-- [ ] Add a settings button or settings panel.
+- [x] Add a settings panel (volume, fullscreen) saved in PlayerPrefs.
 - [x] Add a quit or close-game option appropriate for the target platform.
-- [ ] Create a game-over screen.
+- [x] Create a game-over screen with score, Retry, and Main Menu.
 - [x] Create a prototype victory screen with a return-to-menu option.
 - [ ] Add restart and return-to-title actions.
 
 ### In-game UI
 
 - [x] Add player health display.
-- [ ] Add score display.
-- [ ] Add timer or level display.
+- [x] Add score display.
+- [x] Add timer and floor display.
 - [ ] Add enemy count or encounter status.
 - [ ] Add bow cooldown or ammunition display if needed.
 - [x] Add inventory/quick-slot display.
@@ -294,12 +295,13 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Save the run on quit and restore it on Continue; delete it on death or victory.
 - [ ] Playtest save/continue across several floors, after dropping/throwing items, and after Goo dies.
 - [ ] Save status effects and door states if needed.
-- [ ] Fill in the Leaderboards screen (currently an empty placeholder with Back).
+- [x] Fill in the Leaderboards screen.
+- [ ] Playtest score values, game-over screen buttons, and leaderboard after a death and a win.
 - [x] Restore the pixel-art UI and style Games in Progress, the new-game confirmation, Leaderboards, and the Drop/Throw actions.
 - [ ] Playtest the styled inventory, item-action popup (with Drop/Throw), pause menu, and death screen.
 - [ ] Check the UI colors in a standalone build (the Linear color-space correction was verified only in the editor).
-- [ ] Add persistent high score.
-- [ ] Add persistent user settings.
+- [x] Add persistent high score (top 10 leaderboard).
+- [x] Add persistent user settings.
 - [ ] Add persistent audio and control settings if used.
 - [ ] Add player health persistence between scenes.
 - [ ] Add score persistence between scenes.
@@ -322,11 +324,13 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Playtest rat model size, facing, walk motion, and visibility in fog.
 - [ ] Create dungeon floor and wall assets.
 - [ ] Create bow, arrow, and melee visual assets.
-- [ ] Improve slash animation.
+- [x] Replace the box swing with code-driven punch, slash, and stab animations and weapon models in hand.
+- [ ] Playtest attack poses and feel (wind-up length, hit-stop, shake strength, trail placement) and tune.
 - [ ] Add projectile trail or impact effect.
 - [ ] Add enemy death effects.
 - [ ] Add player damage feedback.
-- [ ] Add ambient dungeon audio.
+- [x] Add music: menu, dungeon, Goo battle, and victory tracks (generated, replaceable).
+- [ ] Listen to the generated tracks and replace any you dislike.
 - [ ] Add bow, melee, hit, pickup, and UI sounds.
 - [ ] Add lighting and atmosphere after the level layouts are stable.
 - [ ] Record asset sources and credits in the project documentation.

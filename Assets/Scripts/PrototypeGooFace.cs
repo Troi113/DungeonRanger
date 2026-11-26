@@ -47,8 +47,8 @@ public sealed class PrototypeGooFace : MonoBehaviour
 
         normal = new GameObject("Face_Normal");
         normal.transform.SetParent(face, false);
-        Eye(normal.transform, -0.32f, r, h, front, 0.22f, white, black);
-        Eye(normal.transform, 0.32f, r, h, front, 0.22f, white, black);
+        Eye(normal.transform, -0.32f, r, h, front, 0.3f, white, black);
+        Eye(normal.transform, 0.32f, r, h, front, 0.3f, white, black);
         Part("Mouth", normal.transform, PrimitiveType.Cube, new Vector3(0f, -h * 0.2f, front), new Vector3(r * 0.22f, h * 0.04f, 0.05f), mouthColor);
 
         silly = new GameObject[3];
@@ -66,8 +66,8 @@ public sealed class PrototypeGooFace : MonoBehaviour
         // Shocked: O O with an open O mouth.
         silly[1] = new GameObject("Face_Shocked");
         silly[1].transform.SetParent(face, false);
-        Eye(silly[1].transform, -0.32f, r, h, front, 0.3f, white, black, 0.35f);
-        Eye(silly[1].transform, 0.32f, r, h, front, 0.3f, white, black, 0.35f);
+        Eye(silly[1].transform, -0.32f, r, h, front, 0.38f, white, black, 0.35f);
+        Eye(silly[1].transform, 0.32f, r, h, front, 0.38f, white, black, 0.35f);
         Part("O_Mouth", silly[1].transform, PrimitiveType.Sphere, new Vector3(0f, -h * 0.28f, front), new Vector3(r * 0.2f, h * 0.26f, 0.1f), mouthColor);
         // Derp: mismatched eyes looking different ways, tongue out.
         silly[2] = new GameObject("Face_Derp");

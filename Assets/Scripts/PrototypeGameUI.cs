@@ -104,11 +104,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
 
         if (stats != null && stats.IsDead && Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
         {
-            IsInventoryOpen = false;
-            IsPauseMenuOpen = false;
-            ApplyPause();
-            if (run != null) run.Restart();
-            else SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            RestartRun();
         }
     }
 
@@ -215,7 +211,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
             PrototypeUITheme.Label(new Rect(cheat.x + 52f, cheat.y, cheat.width - 64f, cheat.height), "One-hit bow cheat ON", 14, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
         }
 
-        var right = new Rect(PrototypeUITheme.Width - 246f, 16f, 230f, 100f);
+        var right = new Rect(PrototypeUITheme.Width - 246f, 16f, 230f, 130f);
         PrototypeUITheme.DrawPanel(right);
         if (run != null)
         {
@@ -224,10 +220,16 @@ public sealed class PrototypeGameUI : MonoBehaviour
             PrototypeUITheme.Label(new Rect(right.x + 58f, right.y + 14f, right.width - 74f, 32f),
                 bossFloor ? "Floor 5: Goo" : $"Floor {run.Floor} / 5", 16, bossFloor ? PrototypeUITheme.Danger : PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
         }
-        PrototypeUITheme.DrawIcon(new Rect(right.x + 20f, right.y + 58f, 24f, 24f), PrototypeUITheme.Bag);
-        PrototypeUITheme.Label(new Rect(right.x + 48f, right.y + 56f, 70f, 28f), "I  Bag", 13, PrototypeUITheme.Muted);
-        PrototypeUITheme.DrawIcon(new Rect(right.x + 120f, right.y + 58f, 24f, 24f), PrototypeUITheme.Pause);
-        PrototypeUITheme.Label(new Rect(right.x + 148f, right.y + 56f, 70f, 28f), "Esc  Pause", 13, PrototypeUITheme.Muted);
+        if (run != null)
+        {
+            PrototypeUITheme.DrawIcon(new Rect(right.x + 20f, right.y + 50f, 24f, 24f), PrototypeUITheme.Star);
+            PrototypeUITheme.Label(new Rect(right.x + 48f, right.y + 48f, 90f, 28f), run.Score.ToString(), 15, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
+            PrototypeUITheme.Label(new Rect(right.x + 130f, right.y + 48f, 80f, 28f), PrototypeLeaderboard.FormatTime(run.ElapsedSeconds), 15, PrototypeUITheme.Parchment, TextAnchor.MiddleRight, true);
+        }
+        PrototypeUITheme.DrawIcon(new Rect(right.x + 20f, right.y + 88f, 24f, 24f), PrototypeUITheme.Bag);
+        PrototypeUITheme.Label(new Rect(right.x + 48f, right.y + 86f, 70f, 28f), "I  Bag", 13, PrototypeUITheme.Muted);
+        PrototypeUITheme.DrawIcon(new Rect(right.x + 120f, right.y + 88f, 24f, 24f), PrototypeUITheme.Pause);
+        PrototypeUITheme.Label(new Rect(right.x + 148f, right.y + 86f, 70f, 28f), "Esc  Pause", 13, PrototypeUITheme.Muted);
     }
 
     private static void DrawPrompt(string prompt)
@@ -245,16 +247,42 @@ public sealed class PrototypeGameUI : MonoBehaviour
         PrototypeUITheme.DrawBar(new Rect(rect.x + 40f, rect.y + 36f, rect.width - 80f, 14f), progress, PrototypeUITheme.Gold);
     }
 
-    private static void DrawDeathScreen()
+    private void DrawDeathScreen()
     {
         PrototypeUITheme.Fill(new Rect(0f, 0f, PrototypeUITheme.Width, PrototypeUITheme.Height), new Color(0.15f, 0f, 0f, 0.55f));
-        const float width = 380f;
-        const float height = 230f;
+        const float width = 420f;
+        const float height = 380f;
         var rect = new Rect((PrototypeUITheme.Width - width) * 0.5f, (PrototypeUITheme.Height - height) * 0.5f, width, height);
         PrototypeUITheme.DrawPanel(rect);
-        PrototypeUITheme.DrawIcon(new Rect(rect.center.x - 32f, rect.y + 24f, 64f, 64f), PrototypeUITheme.Skull);
-        PrototypeUITheme.Label(new Rect(rect.x, rect.y + 96f, width, 48f), "You Died", 32, PrototypeUITheme.Danger, TextAnchor.MiddleCenter, true);
-        PrototypeUITheme.Label(new Rect(rect.x, rect.y + 150f, width, 40f), "Press R to restart", 17, PrototypeUITheme.Parchment, TextAnchor.MiddleCenter);
+        PrototypeUITheme.DrawIcon(new Rect(rect.center.x - 32f, rect.y + 22f, 64f, 64f), PrototypeUITheme.Skull);
+        PrototypeUITheme.Label(new Rect(rect.x, rect.y + 90f, width, 44f), "Game Over", 32, PrototypeUITheme.Danger, TextAnchor.MiddleCenter, true);
+
+        var result = PrototypeLeaderboard.LastRun;
+        if (result != null)
+        {
+            PrototypeUITheme.Label(new Rect(rect.x, rect.y + 140f, width, 28f), $"Score  {result.Score}", 20, PrototypeUITheme.Gold, TextAnchor.MiddleCenter, true);
+            PrototypeUITheme.Label(new Rect(rect.x, rect.y + 170f, width, 24f),
+                $"Reached floor {result.Floor}    Time {PrototypeLeaderboard.FormatTime(result.Seconds)}", 15, PrototypeUITheme.Parchment, TextAnchor.MiddleCenter);
+            PrototypeUITheme.Label(new Rect(rect.x, rect.y + 198f, width, 24f),
+                PrototypeLeaderboard.LastRunWasBest ? "New high score!" : $"Best  {PrototypeLeaderboard.BestScore}", 15,
+                PrototypeLeaderboard.LastRunWasBest ? PrototypeUITheme.Gold : PrototypeUITheme.Muted, TextAnchor.MiddleCenter, true);
+        }
+
+        if (PrototypeUITheme.Button(new Rect(rect.x + 50f, rect.y + 240f, width - 100f, 46f), "Retry  (R)")) RestartRun();
+        if (PrototypeUITheme.Button(new Rect(rect.x + 50f, rect.y + 298f, width - 100f, 46f), "Main Menu"))
+        {
+            ResumeGame();
+            SceneManager.LoadScene("MainMenu");
+        }
+    }
+
+    private void RestartRun()
+    {
+        IsInventoryOpen = false;
+        IsPauseMenuOpen = false;
+        ApplyPause();
+        if (run != null) run.Restart();
+        else SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void DrawPauseMenu()

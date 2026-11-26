@@ -93,6 +93,9 @@ public sealed class PrototypeSaveData
     public float PlayerZ;
     public int Health;
     public float HungerMovingTime;
+    public int Score;
+    public float ElapsedSeconds;
+    public int DeepestFloor;
     public List<PrototypeItemSave> Inventory = new();
     public List<string> KnownScrolls = new();
     public List<PrototypeFloorSave> Floors = new();

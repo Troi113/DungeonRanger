@@ -30,6 +30,11 @@ Status of the KayKit asset integration (Ranger hero + sewer dungeon dressing). R
 
 ## Goo update (latest session)
 
-- Done, compiles, NOT seen in Play mode: `PrototypeGooFace.cs` (original primitive slime face, squash and random silly faces on hit via new `PrototypeEnemy.Damaged` event; face renderers follow fog via `PrototypeEnemy.AttachExtraRenderers`), `PrototypeSlimeTrail.cs` (puddles; `PrototypePlayerMovement` slows to 45% and blocks tumble while `IsSlimed`), Goo scale 9×6×9 in `PrototypeMobs`, Goo now spawns at half its height (`PrototypeDungeonRun.CreateEnemy`).
+- Done and compiles. Seen in Play mode (editor, floor 5 via a temporary test save, user's save restored after): giant green slime with tip, droplet and eyes facing its movement direction, fits the arena. Eyes were enlarged afterwards. Hit faces and the slime trail were not seen (no keyboard input from the background). Files: `PrototypeGooFace.cs` (original primitive slime face, squash and random silly faces on hit via new `PrototypeEnemy.Damaged` event; face renderers follow fog via `PrototypeEnemy.AttachExtraRenderers`), `PrototypeSlimeTrail.cs` (puddles; `PrototypePlayerMovement` slows to 45% and blocks tumble while `IsSlimed`), Goo scale 9×6×9 in `PrototypeMobs`, Goo now spawns at half its height (`PrototypeDungeonRun.CreateEnemy`).
 - The user's Poring model (`~/Downloads/poring-ragnarok-online.zip`) was intentionally NOT used: it is Ragnarok Online's character art.
 - Next: check Goo fits the boss arena at 3x, face placement on the sphere, charge/knockback at the new size, slime trail balance.
+
+## Melee animations (latest)
+
+- `PrototypeHeroAttackAnimation.cs` (added in `PrototypeBootstrap.CreatePlayer`, called from `PrototypeCombat.PerformMeleeAttack`) poses `upperarm.r`/`lowerarm.r`/`hand.r` in LateUpdate with `FromToRotation` toward punch/stab/slash directions, plus a lunge of the `Hero_Model` holder. Weapon models from `Resources/KayKit/Weapons/` attach to `handslot.r` with identity transforms.
+- Not seen in Play mode (needs the K key). Likely tuning points: whether blades point along `handSlot.up` (change the axis in the stab/slash Aim call if the blade points sideways), spear tip offset (`bounds.max.y * spearLength`), slash arc angles (100° to -70°), and lunge distances.

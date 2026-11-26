@@ -133,10 +133,36 @@ public sealed class PrototypeCombat : MonoBehaviour
         var facing = movement.FacingDirection;
         facing.y = 0f;
         facing.Normalize();
+        var depth = weapon.Range * PrototypeLevelGenerator.TileSize;
+
+        // The Ranger model winds up and strikes; the blow lands at the strike moment.
+        // The old box swing is only a fallback when the model is missing.
+        var attackAnimation = GetComponent<PrototypeHeroAttackAnimation>();
+        if (attackAnimation != null && attackAnimation.PlayAttack(weapon.Id, weapon.Cooldown * 0.85f))
+        {
+            StartCoroutine(StrikeAfter(attackAnimation.StrikeDelay, weapon, facing));
+            return;
+        }
+        ResolveMeleeHit(weapon, facing);
+        StartCoroutine(AnimateSlash(facing, depth));
+    }
+
+    private IEnumerator StrikeAfter(float delay, PrototypeMeleeWeapons.WeaponData weapon, Vector3 facing)
+    {
+        yield return new WaitForSeconds(delay);
+        var stats = GetComponent<PrototypePlayerStats>();
+        if (stats == null || !stats.IsDead) ResolveMeleeHit(weapon, facing);
+    }
+
+    /// <summary>Damages enemies in the tile-wide box ahead and plays the impact effects on a hit.</summary>
+    private void ResolveMeleeHit(PrototypeMeleeWeapons.WeaponData weapon, Vector3 facing)
+    {
         var side = new Vector3(facing.z, 0f, -facing.x);
         // The hit area is a tile-wide box in front of the player, weapon.Range tiles deep.
         var depth = weapon.Range * PrototypeLevelGenerator.TileSize;
         var halfWidth = PrototypeLevelGenerator.TileSize * 0.5f;
+        var hits = 0;
+        var heavy = weapon.Damage >= 3 || weapon.Id == "spear";
 
         foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude))
         {
@@ -154,10 +180,15 @@ public sealed class PrototypeCombat : MonoBehaviour
             if (forward >= 0f && forward <= depth && Mathf.Abs(Vector3.Dot(offset, side)) <= halfWidth && HasClearMeleePath(offset, distance))
             {
                 enemy.TakeDamage(weapon.Damage, true);
+                hits++;
+                PrototypeGameFeel.Sparks(new Vector3(closest.x, 1.1f, closest.z), new Color(1f, 0.85f, 0.45f), heavy ? 22 : 14);
             }
         }
 
-        StartCoroutine(AnimateSlash(facing, depth));
+        if (hits == 0) return;
+        // Bigger weapons and multi-hits land harder.
+        PrototypeGameFeel.HitStop(heavy ? 0.09f : 0.06f + 0.015f * (hits - 1));
+        PrototypeGameFeel.Shake(heavy ? 0.35f : 0.22f, 0.18f);
     }
 
     private bool HasClearMeleePath(Vector3 offset, float distance)

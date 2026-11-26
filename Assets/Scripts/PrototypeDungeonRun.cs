@@ -34,6 +34,27 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     private GameObject floorRoot;
     private readonly Dictionary<int, FloorState> floors = new();
     private int runSeed;
+    private PrototypeEnemy bossGoo;
+    private RectInt bossRoomBounds;
+    private bool bossSealed;
+
+    /// <summary>Like Pixel Dungeon, the way back up is sealed once the ranger enters Goo's room, until Goo dies.</summary>
+    public bool IsBossSealed => bossSealed && bossGoo != null && bossGoo.IsAlive;
+
+    private void Update()
+    {
+        if (bossSealed || Floor != 5 || bossGoo == null || !bossGoo.IsAlive || player == null) return;
+        if (!bossRoomBounds.Contains(PrototypeLevelGenerator.WorldToGrid(player.transform.position))) return;
+        bossSealed = true;
+        bossGoo.AlertTo(player);
+        PrototypeGameUI.ShowNotice("The way back is sealed!");
+    }
+
+    private static RectInt RoomContaining(PrototypeLevelGenerator.Layout layout, Vector2Int cell)
+    {
+        foreach (var room in layout.RoomBounds) if (room.Contains(cell)) return room;
+        return layout.RoomBounds.Count > 0 ? layout.RoomBounds[layout.RoomBounds.Count - 1] : new RectInt(cell.x - 2, cell.y - 2, 5, 5);
+    }
     private bool runEnded;
     public int Floor { get; private set; }
     public bool Victory { get; private set; }
@@ -82,6 +103,11 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         Floor = 1;
         Victory = false;
         runEnded = false;
+        Score = 0;
+        ElapsedSeconds = 0f;
+        DeepestFloor = 1;
+        bossGoo = null;
+        bossSealed = false;
         ClearFloors();
         EnterFloor(false);
     }
@@ -106,8 +132,35 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     /// <summary>A finished run (death or victory) leaves no game in progress.</summary>
     private void EndRun()
     {
+        if (!runEnded) PrototypeLeaderboard.Record(Score, DeepestFloor, ElapsedSeconds, Victory);
         runEnded = true;
         PrototypeSaveSystem.Delete();
+    }
+
+    // ---------------- Score ----------------
+
+    private const int PointsPerNewFloor = 100;
+    private const int VictoryBonus = 1000;
+    // Victory time bonus: up to this many points, minus one per second of play.
+    private const int MaxTimeBonus = 900;
+
+    public int Score { get; private set; }
+    public float ElapsedSeconds { get; private set; }
+    public int DeepestFloor { get; private set; } = 1;
+
+    private static int KillPoints(PrototypeMobs.MobData data) => data.Id switch
+    {
+        "goo" => 500,
+        "albino_rat" => 30,
+        _ => 10
+    };
+
+    private void LateUpdate()
+    {
+        // The run clock counts unpaused play time only (timeScale is 0 while paused).
+        if (runEnded || Victory || player == null) return;
+        var stats = player.GetComponent<PrototypePlayerStats>();
+        if (stats != null && !stats.IsDead) ElapsedSeconds += Time.deltaTime;
     }
 
     private void EnterFloor(bool arrivingFromBelow)
@@ -127,6 +180,11 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         }
 
         var state = BuildFloor(Floor, null);
+        if (Floor > DeepestFloor)
+        {
+            DeepestFloor = Floor;
+            Score += PointsPerNewFloor;
+        }
         MovePlayer(state.UpPosition);
     }
 
@@ -137,7 +195,9 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         floorRoot.transform.SetParent(transform, false);
         var seed = runSeed + floorNumber * 1000;
         var generator = new PrototypeLevelGenerator();
-        var layout = floorNumber == 5 ? generator.BuildBossArena(floorRoot.transform, seed) : generator.Build(floorRoot.transform, seed, false);
+        // Floor 5 follows Pixel Dungeon's SewerBossLevel: a normal sewer layout (entrance room,
+        // tunnels, boss room at the far end) rather than a bare arena.
+        var layout = generator.Build(floorRoot.transform, seed, false);
 
         PrototypeDungeonDressing.Apply(floorRoot.transform, seed);
         var state = new FloorState { Root = floorRoot, UpPosition = layout.PlayerSpawn, DownPosition = layout.ExitSpawn };
@@ -163,10 +223,24 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         }
         else
         {
-            var goo = CreateEnemy(layout.ExitSpawn, layout, seed + 500, true, PrototypeMobs.Goo);
+            // Goo lives in the boss room (the room farthest along the generated path) and stays there.
+            var bossRoom = RoomContaining(layout, PrototypeLevelGenerator.WorldToGrid(layout.ExitSpawn));
+            var bossCells = new List<Vector2Int>();
+            foreach (var cell in layout.WalkableCells) if (bossRoom.Contains(cell)) bossCells.Add(cell);
+            var goo = CreateEnemy(layout.ExitSpawn, layout, seed + 500, true, PrototypeMobs.Goo, bossCells.Count > 0 ? bossCells : null);
             var bossFloor = floorRoot.transform;
-            goo.Defeated += () => PrototypeVictoryAmulet.Create(bossFloor, goo.transform.position, this);
+            goo.Defeated += () =>
+            {
+                bossSealed = false;
+                PrototypeGameUI.ShowNotice("Goo is defeated. The way back opens.");
+                PrototypeVictoryAmulet.Create(bossFloor, goo.transform.position, this);
+            };
             state.Enemies.Add(goo);
+            bossGoo = goo;
+            bossRoomBounds = bossRoom;
+            // Sewer water over about half the floor (Goo heals in it); stairs and spawns stay dry.
+            PrototypeSewerWater.Create(floorRoot.transform, layout.WalkableCells, seed, 0.5f, 5,
+                new[] { PrototypeLevelGenerator.WorldToGrid(layout.PlayerSpawn), PrototypeLevelGenerator.WorldToGrid(layout.ExitSpawn) });
         }
 
         // Saved changes are applied before fog and the wake director collect their enemies.
@@ -187,6 +261,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     {
         if (Victory) return;
         Victory = true;
+        Score += VictoryBonus + Mathf.Max(0, MaxTimeBonus - Mathf.FloorToInt(ElapsedSeconds));
         EndRun();
         PrototypeVictoryScreen.Show();
     }
@@ -212,7 +287,10 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
             PlayerX = player.transform.position.x,
             PlayerZ = player.transform.position.z,
             Health = stats.CurrentHealth,
-            HungerMovingTime = player.GetComponent<PrototypeHunger>()?.MovingTime ?? 0f
+            HungerMovingTime = player.GetComponent<PrototypeHunger>()?.MovingTime ?? 0f,
+            Score = Score,
+            ElapsedSeconds = ElapsedSeconds,
+            DeepestFloor = DeepestFloor
         };
         var inventory = player.GetComponent<PrototypeInventory>();
         for (var i = 0; i < inventory.Capacity; i++) data.Inventory.Add(PrototypeItemSave.From(inventory.GetSlot(i)));
@@ -293,6 +371,9 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
             inventory.SetSlot(i, i < data.Inventory.Count ? data.Inventory[i].ToItem() : null);
         player.GetComponent<PrototypePlayerStats>().RestoreHealth(data.Health);
         player.GetComponent<PrototypeHunger>()?.RestoreMovingTime(data.HungerMovingTime);
+        Score = data.Score;
+        ElapsedSeconds = data.ElapsedSeconds;
+        DeepestFloor = Mathf.Max(1, data.DeepestFloor, data.Floor);
 
         foreach (var floorSave in data.Floors)
         {
@@ -387,7 +468,8 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         controller.enabled = true;
     }
 
-    private PrototypeEnemy CreateEnemy(Vector3 position, PrototypeLevelGenerator.Layout layout, int seed, bool boss, PrototypeMobs.MobData data)
+    private PrototypeEnemy CreateEnemy(Vector3 position, PrototypeLevelGenerator.Layout layout, int seed, bool boss, PrototypeMobs.MobData data,
+        IReadOnlyList<Vector2Int> walkableOverride = null)
     {
         var useModel = !boss && !string.IsNullOrEmpty(data.ModelName);
         // Modeled mobs get an unscaled root with a box collider; others are a scaled primitive.
@@ -401,12 +483,15 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var enemy = obj.AddComponent<PrototypeEnemy>();
         if (useModel)
             enemy.UseModel(PrototypeMobModels.Create(data.ModelName, obj.transform, data.Scale.z * ModelLengthScale, -data.Scale.y * 0.5f));
-        enemy.Initialize(player, layout.WalkableCells, seed, layout.BlockedEdges);
+        enemy.Initialize(player, walkableOverride ?? layout.WalkableCells, seed, layout.BlockedEdges);
+        enemy.Defeated += () => Score += KillPoints(data);
+        obj.AddComponent<PrototypeHitFlash>();
         if (boss)
         {
             enemy.ConfigureBoss(data.Health);
             obj.AddComponent<PrototypeGooFace>();
             obj.AddComponent<PrototypeSlimeTrail>();
+            obj.AddComponent<PrototypeGooWaterHeal>();
         }
         else enemy.Configure(data);
         return enemy;
