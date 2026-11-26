@@ -20,7 +20,8 @@ Update this file at the end of each milestone.
 - Floor 5 generates a rectangular arena with a placeholder Goo boss. Defeating Goo drops the Amulet of Glory at its position. Press Space nearby to collect it, even with a full inventory, and enter the dedicated runtime `Victory` scene. The congratulations screen offers a return to the main menu.
 - The same player object carries health, inventory, hunger and status effects between floors. Press R after death to restart the run.
 - Sleeping enemies wake individually at random intervals of 20–35 seconds and patrol; this does not reveal the player's position. A sleeping enemy also wakes immediately if it sees the player within eight logical cells with a clear line of sight or is hit. Enemies that notice the player chase, then search the last seen position if sight is lost.
-- The Goo drop, Space pickup with a full inventory, victory screen, and return to menu were checked in Play mode using a test helper to reach the boss. A complete run through all floors still needs playtesting; Goo has no special attacks or phases yet. The victory scene is created at runtime rather than saved as a scene asset.
+- Goo has a charge attack: after a 10-second cooldown it spends 1 second aiming, then rushes up to 10 world units at three times its normal chase speed in a fixed direction. The orange marker shows the aim during windup. The charge stops at walls and damages the ranger once on contact; its cooldown starts after the charge ends. Goo is immune to hit slowing.
+- The Goo drop, Space pickup with a full inventory, victory screen, and return to menu were checked in Play mode using a test helper to reach the boss. A complete run through all floors still needs playtesting. The victory scene is created at runtime rather than saved as a scene asset.
 
 ## Runtime setup
 - `PrototypeBootstrap` generates the room, player, camera, and lighting at runtime.
@@ -59,9 +60,10 @@ Update this file at the end of each milestone.
 - `PrototypeStatusEffects` currently supports poisoned, toxic, paralyzed, and gripped states. Damage-over-time effects tick once per second; paralyzed and gripped block movement.
 - `PrototypeHunger` starts satiated, counts moving time only, becomes Hungry after 60 moving seconds, becomes Famished after 120 moving seconds, and deals 1 damage every 5 seconds while Famished. These values are serialized prototype defaults and can be tuned later.
 - `PrototypeGameUI` displays health and hunger and opens a 4-column by 5-row inventory with `I`. The top row is reserved for weapon, armor, artifact/ring A, and artifact/ring B.
-- The ranger starts with a permanent bow in a general inventory slot; it requires no equipment slot and always fires with `J` during gameplay. `K` uses the melee weapon equipped in the weapon slot, and does nothing without one.
+- The ranger starts with a permanent bow in a general inventory slot; it requires no equipment slot and always fires with `J` during gameplay. Arrows travel at 24 world units per second for up to 40 world units and disappear on hitting enemies, walls, or closed doors; open doors allow arrows through. Normal enemies hit by `J` or `K` move at half speed for 1.5 seconds; repeated hits refresh the effect.
+- `K` punches for 1 damage without a weapon. Punches and standard melee weapons reach 1 world unit from the player's center to the enemy's nearest surface; spears reach 2. Hits must be in front of the player and cannot pass through walls.
 - During gameplay, five consecutive presses of `Q` toggle the one-hit bow cheat. The HUD displays when it is active; other key presses interrupt an unfinished sequence. It carries between floors during a run and resets when a new player is created.
-- Generated melee pickups include knuckledusters, knives, swords, sickles, axes, and spears, with prototype damage, reach, and cooldown values. A weapon appears near the starting room. Pixel Dungeon's melee weapons informed the variety and real-time feel; knife and sickle are prototype additions.
+- Generated melee pickups include knuckledusters, knives, swords, sickles, axes, and spears, with prototype damage and cooldown values. A weapon appears near the starting room. Pixel Dungeon's melee weapons informed the variety and real-time feel; knife and sickle are prototype additions.
 - In inventory, use WASD or arrow keys to select a slot, `J` to open or confirm an item action, and `Esc` to close its action menu. Potions heal 8 health, food restores 60 moving-seconds of hunger, and equipment can be equipped or unequipped. Both artifact/ring slots are selectable. Armor and artifact/ring stat effects remain unimplemented.
 - Enemies now attack the player at close range with a cooldown. Death displays a restart prompt; `R` reloads the active scene.
 - Opening the inventory pauses game time. Escape opens a pause menu with Continue and Quit to Main Menu; Continue resumes the run and quitting discards it. Exit Game closes a standalone build (Unity ignores application quit in the editor).
@@ -86,7 +88,7 @@ Current prototype movement speed is 8 Unity world units per second.
 | `Shift` | Tumble/dash about one enlarged terrain tile in the facing direction. Collision-aware, short cooldown. |
 | `J` | Fire a straight bow projectile in the facing direction |
 | `Q` five times | Toggle the one-hit bow cheat during gameplay |
-| `K` | Attack in the facing direction with an equipped melee weapon and a temporary slash effect |
+| `K` | Punch or attack with an equipped melee weapon in the facing direction |
 | `I` | Open/close the 4x5 inventory grid |
 | `WASD` / arrows, `J`, `Esc` | Navigate inventory, select/confirm an action, and deselect |
 | `Esc` | Open/close the pause menu when no inventory item action is open |

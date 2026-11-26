@@ -13,7 +13,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] `Shift` tumbles/dashes in the player's facing direction with collision handling and a cooldown.
 - [x] `J` fires a straight bow projectile.
 - [x] Five consecutive `Q` presses toggle a one-hit bow cheat for testing.
-- [x] `K` performs a facing-direction melee attack when a melee weapon is equipped.
+- [x] `K` punches unarmed or attacks with an equipped melee weapon in the facing direction.
+- [x] Use one-block melee reach for punches and standard weapons, and two blocks for spears.
 - [x] Melee attack has a simple temporary slash animation.
 - [x] Basic enemy targets can receive damage and be destroyed.
 - [ ] Decide the exact `L` inventory or quick-slot behavior.
@@ -30,7 +31,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Manually test `K` against an enemy directly in front of the player.
 - [ ] Test that `K` does not damage enemies behind or beside the player.
 - [ ] Test that projectiles collide with enemies and disappear correctly.
-- [ ] Test that projectiles stop or disappear when they hit walls.
+- [x] Test that projectiles disappear on walls and closed doors and pass through open doors.
 - [ ] Test room-boundary collision from every direction.
 - [ ] Add simple hit feedback to enemies.
 - [ ] Add a simple enemy health indicator or temporary damage flash.
@@ -101,7 +102,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 - [x] Establish a shared prototype damage and health system.
 - [ ] Add combat cooldowns that feel good in real time.
-- [ ] Add projectile collision with walls, terrain, and enemies.
+- [ ] Extend projectile collision to additional terrain and objects as they are added.
+- [x] Add swept arrow collision against enemies and walls, and slow normal enemies on bow and melee hits.
 - [ ] Add clear attack telegraphs for enemies.
 - [ ] Add damage numbers or another readable hit indicator.
 - [ ] Add a temporary invulnerability window after player damage.
@@ -183,7 +185,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Keep player health and inventory while replacing generated floors in the same scene.
 - [x] Make Goo drop the Amulet of Glory; picking it up opens a congratulations scene.
 - [ ] Playtest all four stair transitions and the Goo victory and restart flows.
-- [ ] Add distinct Goo attacks, telegraphs, and difficulty balancing.
+- [x] Add Goo's telegraphed, straight-line charge attack.
+- [ ] Playtest and balance Goo's charge attack during a full run.
 - [ ] Create a four-level procedural progression.
 - [ ] Create a fifth boss level.
 - [ ] Decide whether the first four levels share a sewer theme or use different themes.

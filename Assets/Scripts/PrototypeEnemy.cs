@@ -17,6 +17,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
     [SerializeField] private float attackRange = 2.4f;
     [SerializeField] private float attackCooldown = 1.2f;
     [SerializeField] private int attackDamage = 1;
+    [SerializeField] private float hitSlowDuration = 1.5f;
+    [SerializeField, Range(0f, 1f)] private float hitSpeedMultiplier = 0.5f;
 
     private Renderer enemyRenderer;
     private PrototypePlayerMovement player;
@@ -31,10 +33,14 @@ public sealed class PrototypeEnemy : MonoBehaviour
     private float nextAttackTime;
     private bool noticedPlayer;
     private Vector2Int lastSeenPlayer;
+    private float slowRemaining;
+    private bool isBoss;
+    private PrototypeGooCharge charge;
     public event Action Defeated;
 
     public bool IsAlive => health > 0 && this != null;
     public bool IsAwake { get; private set; }
+    public bool IsSlowed => slowRemaining > 0f;
 
     private void Awake()
     {
@@ -63,6 +69,9 @@ public sealed class PrototypeEnemy : MonoBehaviour
             return;
         }
 
+        if (slowRemaining > 0f) slowRemaining = Mathf.Max(0f, slowRemaining - Time.deltaTime);
+        if (charge != null && charge.IsActive) return;
+
         var sightRangeWorld = sightRangeCells * PrototypeLevelGenerator.TileSize;
         var distanceToPlayer = player.transform.position - transform.position;
         var canSeePlayer = distanceToPlayer.sqrMagnitude <= sightRangeWorld * sightRangeWorld && HasClearSight(distanceToPlayer);
@@ -72,6 +81,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
             WakeUp();
             noticedPlayer = true;
             lastSeenPlayer = PrototypeLevelGenerator.WorldToGrid(player.transform.position);
+            if (charge != null && charge.TryStart()) return;
             var planarDistance = distanceToPlayer;
             planarDistance.y = 0f;
             if (planarDistance.magnitude <= attackRange)
@@ -121,7 +131,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
         FollowPath(patrolSpeed);
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int damage, bool slowOnHit = false)
     {
         if (!IsAlive)
         {
@@ -129,6 +139,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
 
         WakeUp();
+        if (slowOnHit && !isBoss && damage > 0) slowRemaining = hitSlowDuration;
         if (player != null)
         {
             noticedPlayer = true;
@@ -145,6 +156,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
 
     public void ConfigureBoss(int bossHealth)
     {
+        isBoss = true;
         health = bossHealth;
         awakeColor = new Color(0.2f, 0.75f, 0.35f);
         patrolSpeed = 2.5f;
@@ -153,6 +165,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
         attackDamage = 2;
         attackCooldown = 1.8f;
         WakeUp();
+        charge = gameObject.AddComponent<PrototypeGooCharge>();
+        charge.Initialize(player, chaseSpeed, attackDamage);
     }
 
     private bool HasClearSight(Vector3 offset)
@@ -230,7 +244,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
 
         var direction = offset.normalized;
-        transform.position = Vector3.MoveTowards(transform.position, waypoint, speed * Time.deltaTime);
+        var actualSpeed = IsSlowed ? speed * hitSpeedMultiplier : speed;
+        transform.position = Vector3.MoveTowards(transform.position, waypoint, actualSpeed * Time.deltaTime);
         transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
     }
 
