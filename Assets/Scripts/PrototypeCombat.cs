@@ -15,6 +15,7 @@ public sealed class PrototypeCombat : MonoBehaviour
     [SerializeField] private float projectileSpeed = 24f;
     [SerializeField] private int bowDamage = 1;
     [SerializeField] private int punchDamage = 1;
+    [Tooltip("Reach in dungeon tiles; 1 tile = PrototypeLevelGenerator.TileSize world units.")]
     [SerializeField] private float punchReach = 1f;
     [SerializeField] private float punchCooldown = 0.35f;
 
@@ -130,6 +131,12 @@ public sealed class PrototypeCombat : MonoBehaviour
     {
         nextMeleeTime = Time.time + weapon.Cooldown;
         var facing = movement.FacingDirection;
+        facing.y = 0f;
+        facing.Normalize();
+        var side = new Vector3(facing.z, 0f, -facing.x);
+        // The hit area is a tile-wide box in front of the player, weapon.Range tiles deep.
+        var depth = weapon.Range * PrototypeLevelGenerator.TileSize;
+        var halfWidth = PrototypeLevelGenerator.TileSize * 0.5f;
 
         foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude))
         {
@@ -138,20 +145,19 @@ public sealed class PrototypeCombat : MonoBehaviour
                 continue;
             }
 
-            var directionToEnemy = enemy.transform.position - transform.position;
-            directionToEnemy.y = 0f;
             var collider = enemy.GetComponent<Collider>();
             var closest = collider != null ? collider.ClosestPoint(transform.position) : enemy.transform.position;
             var offset = closest - transform.position;
             offset.y = 0f;
             var distance = offset.magnitude;
-            if (distance <= weapon.Range && Vector3.Dot(facing, directionToEnemy.normalized) >= 0.7f && HasClearMeleePath(offset, distance))
+            var forward = Vector3.Dot(offset, facing);
+            if (forward >= 0f && forward <= depth && Mathf.Abs(Vector3.Dot(offset, side)) <= halfWidth && HasClearMeleePath(offset, distance))
             {
                 enemy.TakeDamage(weapon.Damage, true);
             }
         }
 
-        StartCoroutine(AnimateSlash(facing, weapon.Range));
+        StartCoroutine(AnimateSlash(facing, depth));
     }
 
     private bool HasClearMeleePath(Vector3 offset, float distance)
@@ -178,8 +184,8 @@ public sealed class PrototypeCombat : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             var progress = Mathf.Clamp01(elapsed / duration);
-            slash.transform.position = transform.position + Vector3.up * 0.25f + direction * Mathf.Lerp(0.45f, reach * 0.65f, progress);
-            slash.transform.localScale = new Vector3(0.12f, 0.12f, Mathf.Lerp(0.1f, reach * 0.4f, progress));
+            slash.transform.position = transform.position + Vector3.up * 0.25f + direction * Mathf.Lerp(0.45f, reach * 0.5f, progress);
+            slash.transform.localScale = new Vector3(Mathf.Lerp(0.12f, PrototypeLevelGenerator.TileSize * 0.9f, progress), 0.12f, Mathf.Lerp(0.1f, reach * 0.9f, progress));
             yield return null;
         }
 

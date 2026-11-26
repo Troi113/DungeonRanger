@@ -289,7 +289,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
             GUI.Label(new Rect(x + 20f, y + 80f, width - 40f, 62f), scrolls.Description(item.ItemId), descriptionStyle);
         }
         if (PrototypeMeleeWeapons.TryGet(item.ItemId, out var weapon))
-            GUI.Label(new Rect(x + 20f, y + 112f, width - 40f, 20f), $"Damage {weapon.Damage + item.UpgradeLevel}   Reach {weapon.Range:0.0}   Delay {weapon.Cooldown:0.00}s");
+            GUI.Label(new Rect(x + 20f, y + 112f, width - 40f, 20f), $"Damage {weapon.Damage + item.UpgradeLevel}   Reach {weapon.Range:0} tile{(weapon.Range > 1f ? "s" : "")}   Delay {weapon.Cooldown:0.00}s");
         if (PrototypeArmors.TryGet(item.ItemId, out _))
             GUI.Label(new Rect(x + 20f, y + 112f, width - 40f, 20f), $"Absorbs 0-{PrototypeArmors.MaxAbsorb(item)} damage per enemy hit");
         for (var i = 0; i < count; i++)

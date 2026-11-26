@@ -14,7 +14,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] `J` fires a straight bow projectile.
 - [x] Five consecutive `Q` presses toggle a one-hit bow cheat for testing.
 - [x] `K` punches unarmed or attacks with an equipped melee weapon in the facing direction.
-- [x] Use one-block melee reach for punches and standard weapons, and two blocks for spears.
+- [x] Melee hits a full tile in front of the player (two tiles for the slowest weapon, the spear).
+- [ ] Playtest the tile-sized melee area; it may hit enemies diagonally close to the player's side.
 - [x] Melee attack has a simple temporary slash animation.
 - [x] Basic enemy targets can receive damage and be destroyed.
 - [ ] Decide the exact `L` inventory or quick-slot behavior.
