@@ -5,6 +5,7 @@
 | Asset | Author | Location | License summary |
 |---|---|---|---|
 | Rat Pack (low-poly rat models: `RatPack.fbx` with three rats and `LPoly-Pallete_Texture.jpg`) | Unknown — the download (`Rat-Pack-All-Files.zip`) has no author or license file | `Assets/ThirdParty/Resources/RatPack/` | Unknown. Confirm the source and license before submitting or sharing the project. |
+| KayKit Adventurers 2.0 (Ranger character, Rig_Medium animations) and KayKit Dungeon Pack 1.1 (floor, wall, torch pieces) | Kay Lousberg (kaylousberg.com) | `Assets/ThirdParty/Resources/KayKit/` | CC0 (public domain); `License.txt` included in each folder. |
 | Free Medieval Fantasy UI Pack (pixel-art icons and buttons, 32×32 and 64×32 PNG) | Kibyra | `Assets/ThirdParty/Resources/FreeMedievalFantasyUIPack/` | Free for personal and commercial use; credit appreciated but not required; no redistribution or resale of the files as-is. See the pack's `Readme.txt`. |
 
 From the Rat Pack, only the FBX and palette texture were imported; `rat.blend` and the preview images were left out.

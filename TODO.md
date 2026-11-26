@@ -226,6 +226,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Add a prototype status-effect component for buffs/debuffs foundation.
 - [x] Add prototype hunger states: satiated, hungry, and famished.
 - [x] Damage the player over time while famished.
+- [x] Regenerate 1 health every 5 seconds while Satiated.
+- [ ] Playtest regeneration rate against enemy damage.
 - [x] Add a 4-column by 5-row inventory overlay opened with `I`.
 - [x] Add WASD/arrow navigation, `J` item actions, and `Esc` to deselect.
 - [x] Start with a permanent bow in a general inventory slot; shooting does not require equipping it.
@@ -307,7 +309,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Choose the final camera style.
 - [ ] Choose the final pixel-art or stylized 3D presentation.
 - [ ] Create a consistent palette.
-- [ ] Replace primitive player model with an original ranger asset.
+- [x] Replace the player capsule with the KayKit Ranger (idle/run/death animations).
+- [x] Dress floors and walls with KayKit Dungeon Pack pieces in a sewer style.
+- [ ] Replace doors, stairs, chests, items, and traps with KayKit pieces (see Docs/KAYKIT_HANDOFF.md).
+- [ ] Playtest Ranger running/death animations and facing; check torch-light performance.
 - [ ] Replace primitive enemies with original enemy assets.
 - [x] Use Rat Pack models for Rat (brown) and Albino Rat (white).
 - [ ] Confirm the Rat Pack's author and license and record them in Docs/CREDITS.md.

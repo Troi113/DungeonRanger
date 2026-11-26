@@ -62,6 +62,7 @@ Update this file at the end of each milestone.
 - `PrototypePlayerStats` starts the player at 20 health and supports damage, healing, and death state.
 - `PrototypeInventory` provides 20 slots. The first four are reserved for weapon, armor, artifact/ring A, and artifact/ring B; the remaining 16 are general inventory slots.
 - `PrototypeStatusEffects` currently supports poisoned, toxic, paralyzed, and gripped states. Damage-over-time effects tick once per second; paralyzed and gripped block movement.
+- `PrototypeRegeneration` heals 1 health every 5 seconds of game time while the ranger is Satiated and below max health (after Pixel Dungeon's Regeneration). It stops while Hungry or Famished and while paused.
 - `PrototypeHunger` starts satiated, counts moving time only, becomes Hungry after 60 moving seconds, becomes Famished after 120 moving seconds, and deals 1 damage every 5 seconds while Famished. These values are serialized prototype defaults and can be tuned later.
 - `PrototypeGameUI` displays health and hunger and opens a 4-column by 5-row inventory with `I`. The top row is reserved for weapon, armor, artifact/ring A, and artifact/ring B.
 - The ranger starts with a permanent bow in a general inventory slot; it requires no equipment slot and always fires with `J` during gameplay. Arrows travel at 24 world units per second for up to 40 world units and disappear on hitting enemies, walls, or closed doors; open doors allow arrows through. Normal enemies hit by `J` or `K` move at half speed for 1.5 seconds; repeated hits refresh the effect.
@@ -87,6 +88,11 @@ Update this file at the end of each milestone.
 - One save slot: `PrototypeSaveSystem` writes `game_in_progress.json` to `Application.persistentDataPath`. Quit to Main Menu and closing the game save the run; dying or collecting the amulet deletes it.
 - Floors are regenerated from the run seed on load, then their saved changes are applied: picked-up generated items, dropped/thrown/chest items, enemy health/position/awake state and deaths, triggered and revealed traps, opened chest, explored fog, and a dropped amulet. Player health, hunger, inventory, known scrolls, floor, and position are restored. Status effects, door positions, the bow cheat, and enemy wake timers are not saved.
 - Death is permanent: dying deletes the saved run immediately, and any later save attempt for a dead run deletes instead of writing.
+
+## 3D art (KayKit, CC0)
+
+- The ranger is the KayKit Adventurers Ranger (`PrototypeHeroModel`): the capsule renderer is hidden, the model is 2.3 units tall, turns to the facing direction, and plays `Idle_A`, `Running_A`, and `Death_A` from the Rig_Medium animation files through a Legacy Animation component.
+- `PrototypeDungeonDressing` dresses each generated floor in a sewer style with the KayKit Dungeon Pack: hex stone, rocky, and grate floor tiles; plain, cracked, and broken stone walls tinted green-grey; and torches with warm point lights on about 8% of walls. The original floor and wall cubes keep their colliders and names, so gameplay is unchanged. Doors, stairs, chests, items, traps, and Goo are still primitive shapes. See `Docs/KAYKIT_HANDOFF.md`.
 
 ## UI art
 

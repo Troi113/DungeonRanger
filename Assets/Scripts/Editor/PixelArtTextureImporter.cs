@@ -2,12 +2,12 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Imports PNGs under Assets/ThirdParty as crisp, uncompressed pixel-art UI sprites.
+/// Imports the UI pack PNGs as crisp, uncompressed pixel-art UI sprites.
 /// Editor-only; it does not run in builds. Source PNG files are never modified.
 /// </summary>
 public sealed class PixelArtTextureImporter : AssetPostprocessor
 {
-    private const string PixelArtRoot = "Assets/ThirdParty/";
+    private const string PixelArtRoot = "Assets/ThirdParty/Resources/FreeMedievalFantasyUIPack/";
 
     // Bump when the import rules change so Unity reimports the affected textures.
     public override uint GetVersion() => 3;

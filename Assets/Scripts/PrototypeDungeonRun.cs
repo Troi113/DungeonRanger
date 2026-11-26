@@ -134,6 +134,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var generator = new PrototypeLevelGenerator();
         var layout = floorNumber == 5 ? generator.BuildBossArena(floorRoot.transform, seed) : generator.Build(floorRoot.transform, seed, false);
 
+        PrototypeDungeonDressing.Apply(floorRoot.transform, seed);
         var state = new FloorState { Root = floorRoot, UpPosition = layout.PlayerSpawn, DownPosition = layout.ExitSpawn };
         floors.Add(floorNumber, state);
         CreateStairs(layout.PlayerSpawn, false);
