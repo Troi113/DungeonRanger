@@ -115,11 +115,13 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         player.AddComponent<PrototypeRegeneration>();
         player.AddComponent<PrototypePlayerSearch>();
         player.AddComponent<PrototypeHeroModel>();
+        player.AddComponent<PrototypeHeroDeath>();
         player.AddComponent<PrototypeHeroAttackAnimation>();
         player.AddComponent<PrototypePlayerInteraction>();
         player.AddComponent<PrototypeCombat>();
         player.AddComponent<PrototypeScrolls>();
         player.AddComponent<PrototypePotions>();
+        player.AddComponent<PrototypeTalents>();
         return movement;
     }
 

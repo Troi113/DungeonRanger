@@ -97,6 +97,7 @@ public sealed class PrototypeSaveData
     public int Experience;
     public int MaxHealth;
     public List<string> KnownPotions = new();
+    public List<int> TalentRanks = new();
     public float HungerMovingTime;
     public int Score;
     public float ElapsedSeconds;

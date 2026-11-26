@@ -23,6 +23,7 @@ public sealed class PrototypeHeroModel : MonoBehaviour
     private Transform model;
     private Animation animator;
     private string playing;
+    private string chosenDeath;
 
     private void Start()
     {
@@ -63,7 +64,9 @@ public sealed class PrototypeHeroModel : MonoBehaviour
         if (model == null) return;
         if (stats != null && stats.IsDead)
         {
-            Play(deathClip, WrapMode.ClampForever);
+            // One of the two KayKit death clips, picked once.
+            if (chosenDeath == null) chosenDeath = Random.value < 0.5f ? deathClip : "Death_B";
+            Play(animator != null && animator.GetClip(chosenDeath) != null ? chosenDeath : deathClip, WrapMode.ClampForever);
             return;
         }
 

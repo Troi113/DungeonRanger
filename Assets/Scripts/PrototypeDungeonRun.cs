@@ -102,6 +102,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         GetComponent<PrototypeGameUI>().Initialize(player.gameObject);
         var follow = Camera.main != null ? Camera.main.GetComponent<PrototypeCameraFollow>() : null;
         if (follow != null) follow.Target = player.transform;
+        PrototypeHeroDeath.RestoreCamera();
         WatchPlayerDeath();
         runSeed = Random.Range(1, 1000000);
         player.GetComponent<PrototypeScrolls>().Initialize(runSeed);
@@ -163,7 +164,13 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var stats = player != null ? player.GetComponent<PrototypePlayerStats>() : null;
         if (stats == null) return;
         var experience = data.Id == "goo" ? 10 : stats.Level <= 5 ? 1 : 0;
-        if (stats.EarnExperience(experience) > 0) PrototypeGameUI.ShowNotice($"Level up! You are now level {stats.Level}.");
+        if (stats.EarnExperience(experience) > 0)
+        {
+            var talents = player.GetComponent<PrototypeTalents>();
+            PrototypeGameUI.ShowNotice(talents != null && talents.PointsAvailable > 0
+                ? $"Level up! Level {stats.Level}. Talent point ready - press T."
+                : $"Level up! You are now level {stats.Level}.");
+        }
     }
 
     private static int KillPoints(PrototypeMobs.MobData data) => data.Id switch
@@ -317,6 +324,8 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var inventory = player.GetComponent<PrototypeInventory>();
         for (var i = 0; i < inventory.Capacity; i++) data.Inventory.Add(PrototypeItemSave.From(inventory.GetSlot(i)));
         data.KnownScrolls.AddRange(player.GetComponent<PrototypeScrolls>().KnownScrolls);
+        var talentRanks = player.GetComponent<PrototypeTalents>();
+        if (talentRanks != null) data.TalentRanks.AddRange(talentRanks.Ranks);
         var knownPotions = player.GetComponent<PrototypePotions>();
         if (knownPotions != null) data.KnownPotions.AddRange(knownPotions.KnownPotions);
         foreach (var pair in floors) data.Floors.Add(CaptureFloor(pair.Key, pair.Value));
@@ -392,6 +401,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         var potions = player.GetComponent<PrototypePotions>();
         potions?.Initialize(runSeed);
         if (data.KnownPotions != null) potions?.RestoreKnown(data.KnownPotions);
+        player.GetComponent<PrototypeTalents>()?.RestoreRanks(data.TalentRanks);
 
         var inventory = player.GetComponent<PrototypeInventory>();
         for (var i = 0; i < inventory.Capacity; i++)
@@ -513,10 +523,12 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         if (useModel)
             enemy.UseModel(PrototypeMobModels.Create(data.ModelName, obj.transform, data.Scale.z * ModelLengthScale, -data.Scale.y * 0.5f));
         enemy.Initialize(player, walkableOverride ?? layout.WalkableCells, seed, layout.BlockedEdges);
+        var killFloor = floorRoot.transform;
         enemy.Defeated += () =>
         {
             Score += KillPoints(data);
             GrantKillExperience(data);
+            if (player != null) player.GetComponent<PrototypeTalents>()?.OnEnemyKilled(obj.transform.position, killFloor, Floor);
         };
         obj.AddComponent<PrototypeHitFlash>();
         if (boss)

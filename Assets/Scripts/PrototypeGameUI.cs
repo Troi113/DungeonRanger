@@ -41,7 +41,9 @@ public sealed class PrototypeGameUI : MonoBehaviour
 
     public static bool IsInventoryOpen { get; private set; }
     public static bool IsPauseMenuOpen { get; private set; }
-    public static bool IsGamePaused => IsInventoryOpen || IsPauseMenuOpen;
+    public static bool IsTalentsOpen { get; private set; }
+    public static bool IsGamePaused => IsInventoryOpen || IsPauseMenuOpen || IsTalentsOpen;
+    private int talentCursor;
 
     public void Initialize(GameObject player)
     {
@@ -61,7 +63,12 @@ public sealed class PrototypeGameUI : MonoBehaviour
 
         if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            if (IsInventoryOpen && targetingScroll >= 0)
+            if (IsTalentsOpen)
+            {
+                IsTalentsOpen = false;
+                ApplyPause();
+            }
+            else if (IsInventoryOpen && targetingScroll >= 0)
             {
                 inventoryCursor = targetingScroll;
                 targetingScroll = -1;
@@ -88,6 +95,15 @@ public sealed class PrototypeGameUI : MonoBehaviour
                 IsPauseMenuOpen = true;
                 ApplyPause();
             }
+        }
+        else if (!IsPauseMenuOpen && !IsInventoryOpen && stats != null && !stats.IsDead && Keyboard.current.tKey.wasPressedThisFrame)
+        {
+            IsTalentsOpen = !IsTalentsOpen;
+            ApplyPause();
+        }
+        else if (IsTalentsOpen)
+        {
+            HandleTalentInput();
         }
         else if (!IsPauseMenuOpen && stats != null && !stats.IsDead && Keyboard.current.iKey.wasPressedThisFrame)
         {
@@ -176,8 +192,23 @@ public sealed class PrototypeGameUI : MonoBehaviour
 
         if (stats.IsDead)
         {
-            DrawDeathScreen();
+            // Red flash right away; the game-over screen waits for the fall, then fades in.
+            var sinceDeath = PrototypeHeroDeath.DeathTime >= 0f ? Time.unscaledTime - PrototypeHeroDeath.DeathTime : 99f;
+            var flash = Mathf.Clamp01(1f - sinceDeath / 0.6f) * 0.45f;
+            if (flash > 0f) PrototypeUITheme.Fill(new Rect(0f, 0f, PrototypeUITheme.Width, PrototypeUITheme.Height), new Color(0.8f, 0f, 0f, flash));
+            var reveal = Mathf.Clamp01((sinceDeath - PrototypeHeroDeath.ScreenDelay) / 0.6f);
+            if (reveal > 0f)
+            {
+                PrototypeUITheme.GlobalAlpha = reveal;
+                DrawDeathScreen();
+                PrototypeUITheme.GlobalAlpha = 1f;
+            }
             return;
+        }
+
+        if (IsTalentsOpen)
+        {
+            DrawTalents();
         }
 
         if (IsInventoryOpen)
@@ -284,6 +315,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
     {
         IsInventoryOpen = false;
         IsPauseMenuOpen = false;
+        IsTalentsOpen = false;
         ApplyPause();
         if (run != null) run.Restart();
         else SceneManager.LoadScene(SceneManager.GetActiveScene().name);
@@ -309,10 +341,60 @@ public sealed class PrototypeGameUI : MonoBehaviour
         }
     }
 
+    private void HandleTalentInput()
+    {
+        var keyboard = Keyboard.current;
+        if (keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame) talentCursor = Mathf.Max(0, talentCursor - 1);
+        if (keyboard.sKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame) talentCursor = Mathf.Min(3, talentCursor + 1);
+        if (keyboard.jKey.wasPressedThisFrame) SpendTalent(talentCursor);
+    }
+
+    private void SpendTalent(int index)
+    {
+        var talents = stats.GetComponent<PrototypeTalents>();
+        if (talents == null) return;
+        if (talents.TrySpend((PrototypeTalents.Talent)index))
+            ShowNotice($"{PrototypeTalents.Names[index]} is now rank {talents.Rank((PrototypeTalents.Talent)index)}.");
+    }
+
+    /// <summary>Huntress tier-1 talents: W/S to choose, J to spend a point, T or Esc to close.</summary>
+    private void DrawTalents()
+    {
+        var talents = stats.GetComponent<PrototypeTalents>();
+        if (talents == null) { IsTalentsOpen = false; ApplyPause(); return; }
+        const float width = 560f;
+        const float height = 470f;
+        var x = (PrototypeUITheme.Width - width) * 0.5f;
+        var y = (PrototypeUITheme.Height - height) * 0.5f;
+        PrototypeUITheme.Fill(new Rect(0f, 0f, PrototypeUITheme.Width, PrototypeUITheme.Height), new Color(0f, 0f, 0f, 0.45f));
+        PrototypeUITheme.DrawPanel(new Rect(x, y, width, height));
+        PrototypeUITheme.DrawIcon(new Rect(x + 24f, y + 20f, 36f, 36f), PrototypeUITheme.Star);
+        PrototypeUITheme.Label(new Rect(x + 68f, y + 20f, 300f, 36f), "Huntress Talents", 24, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
+        PrototypeUITheme.Label(new Rect(x + width - 220f, y + 20f, 196f, 36f), $"Points: {talents.PointsAvailable}", 18,
+            talents.PointsAvailable > 0 ? PrototypeUITheme.Gold : PrototypeUITheme.Muted, TextAnchor.MiddleRight, true);
+        for (var i = 0; i < 4; i++)
+        {
+            var talent = (PrototypeTalents.Talent)i;
+            var rank = talents.Rank(talent);
+            var row = new Rect(x + 24f, y + 70f + i * 86f, width - 48f, 78f);
+            PrototypeUITheme.DrawSlot(row, false, i == talentCursor);
+            PrototypeUITheme.Label(new Rect(row.x + 16f, row.y + 8f, 300f, 26f), PrototypeTalents.Names[i], 17, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
+            PrototypeUITheme.Label(new Rect(row.xMax - 150f, row.y + 8f, 134f, 26f), $"Rank {rank} / {PrototypeTalents.MaxRank}", 15,
+                rank > 0 ? PrototypeUITheme.Parchment : PrototypeUITheme.Muted, TextAnchor.MiddleRight, true);
+            PrototypeUITheme.Label(new Rect(row.x + 16f, row.y + 34f, row.width - 32f, 40f),
+                PrototypeTalents.Describe(talent, Mathf.Max(1, rank < PrototypeTalents.MaxRank ? rank + 1 : rank)), 13, PrototypeUITheme.Parchment, TextAnchor.UpperLeft, false, true);
+            if (GUI.Button(row, GUIContent.none, GUIStyle.none)) { talentCursor = i; SpendTalent(i); }
+        }
+        PrototypeUITheme.Label(new Rect(x + 24f, y + height - 46f, width - 48f, 28f),
+            "W / S: choose    J: spend a point    T / Esc: close    (1 point per level, levels 2-5)", 13, PrototypeUITheme.Muted, TextAnchor.MiddleCenter);
+    }
+
     private static void ResumeGame()
     {
         IsInventoryOpen = false;
+        IsTalentsOpen = false;
         IsPauseMenuOpen = false;
+        IsTalentsOpen = false;
         ApplyPause();
     }
 
@@ -403,7 +485,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (item == null) return actionBuffer;
         if (index < 4) actionBuffer.Add(ItemAction.Unequip);
         else if (PrototypePotions.IsPotion(item.ItemId)) actionBuffer.Add(ItemAction.Drink);
-        else if (item.ItemId == "food") actionBuffer.Add(ItemAction.Eat);
+        else if (item.ItemId == "food" || item.ItemId == PrototypeItemCatalog.Berry) actionBuffer.Add(ItemAction.Eat);
         else if (PrototypeScrolls.IsScroll(item.ItemId)) actionBuffer.Add(ItemAction.Read);
         else if (item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingA || item.EquipmentSlot == PrototypeEquipmentSlot.ArtifactOrRingB)
         {
@@ -462,6 +544,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
                 var potionId = item.ItemId;
                 inventory.ConsumeOneAt(inventoryCursor);
                 var message = potions.Drink(potionId);
+                stats.GetComponent<PrototypeTalents>()?.OnConsumed();
                 PrototypeGameUI.ShowNotice(message);
                 inventoryMessage = message;
                 itemActionsOpen = false;
@@ -469,8 +552,18 @@ public sealed class PrototypeGameUI : MonoBehaviour
                 return;
             }
             case ItemAction.Eat:
-                inventory.RemoveAt(inventoryCursor);
-                hunger.Eat(60f);
+                if (item.ItemId == PrototypeItemCatalog.Berry)
+                {
+                    inventory.ConsumeOneAt(inventoryCursor);
+                    hunger.Eat(25f);
+                    stats.Heal(2);
+                }
+                else
+                {
+                    inventory.RemoveAt(inventoryCursor);
+                    hunger.Eat(60f);
+                }
+                stats.GetComponent<PrototypeTalents>()?.OnConsumed();
                 break;
             case ItemAction.Read:
                 if (scrolls == null || !scrolls.Read(inventoryCursor, out var selectTarget, out inventoryMessage)) return;
@@ -590,6 +683,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
     {
         IsInventoryOpen = false;
         IsPauseMenuOpen = false;
+        IsTalentsOpen = false;
         Time.timeScale = 1f;
     }
 }

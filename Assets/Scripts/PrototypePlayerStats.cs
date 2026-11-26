@@ -24,6 +24,7 @@ public sealed class PrototypePlayerStats : MonoBehaviour
     public event Action Died;
 
     private PrototypeInventory inventory;
+    private PrototypeTalents talents => GetComponent<PrototypeTalents>();
 
     private void Awake()
     {
@@ -37,7 +38,7 @@ public sealed class PrototypePlayerStats : MonoBehaviour
     {
         if (inventory == null) inventory = GetComponent<PrototypeInventory>();
         var armor = inventory != null ? inventory.GetSlot(1) : null;
-        var maxAbsorb = PrototypeArmors.MaxAbsorb(armor);
+        var maxAbsorb = PrototypeArmors.MaxAbsorb(armor) + (talents != null ? talents.BarkskinArmor() : 0);
         var before = CurrentHealth;
         TakeDamage(amount - UnityEngine.Random.Range(0, maxAbsorb + 1));
         return before - CurrentHealth;

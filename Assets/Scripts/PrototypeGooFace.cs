@@ -27,6 +27,7 @@ public sealed class PrototypeGooFace : MonoBehaviour
         enemy = GetComponent<PrototypeEnemy>();
         baseScale = transform.localScale;
         enemy.Damaged += OnDamaged;
+        enemy.Defeated += OnDefeated;
 
         // Children of a non-uniformly scaled body: a holder undoes the scale so parts keep their shape.
         face = new GameObject("Goo_Face").transform;
@@ -84,7 +85,17 @@ public sealed class PrototypeGooFace : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (enemy != null) enemy.Damaged -= OnDamaged;
+        if (enemy != null)
+        {
+            enemy.Damaged -= OnDamaged;
+            enemy.Defeated -= OnDefeated;
+        }
+    }
+
+    /// <summary>Goo bursts into little bits of goo (the boss object itself is removed right after).</summary>
+    private void OnDefeated()
+    {
+        PrototypeGooExplosion.Spawn(transform.parent, transform.position, baseScale, new Color(0.25f, 0.78f, 0.35f));
     }
 
     private void OnDamaged()

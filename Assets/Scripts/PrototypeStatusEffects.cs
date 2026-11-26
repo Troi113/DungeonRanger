@@ -11,7 +11,8 @@ public enum PrototypeStatusEffectType
     Oozed,
     Slowed,
     Invisible,
-    Burning
+    Burning,
+    Barkskin
 }
 
 /// <summary>

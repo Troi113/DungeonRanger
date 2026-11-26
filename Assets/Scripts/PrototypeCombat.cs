@@ -190,7 +190,9 @@ public sealed class PrototypeCombat : MonoBehaviour
             var forward = Vector3.Dot(offset, facing);
             if (forward >= 0f && forward <= depth && Mathf.Abs(Vector3.Dot(offset, side)) <= halfWidth && HasClearMeleePath(offset, distance))
             {
-                enemy.TakeDamage(weapon.Damage, true);
+                // Followup Strike talent: extra damage right after a bow hit on this enemy.
+                var followup = GetComponent<PrototypeTalents>()?.TakeFollowupBonus(enemy) ?? 0;
+                enemy.TakeDamage(weapon.Damage + followup, true);
                 hits++;
                 PrototypeGameFeel.Sparks(new Vector3(closest.x, 1.1f, closest.z), new Color(1f, 0.85f, 0.45f), heavy ? 22 : 14);
             }

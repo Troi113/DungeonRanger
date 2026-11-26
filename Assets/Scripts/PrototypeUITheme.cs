@@ -103,6 +103,7 @@ public static class PrototypeUITheme
             "ranger_bow" => Bow,
             _ when PrototypePotions.IsPotion(itemId) => PotionIcon(itemId),
             "food" => Bread,
+            "berry" => Icon(3, 48),
             "key" => Icon(3, 29),
             "knuckleduster" => Icon(3, 14),
             "knife" => Icon(3, 10),
@@ -155,8 +156,15 @@ public static class PrototypeUITheme
     /// IMGUI treats colors as linear in a Linear color-space project, so authored
     /// (sRGB) colors are converted here to show as written.
     /// </summary>
-    private static Color Ui(Color color) =>
-        QualitySettings.activeColorSpace == ColorSpace.Linear ? color.linear : color;
+    private static Color Ui(Color color)
+    {
+        var converted = QualitySettings.activeColorSpace == ColorSpace.Linear ? color.linear : color;
+        converted.a *= GlobalAlpha;
+        return converted;
+    }
+
+    /// <summary>Multiplies the opacity of everything drawn through the theme (for fade-ins). Reset to 1 after use.</summary>
+    public static float GlobalAlpha { get; set; } = 1f;
 
     public static void Fill(Rect rect, Color color)
     {
@@ -180,7 +188,7 @@ public static class PrototypeUITheme
     {
         if (texture == null) return;
         var old = GUI.color;
-        GUI.color = new Color(1f, 1f, 1f, alpha);
+        GUI.color = new Color(1f, 1f, 1f, alpha * GlobalAlpha);
         GUI.DrawTexture(rect, texture, ScaleMode.ScaleToFit, true);
         GUI.color = old;
     }
@@ -212,7 +220,7 @@ public static class PrototypeUITheme
         if (string.IsNullOrEmpty(text)) return;
         var style = GetStyle(size, anchor, bold, wrap);
         SharedContent.text = text;
-        style.normal.textColor = Shadow;
+        style.normal.textColor = new Color(Shadow.r, Shadow.g, Shadow.b, Shadow.a * GlobalAlpha);
         GUI.Label(new Rect(rect.x + 1f, rect.y + 2f, rect.width, rect.height), SharedContent, style);
         style.normal.textColor = Ui(color);
         GUI.Label(rect, SharedContent, style);

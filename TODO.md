@@ -197,6 +197,9 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Playtest Goo's knockback distance and the longer charge.
 - [x] Give Goo an original slime look with silly hit faces, triple its size, and add a slowing slime trail that blocks tumbling.
 - [x] Boss fixes: no squish/falling out of the world, 7–11 damage charge, caustic glob ranged attack, Goo squeezes through corridors.
+- [x] Reduce floor-5 water to scattered pools (~15%).
+- [x] Goo death animation: swell and burst into bouncing goo bits.
+- [x] Ranger death sequence: slow motion, red flash, camera push-in, death clip, delayed game-over fade.
 - [ ] Playtest giant Goo: hit faces, slime trail slowdown/no-tumble, charge and knockback at the new size (look and arena fit checked).
 - [x] Scale traps to four times their width (full tile).
 - [ ] With full-tile traps, avoid trapping one-cell corridors and doorways so traps stay avoidable.
@@ -257,7 +260,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Playtest item counts per floor, Strength requirements, and encumbrance penalties.
 - [x] Add Pixel Dungeon potions: Healing, Strength, Experience, Invisibility, Liquid Flame (random colors, identify, drink/throw, confirmations).
 - [x] Add hero experience and levels (needed for Experience and future talents).
-- [ ] Add Huntress tier-1 talents (design to confirm).
+- [x] Add Huntress tier-1 talents (adapted Nature's Bounty, Survivalist's Intuition, Followup Strike, Nature's Aid) with a T talent screen.
+- [ ] Playtest talents and the leveling pace (rats give 1 XP; reaching level 5 may need more XP sources).
 - [ ] Playtest potion effects, fire damage, invisibility, and leveling pace.
 - [ ] Add item stack counts and duplicate-item behavior.
 - [x] Add Drop and Throw inventory actions; thrown items open doors, trigger traps, and land before walls.

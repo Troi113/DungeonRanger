@@ -51,6 +51,7 @@ public sealed class PrototypeProjectile : MonoBehaviour
         if (target != null)
         {
             target.TakeDamage(damage, true);
+            FindAnyObjectByType<PrototypeTalents>()?.OnBowHit(target);
             PrototypeGameFeel.Sparks(transform.position, new Color(0.8f, 0.95f, 1f), 8);
             PrototypeGameFeel.Shake(0.1f, 0.1f);
         }

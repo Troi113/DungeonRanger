@@ -37,6 +37,10 @@ public static class PrototypeItemCatalog
 
         switch (itemId)
         {
+            case Berry:
+                name = "Berry";
+                color = new Color(0.75f, 0.15f, 0.45f);
+                return;
             case "food":
                 name = "Food Ration";
                 color = new Color(0.72f, 0.48f, 0.2f);
@@ -51,6 +55,9 @@ public static class PrototypeItemCatalog
                 return;
         }
     }
+
+    /// <summary>Small food from the Nature's Bounty talent: heals 2 and eases hunger.</summary>
+    public const string Berry = "berry";
 
     /// <summary>The ranger's permanent bow cannot leave the inventory.</summary>
     public static bool CanLeaveInventory(string itemId) => itemId != "ranger_bow";
