@@ -21,6 +21,9 @@ public static class PrototypeDungeonDressing
     private const float TorchChance = 0.08f;
     private const float WallDepth = 0.6f;
 
+    /// <summary>The shared damp sewer stone used for floors, walls and stairs.</summary>
+    public static Material StoneMaterial => PrototypeKayKit.TextureMaterial(TexturePath, SewerTint);
+
     public static void Apply(Transform floorRoot, int seed)
     {
         if (PrototypeKayKit.Prefab(Folder + "wall") == null) return;

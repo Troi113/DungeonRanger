@@ -22,12 +22,12 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     // Rat models are drawn well beyond their hit box (2x the earlier 1.4x) so they read clearly from the camera.
     private const float ModelLengthScale = 2.8f;
     private const string StairsModelPath = "KayKit/Dungeon/stairs";
-    // Stairs model width in world units (scaled evenly, so it keeps real stair proportions).
-    private const float StairsWidth = 3.2f;
-    // Gap between the stand point (spawn/arrival) and the foot of the steps.
-    private const float StairsFootGap = 0.4f;
+    // Stairs fill their cell: nearly a tile wide and deep, rising to the top of the walls.
+    private const float StairsWidth = PrototypeLevelGenerator.TileSize - 0.1f;
+    private const float StairsDepth = PrototypeLevelGenerator.TileSize - 0.4f;
+    private const float StairsHeight = 2.5f;
     // Share of floor 5 cells seeded with water before smoothing (lower = less water).
-    private const float BossWaterFill = 0.4f;
+    private const float BossWaterFill = 0.42f;
     // Goo's body radius in world units (its model is much bigger).
     private const float GooBodyRadius = 1.6f;
 
@@ -168,7 +168,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
         {
             var talents = player.GetComponent<PrototypeTalents>();
             PrototypeGameUI.ShowNotice(talents != null && talents.PointsAvailable > 0
-                ? $"Level up! Level {stats.Level}. Talent point ready - press T."
+                ? $"Level up! Level {stats.Level}. Talent point ready - press O."
                 : $"Level up! You are now level {stats.Level}.");
         }
     }
@@ -588,50 +588,57 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     {
         // Stairs extend into a walkable neighboring cell; the stand point stays at the given position.
         var standCell = PrototypeLevelGenerator.WorldToGrid(position);
+        // Prefer a neighbor backed by a wall, so the stairs run up into (or down beside) the wall.
         var direction = StairDirections[0];
-        foreach (var candidate in StairDirections)
+        var found = false;
+        for (var pass = 0; pass < 2 && !found; pass++)
         {
-            if (!walkable.Contains(standCell + candidate)) continue;
-            direction = candidate;
-            break;
+            foreach (var candidate in StairDirections)
+            {
+                if (!walkable.Contains(standCell + candidate)) continue;
+                if (pass == 0 && walkable.Contains(standCell + candidate * 2)) continue;
+                direction = candidate;
+                found = true;
+                break;
+            }
         }
         var stairs = new GameObject(down ? "Stairs_Down" : "Stairs_Up");
         stairs.transform.SetParent(floorRoot.transform, false);
-        stairs.transform.position = new Vector3(position.x, 0.02f, position.z);
+        stairs.transform.position = new Vector3(position.x, 0f, position.z);
         // Local -Z points from the stand point toward the stairs' cell.
         stairs.transform.rotation = Quaternion.LookRotation(new Vector3(-direction.x, 0f, -direction.y));
         var glowColor = down ? new Color(0.2f, 0.6f, 1f) : new Color(1f, 0.82f, 0.3f);
-        Material material;
+        var tile = PrototypeLevelGenerator.TileSize;
         var prefab = PrototypeKayKit.Prefab(StairsModelPath);
         if (prefab != null)
         {
-            // Natural KayKit stone stairs, scaled evenly. The model rises toward its local -Z
-            // (its low step is at +Z), so it is placed behind the stand point with the first
-            // step just behind it. Each staircase gets its own material so its glow pulse
-            // does not affect other dungeon pieces.
-            material = new Material(PrototypeKayKit.TextureMaterial("KayKit/Dungeon/dungeon_texture", Color.white));
-            var model = PrototypeKayKit.Spawn(prefab, stairs.transform, material).transform;
+            // KayKit stone stairs in the same damp sewer stone as the floor and walls, filling the
+            // neighboring cell edge to edge. The model rises toward its local -Z (its low step is at +Z).
+            var model = PrototypeKayKit.Spawn(prefab, stairs.transform, PrototypeDungeonDressing.StoneMaterial).transform;
             var bounds = PrototypeKayKit.LocalBounds(StairsModelPath, prefab);
-            var scale = bounds.size.x > 0.001f ? StairsWidth / bounds.size.x : 1f;
-            model.localScale = Vector3.one * scale;
+            var scale = new Vector3(
+                StairsWidth / Mathf.Max(0.001f, bounds.size.x),
+                StairsHeight / Mathf.Max(0.001f, bounds.size.y),
+                StairsDepth / Mathf.Max(0.001f, bounds.size.z));
+            model.localScale = scale;
             if (down)
             {
-                // Going down: the stairs sink into a pit in the neighboring cell, turned so the
-                // top step is next to the stand point and the steps descend away from it.
+                // Going down: the stairs sink into a pit in the neighboring cell, top step level
+                // with the floor at the stand cell's edge, descending away from it.
                 model.localRotation = Quaternion.Euler(0f, 180f, 0f);
-                var edge = PrototypeLevelGenerator.TileSize * 0.5f + StairsFootGap;
-                model.localPosition = new Vector3(bounds.center.x * scale, -0.02f - bounds.max.y * scale, -edge + bounds.min.z * scale);
-                BuildStairPit(standCell + direction, bounds.size.y * scale + 0.2f);
+                model.localPosition = new Vector3(bounds.center.x * scale.x, -bounds.max.y * scale.y, -tile * 0.5f + bounds.min.z * scale.z);
+                BuildStairPit(standCell + direction, StairsHeight + 0.2f);
             }
             else
             {
-                model.localPosition = new Vector3(-bounds.center.x * scale, -bounds.min.y * scale, -bounds.max.z * scale - StairsFootGap);
+                // Going up: the top step meets the far edge of the cell (the wall), the first step
+                // starts at the near edge, on the floor.
+                model.localPosition = new Vector3(-bounds.center.x * scale.x, -bounds.min.y * scale.y, -tile * 1.5f + 0.05f - bounds.min.z * scale.z);
             }
         }
         else
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            material = new Material(shader) { color = glowColor };
+            var material = PrototypeDungeonDressing.StoneMaterial;
             for (var i = 0; i < 4; i++)
             {
                 var step = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -643,9 +650,11 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
                 step.GetComponent<Collider>().enabled = false;
             }
         }
-        // Stairs glow and pulse like a goal marker; the way down is the brighter beacon.
-        PrototypeGlowPulse.Add(stairs, material, glowColor, 0.3f, down ? 5f : 3.5f, down ? 10f : 8f,
-            down ? new Vector3(0f, 0.8f, -PrototypeLevelGenerator.TileSize) : new Vector3(0f, 2.2f, -1.6f));
+        // The stone itself does not glow; a light and a beam of light rising above the walls mark
+        // the stairs, so they can be seen from other rooms. The way down is the brighter beacon.
+        var beaconCenter = new Vector3(0f, 0f, -tile);
+        PrototypeGlowPulse.Add(stairs, null, glowColor, 0f, down ? 5f : 3.5f, down ? 10f : 8f, beaconCenter + Vector3.up * (down ? 0.8f : 2.2f));
+        PrototypeStairsBeacon.Add(stairs.transform, beaconCenter, glowColor, down ? 1f : 0.7f);
         stairs.AddComponent<PrototypeStairs>().Initialize(this, down);
     }
 }

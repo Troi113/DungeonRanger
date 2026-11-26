@@ -5,8 +5,17 @@
 | Asset | Author | Location | License summary |
 |---|---|---|---|
 | Rat Pack (low-poly rat models: `RatPack.fbx` with three rats and `LPoly-Pallete_Texture.jpg`) | Unknown — the download (`Rat-Pack-All-Files.zip`) has no author or license file | `Assets/ThirdParty/Resources/RatPack/` | Unknown. Confirm the source and license before submitting or sharing the project. |
-| KayKit Adventurers 2.0 (Ranger character, Rig_Medium animations) and KayKit Dungeon Pack 1.1 (floor, wall, torch pieces) | Kay Lousberg (kaylousberg.com) | `Assets/ThirdParty/Resources/KayKit/` | CC0 (public domain); `License.txt` included in each folder. |
+| KayKit Adventurers 2.0 (Ranger character, Rig_Medium animations) and KayKit Dungeon Pack 1.1 (floor, wall, torch, stairs pieces) and KayKit Weapons (still in the project, no longer used) | Kay Lousberg (kaylousberg.com) | `Assets/ThirdParty/Resources/KayKit/` | CC0 (public domain); `License.txt` included in each folder. |
+| Potion Bottle | Don Carson (via Poly Pizza, poly.pizza/m/dOREefQfDQu) | `Assets/ThirdParty/Resources/Items/Potion/` | CC-BY 3.0 — attribution required. |
+| 4 me sword | Isaac Balliet (via Poly Pizza, poly.pizza/m/76TZtaN0feJ) | `Assets/ThirdParty/Resources/Items/Sword/` | CC-BY 3.0 — attribution required. |
+| Dagger | Poly by Google (via Poly Pizza, poly.pizza/m/fiHkakyPnNv) | `Assets/ThirdParty/Resources/Items/Dagger/` | CC-BY 3.0 — attribution required. |
+| Key | Poly by Google (via Poly Pizza, poly.pizza/m/0J_HflIStKl) | `Assets/ThirdParty/Resources/Items/Key/` | CC-BY 3.0 — attribution required. |
+| Loaf Round | Kenney (via Poly Pizza, poly.pizza/m/4BiXgXnxTY) | `Assets/ThirdParty/Resources/Items/Loaf/` | CC0 (public domain). |
+| Axe | Quaternius (via Poly Pizza, poly.pizza/m/FkzZ6I1zjT) | `Assets/ThirdParty/Resources/Items/Axe/` | CC0 (public domain). |
+| Spear | Quaternius (via Poly Pizza, poly.pizza/m/fH1zmvjPNx) | `Assets/ThirdParty/Resources/Items/Spear/` | CC0 (public domain). |
 | Free Medieval Fantasy UI Pack (pixel-art icons and buttons, 32×32 and 64×32 PNG) | Kibyra | `Assets/ThirdParty/Resources/FreeMedievalFantasyUIPack/` | Free for personal and commercial use; credit appreciated but not required; no redistribution or resale of the files as-is. See the pack's `Readme.txt`. |
+
+The Poly Pizza item models were re-oriented (upright, grip at the bottom), rescaled to unit size, and recentered for the game (`Tools/normalize_obj.py`); the Axe and Spear were converted from GLB to OBJ with flat colors (`Tools/glb_to_obj.py`; the Axe's palette texture was baked to one color per triangle). Shapes are otherwise unchanged.
 
 From the Rat Pack, only the FBX and palette texture were imported; `rat.blend` and the preview images were left out.
 

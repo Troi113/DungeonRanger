@@ -730,7 +730,8 @@ public sealed class PrototypeLevelGenerator
 
         if (floor == 1)
         {
-            var starter = new PrototypeInventoryItem(random.Next(2) == 0 ? "knife" : "knuckleduster", PrototypeEquipmentSlot.Weapon);
+            random.Next(2); // kept so floor generation stays the same as before (was knife or knuckleduster)
+            var starter = new PrototypeInventoryItem("knife", PrototypeEquipmentSlot.Weapon);
             PrototypeItemPickup.CreateForItem(itemRoot, GridToWorld(OffsetRoomCell(rooms[0], 2, 0), 0f), starter);
         }
 

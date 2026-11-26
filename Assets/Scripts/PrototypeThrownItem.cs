@@ -6,7 +6,7 @@ using UnityEngine;
 /// - on a wall, in the cell just before the wall;
 /// - on a closed door, under the door, which it opens and holds open;
 /// - on an untriggered trap, on top of the trap, which it sets off.
-/// Enemies are not hit.
+/// Enemies are not hit. In flight it shows the item's own model, tumbling end over end.
 /// </summary>
 public sealed class PrototypeThrownItem : MonoBehaviour
 {
@@ -20,6 +20,7 @@ public sealed class PrototypeThrownItem : MonoBehaviour
     private Vector3 direction;
     private float travelled;
     private Transform visual;
+    private Vector3 spinAxis = Vector3.right;
     private bool landed;
 
     public static void Throw(PrototypeInventoryItem item, PrototypePlayerMovement thrower, Transform landingParent)
@@ -36,14 +37,22 @@ public sealed class PrototypeThrownItem : MonoBehaviour
         thrown.landingParent = landingParent;
         thrown.direction = direction;
 
-        PrototypeItemCatalog.Describe(item.ItemId, out var label, out var color);
-        var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        cube.name = "Thrown_Visual";
-        cube.transform.SetParent(obj.transform, false);
-        cube.transform.localScale = new Vector3(0.45f, 0.45f, 0.45f);
-        cube.GetComponent<Collider>().enabled = false;
-        cube.GetComponent<Renderer>().sharedMaterial = PrototypeBootstrap.CreateMaterial($"Thrown {label} Material", color);
-        thrown.visual = cube.transform;
+        // The item's own model when it has one (weapons, potions, food, key), else a small colored block.
+        var spin = new GameObject("Thrown_Visual").transform;
+        spin.SetParent(obj.transform, false);
+        var model = PrototypeItemVisuals.Create(item.ItemId, spin, PrototypeItemVisuals.DisplaySize(item.ItemId), true);
+        if (model == null)
+        {
+            PrototypeItemCatalog.Describe(item.ItemId, out var label, out var color);
+            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.name = "Thrown_Block";
+            cube.transform.SetParent(spin, false);
+            cube.transform.localScale = new Vector3(0.45f, 0.45f, 0.45f);
+            cube.GetComponent<Collider>().enabled = false;
+            cube.GetComponent<Renderer>().sharedMaterial = PrototypeBootstrap.CreateMaterial($"Thrown {label} Material", color);
+        }
+        thrown.visual = spin;
+        thrown.spinAxis = Vector3.Cross(Vector3.up, direction).normalized;
 
         // Thrown point-blank against a wall: it drops in the ranger's own cell.
         foreach (var overlap in Physics.OverlapSphere(obj.transform.position + direction * 0.6f, thrown.radius,
@@ -85,7 +94,7 @@ public sealed class PrototypeThrownItem : MonoBehaviour
 
         transform.position = origin + direction * step;
         travelled += step;
-        if (visual != null) visual.Rotate(Vector3.up, spinSpeed * Time.deltaTime, Space.World);
+        if (visual != null) visual.Rotate(spinAxis, spinSpeed * Time.deltaTime, Space.World);
         if (travelled >= maxDistance - 0.001f) Land(CellCenter(transform.position));
     }
 

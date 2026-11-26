@@ -96,7 +96,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
                 ApplyPause();
             }
         }
-        else if (!IsPauseMenuOpen && !IsInventoryOpen && stats != null && !stats.IsDead && Keyboard.current.tKey.wasPressedThisFrame)
+        else if (!IsPauseMenuOpen && !IsInventoryOpen && stats != null && !stats.IsDead && Keyboard.current.oKey.wasPressedThisFrame)
         {
             IsTalentsOpen = !IsTalentsOpen;
             ApplyPause();
@@ -457,7 +457,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
             if (GUI.Button(row, GUIContent.none, GUIStyle.none)) { talentCursor = i; SpendTalent(i); }
         }
         PrototypeUITheme.Label(new Rect(x + 24f, y + height - 46f, width - 48f, 28f),
-            "W / S: choose    J: spend a point    T / Esc: close    (1 point per level, levels 2-5)", 13, PrototypeUITheme.Muted, TextAnchor.MiddleCenter);
+            "W / S: choose    J: spend a point    O / Esc: close    (1 point per level, levels 2-5)", 13, PrototypeUITheme.Muted, TextAnchor.MiddleCenter);
     }
 
     private static void ResumeGame()

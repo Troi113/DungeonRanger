@@ -63,21 +63,25 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
         itemObject.transform.SetParent(parent, false);
         itemObject.transform.position = position;
 
-        var visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        visual.name = "Item_Visual";
-        visual.transform.SetParent(itemObject.transform, false);
-        visual.transform.localPosition = new Vector3(0f, 0.55f, 0f);
-        visual.transform.localScale = new Vector3(0.7f, 1.1f, 0.7f);
-        if (PrototypeScrolls.IsScroll(id))
+        // The item's own model when it has one (weapons, potions, food, key), else a colored block.
+        if (PrototypeItemVisuals.CreateOnFloor(id, itemObject.transform) == null)
         {
-            visual.transform.localPosition = new Vector3(0f, 0.32f, 0f);
-            visual.transform.localScale = new Vector3(0.8f, 0.4f, 1.1f);
-        }
-        visual.GetComponent<Renderer>().sharedMaterial = CreateMaterial($"{label} Material", color);
-        var visualCollider = visual.GetComponent<Collider>();
-        if (visualCollider != null)
-        {
-            visualCollider.enabled = false;
+            var visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            visual.name = "Item_Visual";
+            visual.transform.SetParent(itemObject.transform, false);
+            visual.transform.localPosition = new Vector3(0f, 0.55f, 0f);
+            visual.transform.localScale = new Vector3(0.7f, 1.1f, 0.7f);
+            if (PrototypeScrolls.IsScroll(id))
+            {
+                visual.transform.localPosition = new Vector3(0f, 0.32f, 0f);
+                visual.transform.localScale = new Vector3(0.8f, 0.4f, 1.1f);
+            }
+            visual.GetComponent<Renderer>().sharedMaterial = CreateMaterial($"{label} Material", color);
+            var visualCollider = visual.GetComponent<Collider>();
+            if (visualCollider != null)
+            {
+                visualCollider.enabled = false;
+            }
         }
 
         var pickup = itemObject.AddComponent<PrototypeItemPickup>();

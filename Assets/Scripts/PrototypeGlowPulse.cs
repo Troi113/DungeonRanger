@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// Presentation only: makes an object glow and gently pulse, for goal markers such as stairs.
-/// Pulses the material's emission and an attached point light.
+/// Pulses the material's emission (when given) and an attached point light.
 /// </summary>
 public sealed class PrototypeGlowPulse : MonoBehaviour
 {
@@ -21,7 +21,7 @@ public sealed class PrototypeGlowPulse : MonoBehaviour
         var pulse = target.AddComponent<PrototypeGlowPulse>();
         pulse.material = sharedMaterial;
         pulse.emission = color * emissionStrength;
-        if (sharedMaterial.HasProperty("_EmissionColor"))
+        if (sharedMaterial != null && sharedMaterial.HasProperty("_EmissionColor"))
         {
             sharedMaterial.EnableKeyword("_EMISSION");
             sharedMaterial.SetColor("_EmissionColor", pulse.emission);

@@ -7,8 +7,8 @@ using UnityEngine;
 /// (arm cocked back, shoulders turned), a snappy strike with a lunge and a weapon trail, and a
 /// follow-through. `StrikeDelay` tells combat when the blow lands.
 /// Also holds the equipped melee weapon model in the right hand slot.
-///   Punch: bare hands and the knuckleduster.
-///   Sword / knife / sickle / axe: alternate slash and stab.
+///   Punch: bare hands.
+///   Sword / dagger (knife) / axe: alternate slash and stab.
 ///   Spear (a long staff with a blade tip): alternate stab and slash, with a longer lunge.
 /// </summary>
 [DefaultExecutionOrder(100)]
@@ -16,9 +16,7 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
 {
     private enum Move { Punch, Slash, Stab }
 
-    private const string Folder = "KayKit/Weapons/";
 
-    [SerializeField] private float spearLength = 1.6f;
 
     private PrototypePlayerMovement movement;
     private PrototypeInventory inventory;
@@ -56,7 +54,7 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
     {
         if (!FindBones()) return false;
         var isSpear = weaponId == "spear";
-        if (weaponId == "punch" || weaponId == "knuckleduster") move = Move.Punch;
+        if (weaponId == "punch") move = Move.Punch;
         else move = (swingCount++ % 2 == 0) == isSpear ? Move.Stab : Move.Slash;
         lunge = move == Move.Punch ? 0.25f : isSpear ? 0.55f : 0.35f;
         duration = Mathf.Clamp(seconds, 0.18f, 0.45f);
@@ -180,15 +178,8 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
         weaponModel = null;
         var parent = handSlot != null ? handSlot : hand;
         // Trail at the blade tip (local units of the hand slot), or at the fist.
-        PlaceTrail(weaponId switch { "sword" => 1.1f, "axe" => 0.9f, "knife" => 0.6f, "sickle" => 0.6f, "spear" => 2.4f, _ => 0f });
-        switch (weaponId)
-        {
-            case "sword": weaponModel = Attach("sword_1handed", "knight_texture", parent); break;
-            case "knife":
-            case "sickle": weaponModel = Attach("dagger", "rogue_texture", parent); break;
-            case "axe": weaponModel = Attach("axe_1handed", "barbarian_texture", parent); break;
-            case "spear": weaponModel = BuildSpear(parent); break;
-        }
+        PlaceTrail(PrototypeItemVisuals.HeldSize(weaponId, out var length, out var grip) ? length * (1f - grip) : 0f);
+        if (weaponId != null) weaponModel = PrototypeItemVisuals.CreateHeld(weaponId, parent);
     }
 
     /// <summary>A short white swoosh that follows the fist or weapon tip during the strike.</summary>
@@ -215,29 +206,5 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
     private void PlaceTrail(float reach)
     {
         if (trail != null) trail.transform.localPosition = Vector3.up * reach;
-    }
-
-    private GameObject Attach(string model, string texture, Transform parent)
-    {
-        var prefab = PrototypeKayKit.Prefab(Folder + model);
-        if (prefab == null) return null;
-        var instance = PrototypeKayKit.Spawn(prefab, parent, PrototypeKayKit.TextureMaterial(Folder + texture, Color.white));
-        instance.transform.localPosition = Vector3.zero;
-        instance.transform.localRotation = Quaternion.identity;
-        return instance;
-    }
-
-    /// <summary>A spear: the staff stretched longer, with a dagger blade at its tip.</summary>
-    private GameObject BuildSpear(Transform parent)
-    {
-        var spear = new GameObject("Spear");
-        spear.transform.SetParent(parent, false);
-        var shaft = Attach("staff", "mage_texture", spear.transform);
-        if (shaft == null) return spear;
-        shaft.transform.localScale = new Vector3(1f, spearLength, 1f);
-        var bounds = PrototypeKayKit.LocalBounds(Folder + "staff", PrototypeKayKit.Prefab(Folder + "staff"));
-        var tip = Attach("dagger", "rogue_texture", spear.transform);
-        if (tip != null) tip.transform.localPosition = new Vector3(0f, bounds.max.y * spearLength, 0f);
-        return spear;
     }
 }
