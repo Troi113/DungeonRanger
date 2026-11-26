@@ -207,6 +207,7 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Scale traps to four times their width (full tile).
 - [ ] With full-tile traps, avoid trapping one-cell corridors and doorways so traps stay avoidable.
 - [x] Show armed traps bright and glowing, spent traps dark.
+- [x] Use the low-poly trap model (rebuilt in code) with runes in each trap type's color.
 - [x] Hold Space with nothing to interact with to search and reveal hidden traps within 6 tiles.
 - [x] Base search on Pixel Dungeon: stand still to search, visible cells only, plus 10% passive noticing of adjacent hidden traps when entering a cell.
 - [ ] Playtest search hold time, 6-tile range, and passive awareness; consider a Ring of Detection or awareness growth later.

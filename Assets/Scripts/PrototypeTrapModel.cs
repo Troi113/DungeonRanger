@@ -70,7 +70,8 @@ public static class PrototypeTrapModel
         var part = new GameObject(name);
         part.transform.SetParent(root, false);
         part.transform.localPosition = new Vector3(x, y, -z);
-        part.transform.localRotation = Quaternion.Euler(0f, rotationY * Mathf.Rad2Deg, 0f);
+        // Mirroring z also reverses the turning direction around y.
+        part.transform.localRotation = Quaternion.Euler(0f, -rotationY * Mathf.Rad2Deg, 0f);
         part.AddComponent<MeshFilter>().sharedMesh = mesh;
         var renderer = part.AddComponent<MeshRenderer>();
         renderer.sharedMaterial = material;

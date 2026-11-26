@@ -31,7 +31,7 @@ Update this file at the end of each milestone.
 - `PrototypeTerrainGenerator`: procedural 32x32 room with four doorways, floor, and walls.
 - `PrototypeLevelGenerator`: seeded 32x32 floor built from six rectangular rooms connected by a nearby-room network plus an alternate route that forms a loop. Corridor routes go around unrelated rooms. Touching rooms share one door; separate rooms have a door at each end of their corridor. Remaining room boundaries have walls; enemy pathfinding and fog use the same blocked-edge data. Invalid placements are retried before terrain objects are created, with a fixed connected layout as a fallback.
   - Logical terrain tile is 4 Unity world units wide.
-  - Each trap is one flat plate filling the 4x4 world-unit tile (four times the original width). Its trigger covers the whole tile and is 4 units tall.
+  - Each trap uses the project's low-poly trap model (`PrototypeTrapModel`, rebuilt in C# from the three.js trap customizer): octagonal stone base, iron trim with corner spikes and claws, and rune strips/crystals in the trap type's color, scaled to about 0.9 of the tile. Its trigger covers the whole tile and is 4 units tall. Only the rune parts change with state (bright and glowing when armed, dark when spent).
 
 ## LevelTest prototype
 - Seed `4582`, six attempted rooms, one-cell corridors.
@@ -54,7 +54,7 @@ Update this file at the end of each milestone.
 - Eight possible trap types using the source-inspired names: Toxic Gas, Fire, Paralytic Gas, Poison Dart, Alarm, Lightning, Gripping, and Summoning.
 - Trap colors: bright green, orange, yellow, purple, red, blue, grey, and light blue respectively.
 - Searching follows Pixel Dungeon's `Hero.search()`, adapted to real time (`PrototypePlayerSearch`). Deliberate search: hold Space for 1.5 s, standing still, with nothing to interact with (walking restarts the timer); it always reveals every hidden, unsprung trap in the square of 6 tiles around the ranger. Passive noticing: on entering each new cell, every hidden trap in the 8 surrounding cells has a 10% (`awareness`) chance to be revealed. Both only reach cells currently visible through fog. The HUD shows a Searching bar, then "You noticed something." or "You search but find nothing."
-- Hidden trap visuals reveal when the trap is activated. Visible, armed traps show their bright type color with a glow; once activated (by the ranger or a thrown item) the plate turns a dark, unlit shade of that color (`spentShade` 0.3, `armedGlow` 0.6 on `PrototypeTrap`).
+- Hidden trap visuals reveal when the trap is activated. Visible, armed traps' runes show their bright type color with a glow; once activated (by the ranger or a thrown item) the runes turn a dark, unlit shade of that color (`spentShade` 0.3, `armedGlow` 0.6 on `PrototypeTrap`).
 - Enemies are stationary and wake visually when hit by the player.
 
 ## Player systems

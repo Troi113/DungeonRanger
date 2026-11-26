@@ -682,7 +682,9 @@ public sealed class PrototypeLevelGenerator
             // inset so the tile edge still reads. The trigger covers the whole
             // tile (it stops at the tile so neighboring cells stay safe) and is
             // tall enough to catch anything passing over it.
-            DisableCollider(CreateCube("Trap_Plate", visualRoot, new Vector3(0f, 0.06f, 0f), new Vector3(TrapWidth * 0.95f, 0.08f, TrapWidth * 0.95f), material));
+            // The low-poly trap model (stone base, iron trim, glowing runes in the trap's color),
+            // scaled from its ~2.1-unit design width to fill most of the tile.
+            PrototypeTrapModel.Build(visualRoot, material, TrapWidth * 0.9f / 2.1f);
 
             var trigger = trapObject.AddComponent<BoxCollider>();
             trigger.isTrigger = true;

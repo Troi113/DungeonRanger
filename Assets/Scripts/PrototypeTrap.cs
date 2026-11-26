@@ -182,13 +182,15 @@ public sealed class PrototypeTrap : MonoBehaviour
             return;
         }
 
-        // Armed traps glow in their bright color; spent traps turn a dark, unlit shade.
+        // Armed traps' runes glow in their bright type color; spent traps' runes go dark and unlit.
+        // Stone and iron parts keep their own materials.
         var color = activated ? trapColor * spentShade : trapColor;
         color.a = 1f;
         var glow = activated ? Color.black : trapColor * armedGlow;
         foreach (var renderer in visualRenderers)
         {
             renderer.enabled = visible;
+            if (!renderer.name.StartsWith("Rune_") && renderer.name != "Trap_Plate") continue;
             var material = renderer.material;
             material.color = color;
             if (!material.HasProperty("_EmissionColor")) continue;
