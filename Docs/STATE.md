@@ -22,7 +22,7 @@ Update this file at the end of each milestone.
 - Floor 5 generates a rectangular arena with a placeholder Goo boss. Defeating Goo drops the Amulet of Glory at its position. Press Space nearby to collect it, even with a full inventory, and enter the dedicated runtime `Victory` scene. The congratulations screen offers a return to the main menu.
 - The same player object carries health, inventory, hunger and status effects between floors. Press R after death to restart the run.
 - Sleeping enemies wake individually at random intervals of 20–35 seconds and patrol; this does not reveal the player's position. A sleeping enemy also wakes immediately if it sees the player within eight logical cells with a clear line of sight or is hit. Enemies that notice the player chase, then search the last seen position if sight is lost.
-- Goo has a charge attack: after a 10-second cooldown it spends 1 second aiming, then rushes up to 10 world units at three times its normal chase speed in a fixed direction. The orange marker shows the aim during windup. The charge stops at walls and damages the ranger once on contact; its cooldown starts after the charge ends. Goo is immune to hit slowing.
+- Goo has a charge attack: after a 10-second cooldown it spends 1 second aiming, then rushes up to 18 world units at 4.5 times its normal chase speed in a fixed direction. The orange marker shows the aim during windup. The charge stops at walls; a ranger in its path takes damage once and is knocked back 6 world units (forward and out of the path) over 0.25 seconds, blocked by walls. Its cooldown starts after the charge ends. Goo is immune to hit slowing.
 - The Goo drop, Space pickup with a full inventory, victory screen, and return to menu were checked in Play mode using a test helper to reach the boss. A complete run through all floors still needs playtesting. The victory scene is created at runtime rather than saved as a scene asset.
 
 ## Runtime setup
@@ -30,7 +30,7 @@ Update this file at the end of each milestone.
 - `PrototypeTerrainGenerator`: procedural 32x32 room with four doorways, floor, and walls.
 - `PrototypeLevelGenerator`: seeded 32x32 floor built from six rectangular rooms connected by a nearby-room network plus an alternate route that forms a loop. Corridor routes go around unrelated rooms. Touching rooms share one door; separate rooms have a door at each end of their corridor. Remaining room boundaries have walls; enemy pathfinding and fog use the same blocked-edge data. Invalid placements are retried before terrain objects are created, with a fixed connected layout as a fallback.
   - Logical terrain tile is 4 Unity world units wide.
-  - Trap markers are about 1x1 world unit.
+  - Each trap is one flat plate filling the 4x4 world-unit tile (four times the original width). Its trigger covers the whole tile and is 4 units tall.
 
 ## LevelTest prototype
 - Seed `4582`, six attempted rooms, one-cell corridors.
@@ -67,6 +67,7 @@ Update this file at the end of each milestone.
 - During gameplay, five consecutive presses of `Q` toggle the one-hit bow cheat. The HUD displays when it is active; other key presses interrupt an unfinished sequence. It carries between floors during a run and resets when a new player is created.
 - Generated melee pickups include knuckledusters, knives, swords, sickles, axes, and spears, with prototype damage and cooldown values. A weapon appears near the starting room. Pixel Dungeon's melee weapons informed the variety and real-time feel; knife and sickle are prototype additions.
 - Each generated non-boss floor places three scroll pickups, including one in the starting room. The six available types are Challenge, Upgrade, Remove Curse, Teleportation, Identify, and Magic Mapping. Matching scrolls stack in a single backpack slot. Their randomly assigned rune labels and known types persist across floors until the run is restarted.
+- Every item except the permanent bow and worn cursed equipment can be dropped or thrown from its inventory action menu. Drop places the whole stack on the ranger's cell. Throw closes the inventory and throws one item straight in the facing direction: on a wall it lands in the cell before the wall; on a closed door it opens the door, lands under it, and keeps the door open while it lies there; on an untriggered (including hidden) trap it sets the trap off and lands on it. Traps are found by the grid cells the item passes over, not by physics, so fast throws cannot skip them. Thrown items do not hit enemies. Trap effects that need the ranger standing on the trap do nothing when an item triggers them; alarm and summoning still wake enemies. Landed items are picked up with Space.
 - Scrolls are read from the paused inventory with `J`. Challenge alerts enemies on the current floor; Teleportation moves the ranger to a safe cell on that floor; Magic Mapping reveals the floor layout and hidden traps without revealing enemy positions; Remove Curse cleanses carried and equipped equipment. Upgrade and Identify ask the player to choose an eligible item with WASD/arrows and `J`; `Esc` cancels without consuming the scroll. Reading is instantaneous in this prototype.
 - Each generated non-boss floor places one armor pickup in the second room: Cloth (tier 1, most common), Leather (tier 2), or Mail (tier 3, rarest). Equipped armor absorbs a random 0 to (tier + upgrade level) damage from each enemy or Goo hit; traps, poison, and hunger bypass armor. Values live in `PrototypeArmors`. Class armor, glyphs, and Strength requirements are not implemented.
 - Equipping an unidentified weapon or armor has a `PrototypeInventory.equipCurseChance` (default 15%) chance to curse it, on top of the 1-in-5 generation curse. Identified items are safe to equip.
@@ -77,13 +78,19 @@ Update this file at the end of each milestone.
 - Opening the inventory pauses game time. Escape opens a pause menu with Continue and Quit to Main Menu; Continue resumes the run and quitting discards it. Exit Game closes a standalone build (Unity ignores application quit in the editor).
 - The build scene list starts with MainMenu, followed by DungeonGameplay; opening MainMenu in the editor and pressing Play starts at the title screen.
 
+## Menus and saving
+
+- Main menu: Start, Leaderboards, Exit Game. Leaderboards is an empty placeholder screen with Back.
+- Start opens Games in Progress. With no saved run it shows New Game and Back. With a saved run it also shows a Continue button with the floor and the last time played; New Game then asks before erasing the saved run.
+- One save slot: `PrototypeSaveSystem` writes `game_in_progress.json` to `Application.persistentDataPath`. Quit to Main Menu and closing the game save the run; dying or collecting the amulet deletes it.
+- Floors are regenerated from the run seed on load, then their saved changes are applied: picked-up generated items, dropped/thrown/chest items, enemy health/position/awake state and deaths, triggered and revealed traps, opened chest, explored fog, and a dropped amulet. Player health, hunger, inventory, known scrolls, floor, and position are restored. Status effects, door positions, the bow cheat, and enemy wake timers are not saved.
+- Death is permanent: dying deletes the saved run immediately, and any later save attempt for a dead run deletes instead of writing.
+
 ## UI art
 
-- All prototype UI (HUD, interaction prompt, inventory, item actions, pause, death, main menu, victory) is still immediate-mode GUI, now drawn through `PrototypeUITheme` with the Free Medieval Fantasy UI Pack by Kibyra (`Assets/ThirdParty/Resources/FreeMedievalFantasyUIPack/`, see `Docs/CREDITS.md`).
-- Panels and slots are 9-sliced from the pack's wood/iron frames; buttons use the wood plank; items, hearts, hunger, floor and menu buttons use pack icons. Some item icons are approximations (sickle, cloth and leather armor).
-- `Assets/Scripts/Editor/PixelArtTextureImporter.cs` imports PNGs under `Assets/ThirdParty/` as readable, point-filtered, uncompressed sprites.
-- The project uses Linear color space, where IMGUI washes out colors. `PrototypeUITheme` converts its colors to linear and makes a one-time linearized copy of each texture when first loaded. Verified in the editor by comparing rendered panel pixels against the source PNG.
-- `PrototypeUITheme.BeginScaledGui` scales the UI to an 800px reference height (0.5x–2x).
+- All UI (HUD, prompt, inventory, item actions including Drop/Throw, pause, death, main menu, Games in Progress, new-game confirmation, Leaderboards, victory) is immediate-mode GUI drawn through `PrototypeUITheme` with the Free Medieval Fantasy UI Pack by Kibyra (`Assets/ThirdParty/Resources/FreeMedievalFantasyUIPack/`, see `Docs/CREDITS.md`).
+- `Assets/Scripts/Editor/PixelArtTextureImporter.cs` imports those PNGs as readable, point-filtered, uncompressed sprites.
+- The project is in Linear color space, where IMGUI washes colors out; `PrototypeUITheme` converts its colors and makes a one-time linearized copy of each texture. `BeginScaledGui` scales the UI to an 800px reference height (0.5x-2x).
 
 ## Pixel Dungeon reference decisions
 

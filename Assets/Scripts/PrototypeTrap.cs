@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum PrototypeTrapType
@@ -18,6 +19,10 @@ public enum PrototypeTrapType
 /// </summary>
 public sealed class PrototypeTrap : MonoBehaviour
 {
+    // Traps on the active floor by grid cell; floors that are switched off unregister their traps.
+    private static readonly Dictionary<Vector2Int, PrototypeTrap> ActiveByCell = new();
+
+    private Vector2Int cell;
     private PrototypeTrapType trapType;
     private bool isHidden;
     private Renderer[] visualRenderers;
@@ -25,6 +30,8 @@ public sealed class PrototypeTrap : MonoBehaviour
 
     public bool IsActivated { get; private set; }
     public bool IsHidden => isHidden && !IsActivated;
+    /// <summary>True once the trap's hiding was removed (revealed by mapping or activated).</summary>
+    public bool WasRevealed => !isHidden;
     public PrototypeTrapType TrapType => trapType;
 
     public void Initialize(PrototypeTrapType type, bool hidden, Color color, Transform visualRoot)
@@ -34,6 +41,19 @@ public sealed class PrototypeTrap : MonoBehaviour
         trapColor = color;
         visualRenderers = visualRoot.GetComponentsInChildren<Renderer>(true);
         SetVisualState(!hidden, false);
+    }
+
+    public static bool TryGetAt(Vector2Int gridCell, out PrototypeTrap trap) => ActiveByCell.TryGetValue(gridCell, out trap);
+
+    private void OnEnable()
+    {
+        cell = PrototypeLevelGenerator.WorldToGrid(transform.position);
+        ActiveByCell[cell] = this;
+    }
+
+    private void OnDisable()
+    {
+        if (ActiveByCell.TryGetValue(cell, out var registered) && registered == this) ActiveByCell.Remove(cell);
     }
 
     public void Reveal()
@@ -50,6 +70,28 @@ public sealed class PrototypeTrap : MonoBehaviour
         }
 
         Activate(other.GetComponentInParent<PrototypePlayerStats>());
+    }
+
+    /// <summary>
+    /// A thrown item landing on the trap sets it off. Effects that need the ranger to be
+    /// standing on the trap do nothing; alarm and summoning still wake enemies.
+    /// </summary>
+    public bool ActivateByItem()
+    {
+        if (IsActivated) return false;
+        IsActivated = true;
+        SetVisualState(true, true);
+        if (trapType == PrototypeTrapType.Alarm) WakeAllEnemies();
+        else if (trapType == PrototypeTrapType.Summoning) WakeOneEnemy();
+        return true;
+    }
+
+    /// <summary>Restores a saved trap state without triggering any effect.</summary>
+    public void RestoreState(bool activated, bool revealed)
+    {
+        IsActivated = activated;
+        if (revealed || activated) isHidden = false;
+        SetVisualState(!isHidden, IsActivated);
     }
 
     private void Activate(PrototypePlayerStats stats)

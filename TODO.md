@@ -193,6 +193,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Playtest all four stair transitions and the Goo victory and restart flows.
 - [x] Add Goo's telegraphed, straight-line charge attack.
 - [ ] Playtest and balance Goo's charge attack during a full run.
+- [x] Lengthen and speed up Goo's charge (18 units at 4.5x speed) and knock the ranger back on hit.
+- [ ] Playtest Goo's knockback distance and the longer charge.
+- [x] Scale traps to four times their width (full tile).
+- [ ] With full-tile traps, avoid trapping one-cell corridors and doorways so traps stay avoidable.
 - [ ] Create a four-level procedural progression.
 - [ ] Create a fifth boss level.
 - [ ] Decide whether the first four levels share a sewer theme or use different themes.
@@ -238,7 +242,10 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [x] Make health potions usable from the inventory.
 - [ ] Make equipment slots affect combat or player stats.
 - [ ] Add item stack counts and duplicate-item behavior.
-- [ ] Add item drop behavior.
+- [x] Add Drop and Throw inventory actions; thrown items open doors, trigger traps, and land before walls.
+- [x] Detect traps for thrown items by grid cell instead of physics; make traps one flat plate with a taller trigger.
+- [ ] Playtest Drop and Throw: walls, closed doors (held open), hidden traps, stacks, equipped items.
+- [ ] Decide whether thrown items should hit enemies and whether item-triggered gas/fire traps need an area effect.
 - [ ] Define the `L` key behavior.
 - [x] Add weapon slot and armor slot placeholders.
 - [ ] Add bow and arrow data.
@@ -246,7 +253,6 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add one utility item.
 - [ ] Add one ranger-specific item or ability.
 - [x] Add item pickup behavior.
-- [ ] Add item drop behavior.
 - [ ] Add item persistence between scenes.
 - [ ] Keep the first item system small; add Pixel Dungeon-style complexity later.
 - [ ] Decide whether unidentified items are part of the final game.
@@ -272,13 +278,17 @@ The goal is to make the game playable first, then improve visuals, content, bala
 - [ ] Add bow cooldown or ammunition display if needed.
 - [x] Add inventory/quick-slot display.
 - [ ] Add readable controls and feedback.
-- [x] Restyle the IMGUI HUD, inventory, pause, death, main menu, and victory screens with the medieval pixel UI pack.
-- [ ] Playtest the restyled inventory, item-action popup, pause menu, and death screen (not yet viewed in Play mode).
-- [ ] Replace approximate item icons (sickle, cloth armor, leather armor) if better art is found.
-- [ ] Check the UI colors in a standalone build (the Linear color-space correction was verified only in the editor).
 
 ### Persistence
 
+- [x] Add a Games in Progress screen with New Game, Continue (floor and last played), and Back.
+- [x] Save the run on quit and restore it on Continue; delete it on death or victory.
+- [ ] Playtest save/continue across several floors, after dropping/throwing items, and after Goo dies.
+- [ ] Save status effects and door states if needed.
+- [ ] Fill in the Leaderboards screen (currently an empty placeholder with Back).
+- [x] Restore the pixel-art UI and style Games in Progress, the new-game confirmation, Leaderboards, and the Drop/Throw actions.
+- [ ] Playtest the styled inventory, item-action popup (with Drop/Throw), pause menu, and death screen.
+- [ ] Check the UI colors in a standalone build (the Linear color-space correction was verified only in the editor).
 - [ ] Add persistent high score.
 - [ ] Add persistent user settings.
 - [ ] Add persistent audio and control settings if used.

@@ -50,6 +50,13 @@ public sealed class PrototypePlayerStats : MonoBehaviour
         }
     }
 
+    /// <summary>Sets health directly when restoring a saved game.</summary>
+    public void RestoreHealth(int value)
+    {
+        CurrentHealth = Mathf.Clamp(value, 1, MaxHealth);
+        HealthChanged?.Invoke(CurrentHealth, MaxHealth);
+    }
+
     public void Heal(int amount)
     {
         if (IsDead || amount <= 0)

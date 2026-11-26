@@ -81,6 +81,17 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
         RefreshVisibility();
     }
 
+    public IReadOnlyCollection<Vector2Int> VisitedCells => visitedCells;
+    public IReadOnlyCollection<Vector2Int> MappedCells => mappedCells;
+
+    /// <summary>Restores saved exploration; call after Initialize.</summary>
+    public void RestoreExplored(IEnumerable<Vector2Int> visited, IEnumerable<Vector2Int> mapped)
+    {
+        foreach (var cell in visited) if (walkableCells.Contains(cell)) visitedCells.Add(cell);
+        foreach (var cell in mapped) if (walkableCells.Contains(cell)) mappedCells.Add(cell);
+        RefreshVisibility();
+    }
+
     public void RefreshNow()
     {
         if (player != null && walkableCells != null) RefreshVisibility();

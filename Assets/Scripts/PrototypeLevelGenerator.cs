@@ -20,6 +20,8 @@ public sealed class PrototypeLevelGenerator
     // movement and ranged combat.
     public const float TileSize = 4f;
     private const float WallThickness = 0.25f;
+    private const float TrapWidth = 4f;
+    private const float TrapTriggerHeight = 4f;
     private const float WallHeight = 2.5f;
     private const float DoorWidth = 3f;
     private const float DoorHeight = 2.2f;
@@ -674,15 +676,16 @@ public sealed class PrototypeLevelGenerator
 
             var visualRoot = new GameObject("Trap_Visual").transform;
             visualRoot.SetParent(trapObject.transform, false);
-            // Traps intentionally remain one world block wide inside the
-            // enlarged four-unit terrain tile.
-            DisableCollider(CreateCube("Marker_Base", visualRoot, new Vector3(0f, 0.08f, 0f), new Vector3(1f, 0.12f, 1f), material));
-            DisableCollider(CreateCube("Marker_Core", visualRoot, new Vector3(0f, 0.28f, 0f), new Vector3(0.22f, 0.32f, 0.22f), material));
+            // One flat plate, four times the original one-block width, slightly
+            // inset so the tile edge still reads. The trigger covers the whole
+            // tile (it stops at the tile so neighboring cells stay safe) and is
+            // tall enough to catch anything passing over it.
+            DisableCollider(CreateCube("Trap_Plate", visualRoot, new Vector3(0f, 0.06f, 0f), new Vector3(TrapWidth * 0.95f, 0.08f, TrapWidth * 0.95f), material));
 
             var trigger = trapObject.AddComponent<BoxCollider>();
             trigger.isTrigger = true;
-            trigger.center = new Vector3(0f, 1f, 0f);
-            trigger.size = new Vector3(1.2f, 2f, 1.2f);
+            trigger.center = new Vector3(0f, TrapTriggerHeight * 0.5f, 0f);
+            trigger.size = new Vector3(TrapWidth, TrapTriggerHeight, TrapWidth);
 
             var trap = trapObject.AddComponent<PrototypeTrap>();
             trap.Initialize(trapType, hidden, color, visualRoot);

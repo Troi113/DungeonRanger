@@ -5,8 +5,10 @@ public sealed class PrototypeGooCharge : MonoBehaviour
 {
     [SerializeField] private float cooldown = 10f;
     [SerializeField] private float windupDuration = 1f;
-    [SerializeField] private float distance = 10f;
-    [SerializeField] private float speedMultiplier = 3f;
+    [SerializeField] private float distance = 18f;
+    [SerializeField] private float speedMultiplier = 4.5f;
+    [SerializeField] private float knockbackDistance = 6f;
+    [SerializeField] private float knockbackDuration = 0.25f;
 
     private enum ChargeState { Ready, Windup, Charging }
     private ChargeState state;
@@ -97,10 +99,23 @@ public sealed class PrototypeGooCharge : MonoBehaviour
         {
             hitPlayer = true;
             player.GetComponent<PrototypePlayerStats>()?.TakeAttackDamage(damage);
+            player.ApplyKnockback(KnockbackDirection(start, end), knockbackDistance, knockbackDuration);
         }
         transform.position = end;
         distanceRemaining -= wallDistance;
         if (hitWall || distanceRemaining <= 0.001f) FinishCharge();
+    }
+
+    /// <summary>Forward along the charge and sideways out of its path.</summary>
+    private Vector3 KnockbackDirection(Vector3 start, Vector3 end)
+    {
+        var position = player.transform.position;
+        start.y = end.y = position.y = 0f;
+        var segment = end - start;
+        var t = segment.sqrMagnitude > 0.0001f ? Mathf.Clamp01(Vector3.Dot(position - start, segment) / segment.sqrMagnitude) : 0f;
+        var sideways = position - (start + segment * t);
+        if (sideways.sqrMagnitude < 0.01f) sideways = Vector3.Cross(Vector3.up, lockedDirection);
+        return (lockedDirection * 0.6f + sideways.normalized).normalized;
     }
 
     private Vector3 DirectionToPlayer()

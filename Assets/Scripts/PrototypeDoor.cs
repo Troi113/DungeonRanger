@@ -20,6 +20,7 @@ public sealed class PrototypeDoor : MonoBehaviour
     private Vector3 closedPanelPosition;
     private Vector3 openPanelPosition;
     private Coroutine panelAnimation;
+    private GameObject heldOpenBy;
 
     public bool IsOpen { get; private set; }
     public Vector2Int Cell { get; private set; }
@@ -69,6 +70,13 @@ public sealed class PrototypeDoor : MonoBehaviour
         Close();
     }
 
+    /// <summary>Opens the door and keeps it open while an item lies in the doorway.</summary>
+    public void OpenAndHold(GameObject blocker)
+    {
+        heldOpenBy = blocker;
+        if (!IsOpen) Open();
+    }
+
     private void Open()
     {
         IsOpen = true;
@@ -87,7 +95,7 @@ public sealed class PrototypeDoor : MonoBehaviour
 
     private void Close()
     {
-        if (!IsOpen)
+        if (!IsOpen || heldOpenBy != null)
         {
             return;
         }

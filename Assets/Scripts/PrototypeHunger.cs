@@ -67,6 +67,8 @@ public sealed class PrototypeHunger : MonoBehaviour
         }
     }
 
+    public void RestoreMovingTime(float value) => movingTime = Mathf.Max(0f, value);
+
     public void Eat(float movingSecondsRestored)
     {
         movingTime = Mathf.Max(0f, movingTime - Mathf.Max(0f, movingSecondsRestored));

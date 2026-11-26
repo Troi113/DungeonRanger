@@ -192,6 +192,17 @@ public sealed class PrototypeEnemy : MonoBehaviour
         defense = Mathf.Max(0, data.Defense);
     }
 
+    /// <summary>Restores saved health, position, and wake state without triggering events.</summary>
+    public void RestoreState(int savedHealth, Vector3 position, bool awake)
+    {
+        health = Mathf.Clamp(savedHealth, 1, maxHealth);
+        hasTakenDamage = health < maxHealth;
+        transform.position = new Vector3(position.x, transform.position.y, position.z);
+        if (awake) WakeUp();
+        path.Clear();
+        pathIndex = 0;
+    }
+
     public void ConfigureBoss(int bossHealth)
     {
         ApplyMobData(PrototypeMobs.Goo);

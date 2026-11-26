@@ -5,29 +5,27 @@ using UnityEngine;
 /// </summary>
 public sealed class PrototypeItemPickup : PrototypeInteractable
 {
-    private string itemId;
+    private PrototypeInventoryItem item;
     private string displayName;
-    private PrototypeEquipmentSlot equipmentSlot;
-    private bool cursed;
-    private bool identified = true;
 
-    public string ItemId => itemId;
+    public string ItemId => item?.ItemId;
     public string DisplayName => displayName;
+    public PrototypeInventoryItem Item => item;
+    /// <summary>Order among a floor's generated pickups, or -1 for dropped/thrown/chest items.</summary>
+    public int GeneratedIndex { get; set; } = -1;
     public override bool RequiresFacing => false;
     public override string InteractionPrompt => $"Space: Pick up {displayName}";
 
     public void Initialize(string id, string label, PrototypeEquipmentSlot slot)
     {
-        itemId = id;
+        item = new PrototypeInventoryItem(id, slot);
         displayName = label;
-        equipmentSlot = slot;
     }
 
     public override void Interact(PrototypePlayerMovement player)
     {
         var inventory = player != null ? player.GetComponent<PrototypeInventory>() : null;
-        var item = new PrototypeInventoryItem(itemId, equipmentSlot) { IsCursed = cursed, IsIdentified = identified };
-        if (!gameObject.activeInHierarchy || inventory == null || !inventory.TryAdd(item))
+        if (!gameObject.activeInHierarchy || inventory == null || item == null || !inventory.TryAdd(item))
         {
             return;
         }
@@ -38,8 +36,18 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
 
     public void SetEquipmentTraits(bool isCursed, bool isIdentified)
     {
-        cursed = isCursed;
-        identified = isIdentified;
+        item.IsCursed = isCursed;
+        item.IsIdentified = isIdentified;
+    }
+
+    /// <summary>Places an existing inventory item (keeping upgrades, curse, and stack size) on the floor.</summary>
+    public static PrototypeItemPickup CreateForItem(Transform parent, Vector3 position, PrototypeInventoryItem inventoryItem)
+    {
+        PrototypeItemCatalog.Describe(inventoryItem.ItemId, out var label, out var color);
+        var pickup = CreateRuntime(parent, position, $"Item_{inventoryItem.ItemId}", inventoryItem.ItemId, label,
+            inventoryItem.EquipmentSlot, color);
+        pickup.item = inventoryItem;
+        return pickup;
     }
 
     public static PrototypeItemPickup CreateRuntime(

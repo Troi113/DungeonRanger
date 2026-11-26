@@ -20,6 +20,8 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
     private float nextTumbleTime;
     private Quaternion tumbleStartRotation;
     private Vector3 tumbleRotationAxis;
+    private Vector3 knockbackVelocity;
+    private float knockbackRemaining;
 
     public Vector3 FacingDirection { get; private set; } = Vector3.forward;
     public bool IsTumbling { get; private set; }
@@ -48,6 +50,15 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
         if (stats != null && stats.IsDead)
         {
             IsMoving = false;
+            return;
+        }
+
+        if (knockbackRemaining > 0f)
+        {
+            // Knockback overrides input; the controller still collides with walls.
+            knockbackRemaining -= Time.deltaTime;
+            IsMoving = false;
+            characterController.Move(knockbackVelocity * Time.deltaTime);
             return;
         }
 
@@ -92,6 +103,21 @@ public sealed class PrototypePlayerMovement : MonoBehaviour
         verticalVelocity += gravity * Time.deltaTime;
         movement.y = verticalVelocity;
         characterController.Move(movement * Time.deltaTime);
+    }
+
+    /// <summary>Pushes the ranger a set distance over a short time, interrupting a tumble.</summary>
+    public void ApplyKnockback(Vector3 direction, float distance, float duration)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.0001f || distance <= 0f) return;
+        duration = Mathf.Max(0.05f, duration);
+        knockbackVelocity = direction.normalized * (distance / duration);
+        knockbackRemaining = duration;
+        if (IsTumbling)
+        {
+            IsTumbling = false;
+            transform.rotation = tumbleStartRotation;
+        }
     }
 
     private void BeginTumble()

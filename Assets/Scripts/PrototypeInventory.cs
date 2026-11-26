@@ -150,6 +150,30 @@ public sealed class PrototypeInventory : MonoBehaviour
         return item;
     }
 
+    /// <summary>Removes one unit from a slot (the whole item unless it is a stack) and returns it.</summary>
+    public PrototypeInventoryItem TakeOneAt(int index)
+    {
+        var item = GetSlot(index);
+        if (item == null) return null;
+        if (item.Quantity <= 1) return RemoveAt(index);
+        item.Quantity--;
+        InventoryChanged?.Invoke();
+        return new PrototypeInventoryItem(item.ItemId, item.EquipmentSlot)
+        {
+            UpgradeLevel = item.UpgradeLevel,
+            IsCursed = item.IsCursed,
+            IsIdentified = item.IsIdentified
+        };
+    }
+
+    /// <summary>Replaces a slot's contents; used when restoring a saved game.</summary>
+    public void SetSlot(int index, PrototypeInventoryItem item)
+    {
+        if (!IsValidIndex(index)) return;
+        slots[index] = item;
+        InventoryChanged?.Invoke();
+    }
+
     public bool ConsumeOneAt(int index)
     {
         var item = GetSlot(index);

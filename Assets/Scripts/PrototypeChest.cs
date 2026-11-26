@@ -14,6 +14,15 @@ public sealed class PrototypeChest : PrototypeInteractable
     private Renderer chestRenderer;
     private bool opened;
 
+    public bool IsOpened => opened;
+
+    /// <summary>Restores a saved opened chest without dropping its reward again.</summary>
+    public void RestoreOpened()
+    {
+        opened = true;
+        if (chestRenderer != null) chestRenderer.material.color = new Color(0.22f, 0.5f, 0.2f);
+    }
+
     public override string InteractionPrompt => opened
         ? "Chest is open"
         : "Space: Open chest with key";

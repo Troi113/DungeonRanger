@@ -47,6 +47,13 @@ public sealed class PrototypeScrolls : MonoBehaviour
         }
     }
 
+    public IEnumerable<string> KnownScrolls => known;
+
+    public void RestoreKnown(IEnumerable<string> ids)
+    {
+        foreach (var id in ids) if (IsScroll(id)) known.Add(id);
+    }
+
     public static bool IsScroll(string id) => Array.IndexOf(Ids, id) >= 0;
     public bool IsKnown(string id) => known.Contains(id);
     public static bool RequiresTarget(string id) => id == "scroll_identify" || id == "scroll_upgrade";
