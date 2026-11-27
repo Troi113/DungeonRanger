@@ -7,16 +7,26 @@ using UnityEngine;
 /// (arm cocked back, shoulders turned), a snappy strike with a lunge and a weapon trail, and a
 /// follow-through. `StrikeDelay` tells combat when the blow lands.
 /// Also holds the equipped melee weapon model in the right hand slot.
-///   Punch: bare hands.
-///   Sword / dagger (knife) / axe: alternate slash and stab.
-///   Spear (a long staff with a blade tip): alternate stab and slash, with a longer lunge.
+/// Each K press picks one of the weapon's three moves at random (looks only; damage and hit
+/// area are the same for every move), and the ranger steps toward the hit area so the blow
+/// visibly reaches it (the step distance comes from PrototypeCombat):
+///   Fists:  jab (left hand), straight, uppercut.
+///   Dagger: slash, backhand slash, stab.      Sword: slash, stab, backhand slash.
+///   Spear:  two-handed poke, two-handed slash, one-handed slash.
+///   Axe:    swing, poke, overhead slam.
 /// </summary>
 [DefaultExecutionOrder(100)]
 public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
 {
-    private enum Move { Punch, Slash, Stab }
+    private enum Move { Jab, Straight, Uppercut, Slash, Backhand, Stab, TwoHandPoke, TwoHandSlash, Swing, Slam }
 
+    private static readonly Move[] FistMoves = { Move.Jab, Move.Straight, Move.Uppercut };
+    private static readonly Move[] BladeMoves = { Move.Slash, Move.Backhand, Move.Stab };
+    private static readonly Move[] SpearMoves = { Move.TwoHandPoke, Move.TwoHandSlash, Move.Slash };
+    private static readonly Move[] AxeMoves = { Move.Swing, Move.Stab, Move.Slam };
 
+    // Small step back during the wind-up, in world units.
+    private const float BackStep = 0.2f;
 
     private PrototypePlayerMovement movement;
     private PrototypeInventory inventory;
@@ -26,6 +36,9 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
     private Transform hand;
     private Transform handSlot;
     private Transform chest;
+    private Transform upperArmL;
+    private Transform lowerArmL;
+    private Transform handL;
     private TrailRenderer trail;
     private GameObject weaponModel;
     private string shownWeapon;
@@ -34,7 +47,6 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
     private float duration;
     private float lunge;
     private bool attacking;
-    private int swingCount;
 
     // Fractions of the attack: wind-up ends, strike lands, then follow-through and recovery.
     private const float WindupEnd = 0.28f;
@@ -49,14 +61,22 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
         inventory = GetComponent<PrototypeInventory>();
     }
 
-    /// <summary>Called by PrototypeCombat when a melee attack starts.</summary>
-    public bool PlayAttack(string weaponId, float seconds)
+    /// <summary>
+    /// Called by PrototypeCombat when a melee attack starts. `stepDistance` is how far (world
+    /// units) the ranger steps in at the strike, so the blow reaches the hit area.
+    /// </summary>
+    public bool PlayAttack(string weaponId, float seconds, float stepDistance)
     {
         if (!FindBones()) return false;
-        var isSpear = weaponId == "spear";
-        if (weaponId == "punch") move = Move.Punch;
-        else move = (swingCount++ % 2 == 0) == isSpear ? Move.Stab : Move.Slash;
-        lunge = move == Move.Punch ? 0.25f : isSpear ? 0.55f : 0.35f;
+        var moves = weaponId switch
+        {
+            "knife" or "sword" => BladeMoves,
+            "spear" => SpearMoves,
+            "axe" => AxeMoves,
+            _ => FistMoves
+        };
+        move = moves[Random.Range(0, moves.Length)];
+        lunge = Mathf.Max(0f, stepDistance);
         duration = Mathf.Clamp(seconds, 0.18f, 0.45f);
         elapsed = 0f;
         attacking = true;
@@ -93,51 +113,115 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
             var w = t / WindupEnd;
             strike = 0f;
             weight = Mathf.SmoothStep(0f, 1f, w);
-            lungeAmount = -0.15f * weight;
+            lungeAmount = -BackStep * weight;
         }
         else if (t < StrikeEnd)
         {
             var s = (t - WindupEnd) / (StrikeEnd - WindupEnd);
             strike = 1f - (1f - s) * (1f - s) * (1f - s);
             weight = 1f;
-            lungeAmount = Mathf.Lerp(-0.15f, 1f, strike);
+            lungeAmount = Mathf.Lerp(-BackStep, lunge, strike);
         }
         else
         {
             var r = (t - StrikeEnd) / (1f - StrikeEnd);
             strike = 1f;
             weight = 1f - Mathf.SmoothStep(0f, 1f, r);
-            lungeAmount = weight;
+            lungeAmount = lunge * weight;
         }
 
-        Vector3 aim;
-        float twist;
-        switch (move)
-        {
-            case Move.Slash:
-                // Cocked high behind the right shoulder, then a fast sweep across to low left.
-                var angle = Mathf.Lerp(135f, -80f, strike) * Mathf.Deg2Rad;
-                aim = forward * Mathf.Cos(angle) + right * Mathf.Sin(angle) + Vector3.up * Mathf.Lerp(0.9f, -0.4f, strike);
-                twist = Mathf.Lerp(35f, -40f, strike);
-                break;
-            case Move.Stab:
-                aim = Vector3.Lerp(-forward * 0.6f + right * 0.5f + Vector3.up * 0.1f, forward + Vector3.down * 0.05f, strike);
-                twist = Mathf.Lerp(30f, -25f, strike);
-                break;
-            default:
-                aim = Vector3.Lerp(-forward * 0.5f + right * 0.6f + Vector3.down * 0.2f, forward + Vector3.down * 0.1f + right * 0.1f, strike);
-                twist = Mathf.Lerp(35f, -30f, strike);
-                break;
-        }
+        Pose(move, strike, forward, right, out var aim, out var twist);
+        var leftLead = move == Move.Jab;
+        var twoHanded = move == Move.TwoHandPoke || move == Move.TwoHandSlash || move == Move.Slam;
 
         if (chest != null) chest.rotation = Quaternion.AngleAxis(twist * weight, Vector3.up) * chest.rotation;
-        Aim(upperArm, lowerArm.position - upperArm.position, aim, weight);
-        Aim(lowerArm, hand.position - lowerArm.position, aim, weight);
-        // Point the weapon along the strike (blades extend along the hand slot's up axis).
-        if (move != Move.Punch && handSlot != null) Aim(hand, handSlot.up, aim, weight);
-        holder.localPosition = holder.parent.InverseTransformVector(forward * lunge * lungeAmount);
+        if (leftLead && upperArmL != null)
+        {
+            // The jab is thrown with the lead (left) hand.
+            Aim(upperArmL, lowerArmL.position - upperArmL.position, aim, weight);
+            Aim(lowerArmL, handL.position - lowerArmL.position, aim, weight);
+        }
+        else
+        {
+            Aim(upperArm, lowerArm.position - upperArm.position, aim, weight);
+            Aim(lowerArm, hand.position - lowerArm.position, aim, weight);
+            // Point the weapon along the strike (blades extend along the hand slot's up axis).
+            if (!IsFist(move) && handSlot != null) Aim(hand, handSlot.up, aim, weight);
+            // Two-handed moves: the left hand grips the shaft a little behind the right hand.
+            if (twoHanded && upperArmL != null)
+            {
+                var grip = hand.position - aim.normalized * 0.45f;
+                Aim(upperArmL, lowerArmL.position - upperArmL.position, grip - upperArmL.position, weight);
+                Aim(lowerArmL, handL.position - lowerArmL.position, grip - lowerArmL.position, weight);
+            }
+        }
+        holder.localPosition = holder.parent.InverseTransformVector(forward * lungeAmount);
         holder.localPosition = new Vector3(holder.localPosition.x, 0f, holder.localPosition.z);
         if (trail != null) trail.emitting = t >= WindupEnd && t < StrikeEnd + 0.1f;
+    }
+
+    private static bool IsFist(Move m) => m == Move.Jab || m == Move.Straight || m == Move.Uppercut;
+
+    /// <summary>Arm direction and chest twist for a move; strike goes 0 (cocked) to 1 (extended).</summary>
+    private static void Pose(Move m, float strike, Vector3 forward, Vector3 right, out Vector3 aim, out float twist)
+    {
+        var up = Vector3.up;
+        switch (m)
+        {
+            case Move.Jab:
+                // Short and quick from the guard, little body turn.
+                aim = Vector3.Lerp(forward * 0.2f - right * 0.3f + up * 0.1f, forward + up * 0.05f, strike);
+                twist = Mathf.Lerp(-10f, 15f, strike);
+                break;
+            case Move.Straight:
+                aim = Vector3.Lerp(-forward * 0.5f + right * 0.6f + up * 0.05f, forward + up * 0.05f, strike);
+                twist = Mathf.Lerp(40f, -35f, strike);
+                break;
+            case Move.Uppercut:
+                aim = Vector3.Lerp(forward * 0.1f + right * 0.35f - up * 0.9f, forward * 0.55f + up, strike);
+                twist = Mathf.Lerp(25f, -20f, strike);
+                break;
+            case Move.Slash:
+                // Cocked high behind the right shoulder, then a fast sweep across to low left.
+                aim = Arc(forward, right, Mathf.Lerp(135f, -80f, strike), Mathf.Lerp(0.9f, -0.4f, strike));
+                twist = Mathf.Lerp(35f, -40f, strike);
+                break;
+            case Move.Backhand:
+                // Wound across the body on the left, then swept out to the right.
+                aim = Arc(forward, right, Mathf.Lerp(-120f, 95f, strike), Mathf.Lerp(-0.1f, 0.35f, strike));
+                twist = Mathf.Lerp(-40f, 40f, strike);
+                break;
+            case Move.TwoHandPoke:
+                aim = Vector3.Lerp(-forward * 0.3f + right * 0.25f - up * 0.2f, forward - up * 0.05f, strike);
+                twist = Mathf.Lerp(20f, -10f, strike);
+                break;
+            case Move.TwoHandSlash:
+                // A flat sweep at waist height, both hands on the shaft.
+                aim = Arc(forward, right, Mathf.Lerp(110f, -95f, strike), Mathf.Lerp(0.3f, 0f, strike));
+                twist = Mathf.Lerp(40f, -45f, strike);
+                break;
+            case Move.Swing:
+                // A wide, heavy horizontal swing with a big body turn.
+                aim = Arc(forward, right, Mathf.Lerp(155f, -105f, strike), Mathf.Lerp(0.45f, -0.15f, strike));
+                twist = Mathf.Lerp(55f, -55f, strike);
+                break;
+            case Move.Slam:
+                // Raised overhead, then chopped straight down in front.
+                aim = Vector3.Lerp(-forward * 0.45f + up, forward * 0.75f - up * 0.8f, strike);
+                twist = Mathf.Lerp(10f, -5f, strike);
+                break;
+            default: // Stab
+                aim = Vector3.Lerp(-forward * 0.6f + right * 0.5f + up * 0.1f, forward - up * 0.05f, strike);
+                twist = Mathf.Lerp(30f, -25f, strike);
+                break;
+        }
+    }
+
+    /// <summary>A direction at `degrees` around the ranger (0 = forward, + = right), lifted by `height`.</summary>
+    private static Vector3 Arc(Vector3 forward, Vector3 right, float degrees, float height)
+    {
+        var angle = degrees * Mathf.Deg2Rad;
+        return forward * Mathf.Cos(angle) + right * Mathf.Sin(angle) + Vector3.up * height;
     }
 
     private static void Aim(Transform bone, Vector3 current, Vector3 target, float weight)
@@ -161,9 +245,13 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
                 case "hand.r": hand = child; break;
                 case "handslot.r": handSlot = child; break;
                 case "chest": chest = child; break;
+                case "upperarm.l": upperArmL = child; break;
+                case "lowerarm.l": lowerArmL = child; break;
+                case "hand.l": handL = child; break;
             }
         }
         if (upperArm == null || lowerArm == null || hand == null) { hand = null; return false; }
+        if (lowerArmL == null || handL == null) upperArmL = null; // left-arm moves need all three bones
         CreateTrail();
         return true;
     }

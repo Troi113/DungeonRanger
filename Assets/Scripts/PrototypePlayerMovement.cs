@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public sealed class PrototypePlayerMovement : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 8f;
+    [SerializeField] private float moveSpeed = 12f; // 1.5x the original 8
     [SerializeField] private float gravity = -20f;
     [SerializeField] private float tumbleDistance = 4f;
     [SerializeField] private float tumbleDuration = 0.2f;

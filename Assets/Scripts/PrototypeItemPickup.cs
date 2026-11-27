@@ -50,6 +50,8 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
         return pickup;
     }
 
+    private static readonly Color DropGlow = new(1f, 0.85f, 0.3f);
+
     public static PrototypeItemPickup CreateRuntime(
         Transform parent,
         Vector3 position,
@@ -69,12 +71,13 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
             var visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
             visual.name = "Item_Visual";
             visual.transform.SetParent(itemObject.transform, false);
-            visual.transform.localPosition = new Vector3(0f, 0.55f, 0f);
-            visual.transform.localScale = new Vector3(0.7f, 1.1f, 0.7f);
+            // Twice the original block size, like the item models.
+            visual.transform.localPosition = new Vector3(0f, 1.1f, 0f);
+            visual.transform.localScale = new Vector3(1.4f, 2.2f, 1.4f);
             if (PrototypeScrolls.IsScroll(id))
             {
-                visual.transform.localPosition = new Vector3(0f, 0.32f, 0f);
-                visual.transform.localScale = new Vector3(0.8f, 0.4f, 1.1f);
+                visual.transform.localPosition = new Vector3(0f, 0.4f, 0f);
+                visual.transform.localScale = new Vector3(1.6f, 0.8f, 2.2f);
             }
             visual.GetComponent<Renderer>().sharedMaterial = CreateMaterial($"{label} Material", color);
             var visualCollider = visual.GetComponent<Collider>();
@@ -83,6 +86,9 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
                 visualCollider.enabled = false;
             }
         }
+
+        // A soft pulsing yellow glow marks every drop.
+        PrototypeGlowPulse.Add(itemObject, null, DropGlow, 0f, 1.6f, 3.5f, new Vector3(0f, 1.2f, 0f));
 
         var pickup = itemObject.AddComponent<PrototypeItemPickup>();
         pickup.Initialize(id, label, slot);

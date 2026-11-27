@@ -10,8 +10,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
     [SerializeField] private int health = 3;
     [SerializeField] private Color sleepingColor = new(0.18f, 0.22f, 0.3f);
     [SerializeField] private Color awakeColor = new(0.85f, 0.12f, 0.1f);
-    [SerializeField] private float patrolSpeed = 3.5f;
-    [SerializeField] private float chaseSpeed = 4.5f;
+    [SerializeField] private float patrolSpeed = 7f; // 2x the original 3.5
+    [SerializeField] private float chaseSpeed = 9f; // 2x the original 4.5
     [SerializeField] private int sightRangeCells = 8;
     [SerializeField] private float repathInterval = 0.35f;
     [SerializeField] private float attackRange = 2.4f;
@@ -38,6 +38,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
     private int pathIndex;
     private float nextRepathTime;
     private float nextAttackTime;
+    private PrototypeMobWalkMotion walkMotion;
     private bool noticedPlayer;
     private Vector2Int lastSeenPlayer;
     private float slowRemaining;
@@ -92,6 +93,7 @@ public sealed class PrototypeEnemy : MonoBehaviour
     {
         if (model == null) return;
         modelRenderers = model.GetComponentsInChildren<Renderer>(true);
+        walkMotion = model.GetComponent<PrototypeMobWalkMotion>();
         tintBlock ??= new MaterialPropertyBlock();
         if (IsAwake) ApplyModelTint(Color.white);
         else ApplySleepVisual();
@@ -203,6 +205,9 @@ public sealed class PrototypeEnemy : MonoBehaviour
         FollowPath(patrolSpeed);
     }
 
+    /// <summary>Name for messages and the combat log.</summary>
+    public string DisplayName => isBoss ? "Goo" : hasMobData ? mob.Name : "Enemy";
+
     public void TakeDamage(int damage, bool slowOnHit = false)
     {
         if (!IsAlive || damage <= 0)
@@ -221,9 +226,11 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
         health = (int)Math.Max(0L, (long)health - damage);
         hasTakenDamage = true;
+        PrototypeCombatLog.Add($"{DisplayName} takes {damage} damage ({health}/{maxHealth}).");
         Damaged?.Invoke();
         if (health <= 0)
         {
+            PrototypeCombatLog.Add($"{DisplayName} is defeated!");
             Defeated?.Invoke();
             Destroy(gameObject);
         }
@@ -275,8 +282,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
         maxHealth = health;
         hasTakenDamage = false;
         awakeColor = new Color(0.2f, 0.75f, 0.35f);
-        patrolSpeed = 2.5f;
-        chaseSpeed = 3f;
+        patrolSpeed = 5f; // 2x the original 2.5
+        chaseSpeed = 6f; // 2x the original 3
         // Reaches to the edge of its big model, not just its small body.
         attackRange = 4.2f;
         // Charge damage stays fixed at 2; normal contact attacks roll Goo's damage range.
@@ -332,9 +339,16 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
 
         nextAttackTime = Time.time + attackCooldown;
+        // Face the ranger and play the bite (rat models only; presentation).
+        var toPlayer = player.transform.position - transform.position;
+        toPlayer.y = 0f;
+        if (toPlayer.sqrMagnitude > 0.01f) transform.rotation = Quaternion.LookRotation(toPlayer, Vector3.up);
+        if (walkMotion != null) walkMotion.PlayBite();
         var stats = player.GetComponent<PrototypePlayerStats>();
         if (stats == null) return;
+        PrototypeCombatLog.Add($"{DisplayName} attacks you.");
         var dealt = stats.TakeAttackDamage(PrototypeMobs.RollDamage(minAttackDamage, maxAttackDamage));
+        if (dealt <= 0) PrototypeCombatLog.Add("Your armor absorbs the blow.");
         if (dealt > 0 && hasMobData && mob.HasOnHitEffect && UnityEngine.Random.value < mob.OnHitChance)
         {
             var statuses = player.GetComponent<PrototypeStatusEffects>();

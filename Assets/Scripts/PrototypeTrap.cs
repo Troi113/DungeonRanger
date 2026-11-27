@@ -24,6 +24,7 @@ public sealed class PrototypeTrap : MonoBehaviour
 
     [SerializeField, Range(0f, 1f)] private float spentShade = 0.3f;
     [SerializeField, Range(0f, 2f)] private float armedGlow = 0.6f;
+    [SerializeField] private float revealFadeSeconds = 1.6f;
 
     private Vector2Int cell;
     private PrototypeTrapType trapType;
@@ -82,8 +83,75 @@ public sealed class PrototypeTrap : MonoBehaviour
 
     public void Reveal()
     {
+        var wasHidden = isHidden && !IsActivated;
         isHidden = false;
         SetVisualState(true, IsActivated);
+        if (!wasHidden || !isActiveAndEnabled) return;
+        // Discovered: it gets "dusted off" and slowly fades in from clear to solid.
+        PrototypeTrapRevealEffect.Play(transform.position, PrototypeLevelGenerator.TileSize * 0.35f);
+        StartCoroutine(FadeIn());
+    }
+
+    /// <summary>
+    /// Fades the trap from see-through to solid: each renderer briefly gets a transparent copy of
+    /// its material, then its own materials come back.
+    /// </summary>
+    private System.Collections.IEnumerator FadeIn()
+    {
+        if (visualRenderers == null) yield break;
+        var originals = new Material[visualRenderers.Length][];
+        var fades = new Material[visualRenderers.Length][];
+        for (var i = 0; i < visualRenderers.Length; i++)
+        {
+            var renderer = visualRenderers[i];
+            if (renderer == null) continue;
+            originals[i] = renderer.sharedMaterials;
+            fades[i] = new Material[originals[i].Length];
+            for (var m = 0; m < originals[i].Length; m++)
+                if (originals[i][m] != null) fades[i][m] = TransparentCopy(originals[i][m]);
+            renderer.sharedMaterials = fades[i];
+        }
+
+        for (var time = 0f; time < revealFadeSeconds; time += Time.deltaTime)
+        {
+            var alpha = Mathf.SmoothStep(0f, 1f, time / revealFadeSeconds);
+            foreach (var set in fades)
+                if (set != null)
+                    foreach (var material in set)
+                        if (material != null) SetAlpha(material, alpha);
+            yield return null;
+        }
+
+        for (var i = 0; i < visualRenderers.Length; i++)
+        {
+            if (visualRenderers[i] != null && originals[i] != null) visualRenderers[i].sharedMaterials = originals[i];
+            if (fades[i] != null) foreach (var material in fades[i]) if (material != null) Destroy(material);
+        }
+        // Re-apply in case the trap was set off while fading.
+        SetVisualState(true, IsActivated);
+    }
+
+    private static Material TransparentCopy(Material source)
+    {
+        var material = new Material(source);
+        material.SetFloat("_Surface", 1f);
+        material.SetFloat("_Blend", 0f);
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        material.SetInt("_ZWrite", 0);
+        material.renderQueue = 3000;
+        SetAlpha(material, 0f);
+        return material;
+    }
+
+    private static void SetAlpha(Material material, float alpha)
+    {
+        var color = material.HasProperty("_BaseColor") ? material.GetColor("_BaseColor") : material.color;
+        color.a = alpha;
+        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+        else material.color = color;
     }
 
     private void OnTriggerEnter(Collider other)

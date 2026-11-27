@@ -98,7 +98,7 @@ Update this file at the end of each milestone.
 ## Buffs and debuffs (after Pixel Dungeon)
 
 - `PrototypeStatusEffects` acts once per turn (1 s): Burning (8 turns, 1–4 damage per turn, may burn up a random unequipped scroll, can go out early, more likely at low health, and water douses it), Bleeding (level; each turn becomes random(level/2..level−1) damage), Poisoned (deals left/3 + 1 per turn, counting down), Toxic and Ooze (1 per turn), Crippled (half movement), Slowed (half movement and double attack delay), Paralysed (no moving or attacking), Rooted/Gripped (no moving), Invisible, Barkskin. Fire blobs reignite Burning; the albino rat's bite sets Bleeding to the damage dealt; poison darts poison for 4 + floor/2 turns.
-- Hunger is a debuff (`PrototypeHunger`, PD Hunger): the level rises 1 per second of game time; Hungry at 260, Starving at 360; while starving, a 30% chance of 1 damage every 10 s. A ration satisfies 260, a berry 87. Regeneration only stops while Starving.
+- Hunger is a debuff (`PrototypeHunger`, PD Hunger): the level rises 2 per second of game time (twice PD's pace: Hungry after about 2 min 10 s, Starving after 3 min); Hungry at 260, Starving at 360; while starving, a 30% chance of 1 damage every 10 s. A ration satisfies 260, a berry 87. Regeneration only stops while Starving.
 - The HUD shows a buff indicator under the health panel: one tag per active buff or debuff (including Hungry/Starving) with its time left (Bleeding shows its level).
 
 ## Blobs: gas and fire (after Pixel Dungeon)
@@ -182,3 +182,13 @@ Current prototype movement speed is 8 Unity world units per second.
 | `L` | Reserved for a future inventory/quick-slot action. Do not implement until defined. |
 
 Auto-targeting is intentionally deferred. Bow shots travel straight.
+
+## Touch-ups (feel and presentation)
+
+- Hero model 1.25x taller (`modelHeight` 2.875) and runs 1.5x faster (`moveSpeed` 12). Rat models 1.25x bigger (`ModelLengthScale` 3.5; hit boxes unchanged). Rats and albino rats move 2x faster (patrol 7, chase 9), Goo 2x (patrol 5, chase 6); Goo's charge is 1.5x its old speed (20.25) and the caustic glob flies at 20 (was 13).
+- K attack: the ranger steps in toward the hit area at the strike so the fist or weapon tip reaches it (to the far edge, or to the nearest enemy in it; stopped by walls and closed doors; the step is visual only, `PrototypeCombat.MeleeStepDistance`). Each press picks one of three moves at random, looks only: fists jab (left hand) / straight / uppercut; dagger and sword slash / backhand slash / stab; spear two-handed poke / two-handed slash / one-handed slash; axe swing / poke / overhead slam.
+- Rats bite: on each attack they turn to the ranger, rear back nose-up, and snap forward (`PrototypeMobWalkMotion.PlayBite`).
+- Floor drops are drawn 2x larger and carry a soft pulsing yellow light.
+- A discovered hidden trap gets "dusted off" (a dust puff and rising sparkles, `PrototypeTrapRevealEffect`) and fades from clear to solid over 1.6 s.
+- Arrows shot at an enemy within one block of the ranger miss 40% of the time (`pointBlankMissChance` on `PrototypeCombat`); a missed arrow flies past that enemy. The one-hit cheat never misses.
+- Hidden combat log (`PrototypeCombatLog`): press E five times in a row to show or hide the last 12 combat lines (attacks, hits, misses, damage taken from enemies and effects, kills) in the bottom-right corner.

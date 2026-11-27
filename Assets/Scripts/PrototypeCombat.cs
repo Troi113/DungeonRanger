@@ -14,6 +14,8 @@ public sealed class PrototypeCombat : MonoBehaviour
     [SerializeField] private float bowCooldown = 0.35f;
     [SerializeField] private float projectileSpeed = 24f;
     [SerializeField] private int bowDamage = 1;
+    [Tooltip("Chance an arrow misses an enemy within one block of the ranger.")]
+    [SerializeField, Range(0f, 1f)] private float pointBlankMissChance = 0.4f;
     [SerializeField] private int punchDamage = 1;
     [Tooltip("Reach in dungeon tiles; 1 tile = PrototypeLevelGenerator.TileSize world units.")]
     [SerializeField] private float punchReach = 1f;
@@ -104,6 +106,7 @@ public sealed class PrototypeCombat : MonoBehaviour
 
     private void FireBow()
     {
+        PrototypeCombatLog.Add("You shoot an arrow.");
         nextBowTime = Time.time + bowCooldown * (GetComponent<PrototypeStatusEffects>()?.ActionDelayMultiplier ?? 1f);
         EndInvisibility();
         var direction = movement.FacingDirection;
@@ -123,7 +126,9 @@ public sealed class PrototypeCombat : MonoBehaviour
         AddArrowPart(arrow.transform, "Fletching", new Vector3(0f, 0f, -0.48f), new Vector3(0.32f, 0.1f, 0.25f), tipMaterial);
 
         var projectile = arrow.AddComponent<PrototypeProjectile>();
-        projectile.Initialize(direction, projectileSpeed, OneHitBowEnabled ? int.MaxValue : bowDamage, bowRange);
+        // The one-hit cheat never misses.
+        projectile.Initialize(direction, projectileSpeed, OneHitBowEnabled ? int.MaxValue : bowDamage, bowRange,
+            transform.position, OneHitBowEnabled ? 0f : pointBlankMissChance);
     }
 
     private static void AddArrowPart(Transform parent, string partName, Vector3 position, Vector3 scale, Material material)
@@ -139,6 +144,7 @@ public sealed class PrototypeCombat : MonoBehaviour
 
     private void PerformMeleeAttack(PrototypeMeleeWeapons.WeaponData weapon)
     {
+        PrototypeCombatLog.Add(weapon.Id == "punch" ? "You throw a punch." : $"You attack with your {weapon.Name}.");
         EndInvisibility();
         // Slowed: attacks take twice as long (Pixel Dungeon Slow).
         nextMeleeTime = Time.time + weapon.Cooldown * (GetComponent<PrototypeStatusEffects>()?.ActionDelayMultiplier ?? 1f);
@@ -150,13 +156,42 @@ public sealed class PrototypeCombat : MonoBehaviour
         // The Ranger model winds up and strikes; the blow lands at the strike moment.
         // The old box swing is only a fallback when the model is missing.
         var attackAnimation = GetComponent<PrototypeHeroAttackAnimation>();
-        if (attackAnimation != null && attackAnimation.PlayAttack(weapon.Id, weapon.Cooldown * 0.85f))
+        if (attackAnimation != null && attackAnimation.PlayAttack(weapon.Id, weapon.Cooldown * 0.85f, MeleeStepDistance(weapon, facing, depth)))
         {
             StartCoroutine(StrikeAfter(attackAnimation.StrikeDelay, weapon, facing));
             return;
         }
         ResolveMeleeHit(weapon, facing);
         StartCoroutine(AnimateSlash(facing, depth));
+    }
+
+    /// <summary>
+    /// How far the ranger visibly steps in so the fist or weapon tip reaches the hit area: to its
+    /// far edge, or to the nearest enemy in it, never through a wall or closed door. Looks only.
+    /// </summary>
+    private float MeleeStepDistance(PrototypeMeleeWeapons.WeaponData weapon, Vector3 facing, float depth)
+    {
+        const float armReach = 0.7f;
+        var weaponReach = armReach + (PrototypeItemVisuals.HeldSize(weapon.Id, out var length, out var grip) ? length * (1f - grip) : 0.1f);
+        var step = depth - weaponReach;
+
+        var side = new Vector3(facing.z, 0f, -facing.x);
+        var halfWidth = PrototypeLevelGenerator.TileSize * 0.5f;
+        foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude))
+        {
+            if (enemy == null || !enemy.IsAlive) continue;
+            var collider = enemy.GetComponent<Collider>();
+            var offset = (collider != null ? collider.ClosestPoint(transform.position) : enemy.transform.position) - transform.position;
+            offset.y = 0f;
+            var ahead = Vector3.Dot(offset, facing);
+            if (ahead < 0f || ahead > depth || Mathf.Abs(Vector3.Dot(offset, side)) > halfWidth) continue;
+            step = Mathf.Min(step, ahead - weaponReach * 0.8f);
+        }
+
+        foreach (var hit in Physics.RaycastAll(transform.position, facing, depth, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            if (hit.collider.name.StartsWith("Wall_") || hit.collider.name == "Door_Panel")
+                step = Mathf.Min(step, hit.distance - 0.8f);
+        return Mathf.Max(0.25f, step);
     }
 
     /// <summary>Attacking reveals an invisible ranger (Pixel Dungeon rule).</summary>
@@ -203,7 +238,11 @@ public sealed class PrototypeCombat : MonoBehaviour
             }
         }
 
-        if (hits == 0) return;
+        if (hits == 0)
+        {
+            PrototypeCombatLog.Add("Your attack hits nothing.");
+            return;
+        }
         // Bigger weapons and multi-hits land harder.
         PrototypeGameFeel.HitStop(heavy ? 0.09f : 0.06f + 0.015f * (hits - 1));
         PrototypeGameFeel.Shake(heavy ? 0.35f : 0.22f, 0.18f);

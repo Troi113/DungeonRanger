@@ -326,6 +326,8 @@ The goal is to make the game playable first, then improve visuals, content, bala
 
 ## Visuals, audio, and feel
 
+- [ ] Play-test the feel touch-ups (compile-checked only): hero size/speed, attack step-in distance and the 12 attack moves (bone poses, left-hand jab and two-handed grips), rat bite, faster enemies and Goo charge, 2x drops and their yellow lights (they can light up fogged cells), trap reveal dust and fade, point-blank arrow misses, the E x5 combat log.
+
 - [ ] Play-test the item models (compile- and import-checked only): their colors, sizes on the floor, the potion liquid tint and see-through glass, and how each weapon sits in the hand (grip offsets in `PrototypeItemVisuals.HeldSize`). Old saves holding a knuckleduster or sickle lose that item.
 - [ ] Play-test the touch-ups (compile-checked only): thrown item models and tumble, stairs fitting their cell against the wall, the stairs light beam seen from other rooms and its brightness near the camera, the boss floor's extra water (0.42 fill), talents on O.
 

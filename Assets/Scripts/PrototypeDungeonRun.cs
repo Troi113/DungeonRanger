@@ -20,7 +20,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     }
 
     // Rat models are drawn well beyond their hit box (2x the earlier 1.4x) so they read clearly from the camera.
-    private const float ModelLengthScale = 2.8f;
+    private const float ModelLengthScale = 3.5f; // 1.25x the earlier 2.8
     private const string StairsModelPath = "KayKit/Dungeon/stairs";
     // Stairs fill their cell: nearly a tile wide and deep, rising to the top of the walls.
     private const float StairsWidth = PrototypeLevelGenerator.TileSize - 0.1f;

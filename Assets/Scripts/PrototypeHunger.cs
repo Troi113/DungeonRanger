@@ -9,7 +9,7 @@ public enum PrototypeHungerState
 
 /// <summary>
 /// Hunger as a debuff, after Pixel Dungeon's Hunger buff (1 turn = 1 second of game time):
-/// the hunger level rises by 1 per second; at 260 the ranger is Hungry, at 360 Starving.
+/// the hunger level rises by 2 per second (twice PD's pace); at 260 the ranger is Hungry, at 360 Starving.
 /// While starving, every 10 seconds there is a 30% chance of 1 damage (never the last point
 /// while paralyzed). Food lowers the level (a ration by 260). Paused time does not count.
 /// </summary>
@@ -20,7 +20,7 @@ public sealed class PrototypeHunger : MonoBehaviour
     public const float StarvingLevel = 360f;
     private const float Step = 10f;
 
-    [SerializeField] private float levelPerSecond = 1f;
+    [SerializeField] private float levelPerSecond = 2f;
 
     private PrototypePlayerStats stats;
     private PrototypeStatusEffects statuses;
@@ -54,6 +54,7 @@ public sealed class PrototypeHunger : MonoBehaviour
             if (Random.value < 0.3f && (stats.CurrentHealth > 1 || !paralyzed))
             {
                 PrototypeGameUI.ShowNotice("You are starving!");
+                PrototypeCombatLog.Add("Starvation gnaws at you.");
                 stats.TakeDamage(1);
             }
             return;

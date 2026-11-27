@@ -16,6 +16,9 @@ public static class PrototypeItemVisuals
     private const string PotionLiquid = "mat2";
     private const string PotionGlass = "mat24";
 
+    // Floor pickups are drawn twice their in-flight size so they stand out.
+    private const float FloorScale = 2f;
+
     private static readonly Dictionary<string, Material> Materials = new();
     private static readonly List<Renderer> RendererBuffer = new();
     private static readonly List<Material> MaterialBuffer = new();
@@ -73,7 +76,7 @@ public static class PrototypeItemVisuals
     /// </summary>
     public static GameObject CreateOnFloor(string itemId, Transform parent)
     {
-        var holder = Create(itemId, parent, DisplaySize(itemId), true);
+        var holder = Create(itemId, parent, DisplaySize(itemId) * FloorScale, true);
         if (holder == null) return null;
         var upright = PrototypePotions.IsPotion(itemId) || itemId == "food";
         var turn = 0;

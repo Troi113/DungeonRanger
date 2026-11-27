@@ -6,7 +6,8 @@ public sealed class PrototypeGooCharge : MonoBehaviour
     [SerializeField] private float cooldown = 10f;
     [SerializeField] private float windupDuration = 1f;
     [SerializeField] private float distance = 18f;
-    [SerializeField] private float speedMultiplier = 4.5f;
+    // Charge speed = chase speed x this: 6 x 3.375 = 20.25, 1.5x the original 3 x 4.5.
+    [SerializeField] private float speedMultiplier = 3.375f;
     [SerializeField] private float knockbackDistance = 6f;
     [Tooltip("The charge is Goo's big move: 7-11 damage (before armor).")]
     [SerializeField] private int chargeMinDamage = 7;

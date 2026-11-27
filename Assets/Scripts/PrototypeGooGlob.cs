@@ -12,7 +12,7 @@ public sealed class PrototypeGooGlob : MonoBehaviour
     [SerializeField] private float maxCooldown = 9f;
     [SerializeField] private float range = 34f;
     [SerializeField] private float windupSeconds = 0.8f;
-    [SerializeField] private float speed = 13f;
+    [SerializeField] private float speed = 20f; // was 13
     [SerializeField] private float effectSeconds = 3f;
 
     private PrototypeEnemy enemy;

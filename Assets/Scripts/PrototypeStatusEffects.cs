@@ -172,7 +172,9 @@ public sealed class PrototypeStatusEffects : MonoBehaviour
                 case PrototypeStatusEffectType.Poisoned: ActPoison(effect); break;
                 case PrototypeStatusEffectType.Toxic:
                 case PrototypeStatusEffectType.Oozed:
-                    if (Has(type)) stats.TakeDamage(1);
+                    if (!Has(type)) break;
+                    PrototypeCombatLog.Add(type == PrototypeStatusEffectType.Toxic ? "Toxic gas burns your lungs." : "The ooze stings you.");
+                    stats.TakeDamage(1);
                     break;
             }
             if (!Has(type)) effects.Remove(type);
@@ -183,6 +185,7 @@ public sealed class PrototypeStatusEffects : MonoBehaviour
     private void ActBurning(Effect effect)
     {
         if (effect.Left <= 0f) return;
+        PrototypeCombatLog.Add("You are burning!");
         stats.TakeDamage(Random.Range(1, 5));
         BurnRandomScroll();
         effect.Left -= 1f;
@@ -194,12 +197,17 @@ public sealed class PrototypeStatusEffects : MonoBehaviour
     private void ActBleeding(Effect effect)
     {
         effect.Level = Random.Range(effect.Level / 2, effect.Level);
-        if (effect.Level > 0) stats.TakeDamage(effect.Level);
+        if (effect.Level > 0)
+        {
+            PrototypeCombatLog.Add("You are bleeding.");
+            stats.TakeDamage(effect.Level);
+        }
     }
 
     private void ActPoison(Effect effect)
     {
         if (effect.Left <= 0f) return;
+        PrototypeCombatLog.Add("Poison courses through you.");
         stats.TakeDamage((int)(effect.Left / 3f) + 1);
         effect.Left -= 1f;
     }

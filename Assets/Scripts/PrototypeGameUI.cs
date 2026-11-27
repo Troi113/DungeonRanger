@@ -57,9 +57,48 @@ public sealed class PrototypeGameUI : MonoBehaviour
         run = GetComponent<PrototypeDungeonRun>();
     }
 
+    // Hidden combat log: shown/hidden by pressing E five times in a row.
+    private const int CombatLogPresses = 5;
+    private const int CombatLogLines = 12;
+    private int combatLogKeyCount;
+    private bool showCombatLog;
+
+    private void HandleCombatLogToggle(Keyboard keyboard)
+    {
+        if (!keyboard.anyKey.wasPressedThisFrame) return;
+        if (!keyboard.eKey.wasPressedThisFrame)
+        {
+            combatLogKeyCount = 0;
+            return;
+        }
+        if (++combatLogKeyCount < CombatLogPresses) return;
+        combatLogKeyCount = 0;
+        showCombatLog = !showCombatLog;
+        ShowNotice(showCombatLog ? "Combat log shown." : "Combat log hidden.");
+    }
+
+    private void DrawCombatLog()
+    {
+        var entries = PrototypeCombatLog.Entries;
+        const float lineHeight = 18f;
+        var count = Mathf.Min(CombatLogLines, entries.Count);
+        var rect = new Rect(PrototypeUITheme.Width - 436f, PrototypeUITheme.Height - 72f - lineHeight * CombatLogLines, 420f, lineHeight * CombatLogLines + 52f);
+        PrototypeUITheme.DrawPanel(rect);
+        PrototypeUITheme.Label(new Rect(rect.x + 16f, rect.y + 8f, rect.width - 32f, 22f), "Combat Log", 14, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
+        if (count == 0)
+            PrototypeUITheme.Label(new Rect(rect.x + 16f, rect.y + 34f, rect.width - 32f, lineHeight), "Nothing yet.", 12, PrototypeUITheme.Muted);
+        for (var i = 0; i < count; i++)
+        {
+            var text = entries[entries.Count - count + i];
+            PrototypeUITheme.Label(new Rect(rect.x + 16f, rect.y + 34f + i * lineHeight, rect.width - 32f, lineHeight), text, 12,
+                i == count - 1 ? PrototypeUITheme.Parchment : PrototypeUITheme.Muted);
+        }
+    }
+
     private void Update()
     {
         if (Keyboard.current == null) return;
+        HandleCombatLogToggle(Keyboard.current);
 
         if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
@@ -172,6 +211,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
 
         PrototypeUITheme.BeginScaledGui();
         DrawHud();
+        if (showCombatLog) DrawCombatLog();
 
         var currentTarget = interaction != null ? interaction.CurrentTarget : null;
         var searchProgress = interaction != null ? interaction.SearchProgress : 0f;
