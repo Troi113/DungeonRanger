@@ -81,12 +81,29 @@ public sealed class PrototypeTrap : MonoBehaviour
         if (ActiveByCell.TryGetValue(cell, out var registered) && registered == this) ActiveByCell.Remove(cell);
     }
 
+    /// <summary>The trap type in words, e.g. "poison dart".</summary>
+    private string TrapName => System.Text.RegularExpressions.Regex.Replace(trapType.ToString(), "(?<!^)([A-Z])", " $1").ToLowerInvariant();
+
+    private string TrapEffect => trapType switch
+    {
+        PrototypeTrapType.ToxicGas => "Toxic gas spreads out.",
+        PrototypeTrapType.Fire => "Flames burst up around you.",
+        PrototypeTrapType.ParalyticGas => "Paralytic gas spreads out.",
+        PrototypeTrapType.PoisonDart => "A dart poisons you.",
+        PrototypeTrapType.Alarm => "A loud alarm wakes the whole floor.",
+        PrototypeTrapType.Lightning => "Lightning strikes you.",
+        PrototypeTrapType.Gripping => "Jaws grip your legs.",
+        PrototypeTrapType.Summoning => "Something nearby wakes up.",
+        _ => ""
+    };
+
     public void Reveal()
     {
         var wasHidden = isHidden && !IsActivated;
         isHidden = false;
         SetVisualState(true, IsActivated);
         if (!wasHidden || !isActiveAndEnabled) return;
+        PrototypeGameLog.Add($"You discover a hidden {TrapName} trap.");
         // Discovered: it gets "dusted off" and slowly fades in from clear to solid.
         PrototypeTrapRevealEffect.Play(transform.position, PrototypeLevelGenerator.TileSize * 0.35f);
         StartCoroutine(FadeIn());
@@ -173,6 +190,7 @@ public sealed class PrototypeTrap : MonoBehaviour
         if (IsActivated) return false;
         IsActivated = true;
         SetVisualState(true, true);
+        PrototypeGameLog.Add($"A thrown item sets off a {TrapName} trap.");
         if (trapType == PrototypeTrapType.Alarm) WakeAllEnemies();
         else if (trapType == PrototypeTrapType.Summoning) WakeOneEnemy();
         else SeedBlob();
@@ -212,6 +230,7 @@ public sealed class PrototypeTrap : MonoBehaviour
         SetVisualState(true, true);
 
         var statuses = stats.GetComponent<PrototypeStatusEffects>();
+        PrototypeGameLog.Add($"You step on a {TrapName} trap! {TrapEffect}");
         switch (trapType)
         {
             // Gas and fire traps release spreading blobs; the old instant effects are fallbacks.

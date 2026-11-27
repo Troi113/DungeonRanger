@@ -15,6 +15,7 @@ public sealed class PrototypeItemSave
     public bool IsCursed;
     public bool IsIdentified = true;
     public int Quantity = 1;
+    public int Hits;
 
     public static PrototypeItemSave From(PrototypeInventoryItem item)
     {
@@ -27,7 +28,8 @@ public sealed class PrototypeItemSave
             UpgradeLevel = item.UpgradeLevel,
             IsCursed = item.IsCursed,
             IsIdentified = item.IsIdentified,
-            Quantity = item.Quantity
+            Quantity = item.Quantity,
+            Hits = item.Hits
         };
     }
 
@@ -39,6 +41,7 @@ public sealed class PrototypeItemSave
             UpgradeLevel = UpgradeLevel,
             IsCursed = IsCursed,
             IsIdentified = IsIdentified,
+            Hits = Hits,
             Quantity = Mathf.Max(1, Quantity)
         };
     }

@@ -19,6 +19,7 @@ public sealed class PrototypeInventoryItem
     public bool IsCursed;
     public bool IsIdentified = true;
     public int Quantity = 1;
+    public int Hits;            // enemy hits landed while unidentified (identifies weapons over time)
 
     public PrototypeInventoryItem(string itemId, PrototypeEquipmentSlot equipmentSlot = PrototypeEquipmentSlot.None)
     {

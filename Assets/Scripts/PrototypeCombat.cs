@@ -10,6 +10,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(PrototypePlayerMovement))]
 public sealed class PrototypeCombat : MonoBehaviour
 {
+    [SerializeField] private int hitsToIdentify = 20;
     [SerializeField] private float bowRange = 40f;
     [SerializeField] private float bowCooldown = 0.35f;
     [SerializeField] private float projectileSpeed = 24f;
@@ -106,9 +107,10 @@ public sealed class PrototypeCombat : MonoBehaviour
 
     private void FireBow()
     {
-        PrototypeCombatLog.Add("You shoot an arrow.");
+        PrototypeGameLog.Add("You shoot an arrow.");
         nextBowTime = Time.time + bowCooldown * (GetComponent<PrototypeStatusEffects>()?.ActionDelayMultiplier ?? 1f);
         EndInvisibility();
+        GetComponent<PrototypeHeroBowAnimation>()?.Play();
         var direction = movement.FacingDirection;
 
         if (direction.sqrMagnitude < 0.01f)
@@ -144,7 +146,7 @@ public sealed class PrototypeCombat : MonoBehaviour
 
     private void PerformMeleeAttack(PrototypeMeleeWeapons.WeaponData weapon)
     {
-        PrototypeCombatLog.Add(weapon.Id == "punch" ? "You throw a punch." : $"You attack with your {weapon.Name}.");
+        PrototypeGameLog.Add(weapon.Id == "punch" ? "You throw a punch." : $"You attack with your {weapon.Name}.");
         EndInvisibility();
         // Slowed: attacks take twice as long (Pixel Dungeon Slow).
         nextMeleeTime = Time.time + weapon.Cooldown * (GetComponent<PrototypeStatusEffects>()?.ActionDelayMultiplier ?? 1f);
@@ -189,6 +191,21 @@ public sealed class PrototypeCombat : MonoBehaviour
             if (hit.collider.name.StartsWith("Wall_") || hit.collider.name == "Door_Panel")
                 reach = Mathf.Min(reach, hit.distance - 0.2f);
         return Mathf.Max(0f, reach);
+    }
+
+    /// <summary>
+    /// An unidentified equipped melee weapon identifies itself after landing enough hits on
+    /// enemies (Pixel Dungeon's weapons learn the same way).
+    /// </summary>
+    private void CountHitTowardIdentify()
+    {
+        var weapon = GetComponent<PrototypeInventory>()?.GetSlot(0);
+        if (weapon == null || weapon.IsIdentified) return;
+        if (++weapon.Hits < hitsToIdentify) return;
+        weapon.IsIdentified = true;
+        var name = weapon.ItemId.Replace('_', ' ');
+        PrototypeGameUI.ShowNotice($"You are now familiar with your {name}.");
+        PrototypeGameLog.Add($"Your {name} is identified: {(weapon.UpgradeLevel >= 0 ? "+" : "")}{weapon.UpgradeLevel}{(weapon.IsCursed ? ", cursed" : "")}.");
     }
 
     /// <summary>Attacking reveals an invisible ranger (Pixel Dungeon rule).</summary>
@@ -237,9 +254,10 @@ public sealed class PrototypeCombat : MonoBehaviour
 
         if (hits == 0)
         {
-            PrototypeCombatLog.Add("Your attack hits nothing.");
+            PrototypeGameLog.Add("Your attack hits nothing.");
             return;
         }
+        CountHitTowardIdentify();
         // Bigger weapons and multi-hits land harder.
         PrototypeGameFeel.HitStop(heavy ? 0.09f : 0.06f + 0.015f * (hits - 1));
         PrototypeGameFeel.Shake(heavy ? 0.35f : 0.22f, 0.18f);

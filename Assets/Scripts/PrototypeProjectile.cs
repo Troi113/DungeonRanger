@@ -60,7 +60,7 @@ public sealed class PrototypeProjectile : MonoBehaviour
         {
             // Too close to aim properly: the arrow flies past this enemy and keeps going.
             missed = target;
-            PrototypeCombatLog.Add($"Your arrow misses the {target.DisplayName} at point-blank range.");
+            PrototypeGameLog.Add($"Your arrow misses the {target.DisplayName} at point-blank range.");
             target = null;
             PrototypeGameUI.ShowNotice("Your arrow misses at point-blank range.");
         }
@@ -72,7 +72,7 @@ public sealed class PrototypeProjectile : MonoBehaviour
             PrototypeGameFeel.Sparks(transform.position, new Color(0.8f, 0.95f, 1f), 8);
             PrototypeGameFeel.Shake(0.1f, 0.1f);
         }
-        if (target == null && hitObstacle) PrototypeCombatLog.Add("Your arrow hits a wall.");
+        if (target == null && hitObstacle) PrototypeGameLog.Add("Your arrow hits a wall.");
         if (target != null || hitObstacle) { Destroy(gameObject); return; }
         transform.position += direction * distance;
         remainingDistance -= distance;

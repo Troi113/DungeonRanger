@@ -12,7 +12,7 @@ public sealed class PrototypeHeroModel : MonoBehaviour
     private const string TexturePath = "KayKit/Characters/ranger_texture";
     private static readonly string[] ClipSources = { "KayKit/Characters/Rig_Medium_MovementBasic", "KayKit/Characters/Rig_Medium_General" };
 
-    [SerializeField] private float modelHeight = 2.875f; // 1.25x the original 2.3
+    [SerializeField] private float modelHeight = 4.3125f; // 1.5x the previous 2.875
     [SerializeField] private float turnSpeed = 720f;
     [SerializeField] private string idleClip = "Idle_A";
     [SerializeField] private string moveClip = "Running_A";

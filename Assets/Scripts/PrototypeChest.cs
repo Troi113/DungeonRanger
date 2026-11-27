@@ -20,6 +20,7 @@ public sealed class PrototypeChest : PrototypeInteractable
     public void RestoreOpened()
     {
         opened = true;
+        PrototypeGameLog.Add($"You unlock the chest with a key. Inside: {rewardName}.");
         if (chestRenderer != null) chestRenderer.material.color = new Color(0.22f, 0.5f, 0.2f);
     }
 

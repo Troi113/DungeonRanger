@@ -27,8 +27,12 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
     private static readonly Move[] SpearMoves = { Move.TwoHandPoke, Move.TwoHandSlash, Move.Slash };
     private static readonly Move[] AxeMoves = { Move.Swing, Move.Stab, Move.Slam };
 
-    // Weapons stretch the arm at most this far (world units); the weapon stretches the rest.
-    private const float MaxArmStretch = 0.5f;
+    // The warp only covers part of the gap to the end of the hit area, with caps on the arm
+    // (world units) and on how long the weapon may stretch (1.3 = 30% longer).
+    [SerializeField, Range(0f, 1f)] private float reachFraction = 0.5f;
+    [SerializeField] private float maxFistStretch = 0.35f;
+    [SerializeField] private float maxArmStretch = 0.2f;
+    [SerializeField] private float maxWeaponStretch = 1.3f;
 
     private PrototypePlayerMovement movement;
     private PrototypeInventory inventory;
@@ -179,13 +183,14 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
         // How much farther the tip must go, measured along the facing direction.
         var missing = reach - Vector3.Dot(tip - transform.position, forward);
         if (missing <= 0f || along < 0.2f || extend <= 0f) return;
-        var travel = missing / along;
-        var armTravel = hasWeapon ? Mathf.Min(travel, MaxArmStretch) : travel;
+        var travel = missing * reachFraction / along;
+        var armTravel = Mathf.Min(travel, hasWeapon ? maxArmStretch : maxFistStretch);
         strikingHand.position += direction * armTravel * extend;
         var stretch = 1f;
         if (hasWeapon && tipLength > 0.01f)
         {
-            stretch = 1f + (travel - armTravel) / tipLength * extend;
+            stretch = Mathf.Min(1f + (travel - armTravel) / tipLength, maxWeaponStretch);
+            stretch = 1f + (stretch - 1f) * extend;
             weaponModel.transform.localScale = new Vector3(1f, stretch, 1f);
         }
         if (trail != null)

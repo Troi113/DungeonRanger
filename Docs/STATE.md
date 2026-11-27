@@ -194,4 +194,9 @@ Auto-targeting is intentionally deferred. Bow shots travel straight.
 - Inventory icons are pictures of the same 3D models (or colored blocks) the items use on the map (`PrototypeItemIcons`: rendered once by a hidden camera on layer 31, potions once per color). The bow keeps its pixel icon.
 - A discovered hidden trap gets "dusted off" (a dust puff and rising sparkles, `PrototypeTrapRevealEffect`) and fades from clear to solid over 1.6 s.
 - Arrows shot at an enemy within one block of the ranger miss 40% of the time (`pointBlankMissChance` on `PrototypeCombat`); a missed arrow flies past that enemy. The one-hit cheat never misses.
-- Hidden combat log (`PrototypeCombatLog`): press E five times in a row to show or hide the last 12 combat lines (attacks, hits, misses, damage taken from enemies and effects, kills) in the bottom-right corner.
+- Hidden Log (`PrototypeGameLog`): press E five times in a row to show or hide the last 12 lines in the bottom-right corner. It records everything but movement: combat, damage and its source, effects starting and ending, traps stepped on or discovered, searching, pickups, chests, equipping, eating, throwing, every on-screen notice (potion and scroll results, identifications, level-ups), floor changes.
+- Burning: 1-2 damage per turn (tunable); each burning turn has a 7.5% chance (half the 15% equip-curse chance) to destroy one carried unequipped scroll. Both are logged.
+- Unidentified equipped melee weapons identify themselves after 20 enemy hits (`PrototypeCombat.hitsToIdentify`, saved per item).
+- K-attack warp is toned down: covers half the gap to the hit-area edge, fist stretch <= 0.35, arm <= 0.2, weapon <= 1.3x long (tunables on `PrototypeHeroAttackAnimation`).
+- Hero model height 4.3125 (1.5x previous), move speed 10.8 (10% slower).
+- J bow shot animation (`PrototypeHeroBowAnimation`, looks only): a primitive bow appears in the left hand for the shot; one of three shots at random each press — standard (upright, full draw), snap (hip-level, canted bow, short draw), power (raised, deep draw, hard release).

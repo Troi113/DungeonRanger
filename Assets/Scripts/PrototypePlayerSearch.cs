@@ -62,6 +62,7 @@ public sealed class PrototypePlayerSearch : MonoBehaviour
     private void Show(string text)
     {
         message = text;
+        PrototypeGameLog.Add(text);
         messageUntil = Time.time + messageSeconds;
     }
 

@@ -52,12 +52,12 @@ public sealed class PrototypePlayerStats : MonoBehaviour
         }
 
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
-        PrototypeCombatLog.Add($"You take {amount} damage ({CurrentHealth}/{MaxHealth}).");
+        PrototypeGameLog.Add($"You take {amount} damage ({CurrentHealth}/{MaxHealth}).");
         HealthChanged?.Invoke(CurrentHealth, MaxHealth);
 
         if (IsDead)
         {
-            PrototypeCombatLog.Add("You die...");
+            PrototypeGameLog.Add("You die...");
             Died?.Invoke();
         }
     }

@@ -83,6 +83,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     {
         if (Floor >= 5 || player.GetComponent<PrototypePlayerStats>().IsDead) return;
         Floor++;
+        PrototypeGameLog.Add($"You descend to floor {Floor}.");
         EnterFloor(false);
     }
 
@@ -90,6 +91,7 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
     {
         if (Floor <= 1 || player.GetComponent<PrototypePlayerStats>().IsDead) return;
         Floor--;
+        PrototypeGameLog.Add($"You climb up to floor {Floor}.");
         EnterFloor(true);
     }
 

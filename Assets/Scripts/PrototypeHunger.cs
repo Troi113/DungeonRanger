@@ -54,7 +54,7 @@ public sealed class PrototypeHunger : MonoBehaviour
             if (Random.value < 0.3f && (stats.CurrentHealth > 1 || !paralyzed))
             {
                 PrototypeGameUI.ShowNotice("You are starving!");
-                PrototypeCombatLog.Add("Starvation gnaws at you.");
+                PrototypeGameLog.Add("Starvation gnaws at you.");
                 stats.TakeDamage(1);
             }
             return;

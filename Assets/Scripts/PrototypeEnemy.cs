@@ -226,11 +226,11 @@ public sealed class PrototypeEnemy : MonoBehaviour
         }
         health = (int)Math.Max(0L, (long)health - damage);
         hasTakenDamage = true;
-        PrototypeCombatLog.Add($"{DisplayName} takes {damage} damage ({health}/{maxHealth}).");
+        PrototypeGameLog.Add($"{DisplayName} takes {damage} damage ({health}/{maxHealth}).");
         Damaged?.Invoke();
         if (health <= 0)
         {
-            PrototypeCombatLog.Add($"{DisplayName} is defeated!");
+            PrototypeGameLog.Add($"{DisplayName} is defeated!");
             Defeated?.Invoke();
             Destroy(gameObject);
         }
@@ -346,9 +346,9 @@ public sealed class PrototypeEnemy : MonoBehaviour
         if (walkMotion != null) walkMotion.PlayBite();
         var stats = player.GetComponent<PrototypePlayerStats>();
         if (stats == null) return;
-        PrototypeCombatLog.Add($"{DisplayName} attacks you.");
+        PrototypeGameLog.Add($"{DisplayName} attacks you.");
         var dealt = stats.TakeAttackDamage(PrototypeMobs.RollDamage(minAttackDamage, maxAttackDamage));
-        if (dealt <= 0) PrototypeCombatLog.Add("Your armor absorbs the blow.");
+        if (dealt <= 0) PrototypeGameLog.Add("Your armor absorbs the blow.");
         if (dealt > 0 && hasMobData && mob.HasOnHitEffect && UnityEngine.Random.value < mob.OnHitChance)
         {
             var statuses = player.GetComponent<PrototypeStatusEffects>();

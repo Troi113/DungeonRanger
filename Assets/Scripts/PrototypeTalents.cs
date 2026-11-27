@@ -130,6 +130,7 @@ public sealed class PrototypeTalents : MonoBehaviour
                 item.IsIdentified = true;
                 carried.Remove(item);
                 PrototypeGameUI.ShowNotice("Your intuition tells you more about your gear.");
+                PrototypeGameLog.Add($"Intuition identifies your {item.ItemId.Replace('_', ' ')}{(item.IsCursed ? " (cursed)" : "")}.");
             }
         }
     }

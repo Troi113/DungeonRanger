@@ -72,7 +72,7 @@ public sealed class PrototypeDoor : MonoBehaviour
         if (!initialized || IsBurning || IsBurnt) return;
         IsBurning = true;
         burnStart = Time.time;
-        PrototypeCombatLog.Add("A door catches fire!");
+        PrototypeGameLog.Add("A door catches fire!");
         if (model != null && doorPanel != null)
         {
             var size = doorPanel.localScale;
@@ -103,7 +103,7 @@ public sealed class PrototypeDoor : MonoBehaviour
         if (panelAnimation != null) StopCoroutine(panelAnimation);
         if (doorPanelCollider != null) doorPanelCollider.enabled = false;
         if (fire != null) fire.Collapse();
-        PrototypeCombatLog.Add("The door burns down.");
+        PrototypeGameLog.Add("The door burns down.");
     }
 
     private void OnTriggerStay(Collider other)

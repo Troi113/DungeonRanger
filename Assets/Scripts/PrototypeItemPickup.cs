@@ -30,6 +30,7 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
             return;
         }
 
+        PrototypeGameLog.Add($"You pick up {displayName}.");
         gameObject.SetActive(false);
         Destroy(gameObject);
     }

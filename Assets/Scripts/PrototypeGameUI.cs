@@ -27,7 +27,17 @@ public sealed class PrototypeGameUI : MonoBehaviour
     private int inventoryCursor;
     private int actionCursor;
     private bool itemActionsOpen;
-    private string inventoryMessage;
+    // Inventory results are logged; prompts asking for a confirm or a target are not.
+    private string inventoryMessage
+    {
+        get => inventoryMessageText;
+        set
+        {
+            inventoryMessageText = value;
+            if (value != null && !value.Contains("Press J") && !value.StartsWith("Select")) PrototypeGameLog.Add(value);
+        }
+    }
+    private string inventoryMessageText;
     private int targetingScroll = -1;
     private static string noticeText;
     private static float noticeUntil;
@@ -36,6 +46,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
     public static void ShowNotice(string text, float seconds = 2.5f)
     {
         noticeText = text;
+        PrototypeGameLog.Add(text);
         noticeUntil = Time.unscaledTime + seconds;
     }
 
@@ -57,7 +68,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
         run = GetComponent<PrototypeDungeonRun>();
     }
 
-    // Hidden combat log: shown/hidden by pressing E five times in a row.
+    // Hidden log: shown/hidden by pressing E five times in a row.
     private const int CombatLogPresses = 5;
     private const int CombatLogLines = 12;
     private int combatLogKeyCount;
@@ -74,17 +85,17 @@ public sealed class PrototypeGameUI : MonoBehaviour
         if (++combatLogKeyCount < CombatLogPresses) return;
         combatLogKeyCount = 0;
         showCombatLog = !showCombatLog;
-        ShowNotice(showCombatLog ? "Combat log shown." : "Combat log hidden.");
+        ShowNotice(showCombatLog ? "Log shown." : "Log hidden.");
     }
 
     private void DrawCombatLog()
     {
-        var entries = PrototypeCombatLog.Entries;
+        var entries = PrototypeGameLog.Entries;
         const float lineHeight = 18f;
         var count = Mathf.Min(CombatLogLines, entries.Count);
         var rect = new Rect(PrototypeUITheme.Width - 436f, PrototypeUITheme.Height - 72f - lineHeight * CombatLogLines, 420f, lineHeight * CombatLogLines + 52f);
         PrototypeUITheme.DrawPanel(rect);
-        PrototypeUITheme.Label(new Rect(rect.x + 16f, rect.y + 8f, rect.width - 32f, 22f), "Combat Log", 14, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
+        PrototypeUITheme.Label(new Rect(rect.x + 16f, rect.y + 8f, rect.width - 32f, 22f), "Log", 14, PrototypeUITheme.Gold, TextAnchor.MiddleLeft, true);
         if (count == 0)
             PrototypeUITheme.Label(new Rect(rect.x + 16f, rect.y + 34f, rect.width - 32f, lineHeight), "Nothing yet.", 12, PrototypeUITheme.Muted);
         for (var i = 0; i < count; i++)
@@ -666,18 +677,23 @@ public sealed class PrototypeGameUI : MonoBehaviour
                 if (item.ItemId == PrototypeItemCatalog.Berry)
                 {
                     inventory.ConsumeOneAt(inventoryCursor);
+                    PrototypeGameLog.Add("You eat a berry. It heals you a little.");
                     hunger.Eat(PrototypeHunger.HungryLevel / 3f);
                     stats.Heal(2);
                 }
                 else
                 {
                     inventory.RemoveAt(inventoryCursor);
+                    PrototypeGameLog.Add($"You eat the {DisplayName(item)}. You feel full.");
                     hunger.Eat(PrototypeHunger.HungryLevel);
                 }
                 stats.GetComponent<PrototypeTalents>()?.OnConsumed();
                 break;
             case ItemAction.Read:
-                if (scrolls == null || !scrolls.Read(inventoryCursor, out var selectTarget, out inventoryMessage)) return;
+                if (scrolls == null) return;
+                var read = scrolls.Read(inventoryCursor, out var selectTarget, out var readMessage);
+                inventoryMessage = readMessage;
+                if (!read) return;
                 itemActionsOpen = false;
                 if (selectTarget) targetingScroll = inventoryCursor;
                 return;
@@ -690,6 +706,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
                     : item.EquipmentSlot;
                 if (!inventory.TryEquip(inventoryCursor, slot)) { inventoryMessage = "Cannot equip: slot may be cursed."; return; }
                 itemActionsOpen = false;
+                PrototypeGameLog.Add($"You equip {DisplayName(item)}.");
                 inventoryMessage = item.IsCursed ? $"The {item.ItemId.Replace('_', ' ')} is cursed and binds to you!" : null;
                 return;
             }
@@ -720,6 +737,7 @@ public sealed class PrototypeGameUI : MonoBehaviour
                 inventoryMessage = null;
                 IsInventoryOpen = false;
                 ApplyPause();
+                PrototypeGameLog.Add($"You throw {DisplayName(thrown)}.");
                 PrototypeThrownItem.Throw(thrown, stats.GetComponent<PrototypePlayerMovement>(), FloorParent());
                 return;
             }
@@ -786,7 +804,9 @@ public sealed class PrototypeGameUI : MonoBehaviour
     {
         if (scrolls == null || targetingScroll < 0) return;
         inventoryCursor = index;
-        if (!scrolls.ReadOnTarget(targetingScroll, index, out inventoryMessage)) return;
+        var applied = scrolls.ReadOnTarget(targetingScroll, index, out var readMessage);
+        inventoryMessage = readMessage;
+        if (!applied) return;
         targetingScroll = -1;
     }
 
