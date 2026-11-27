@@ -11,9 +11,11 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
 {
     [SerializeField] private int visibilityRadiusCells = 9;
     [SerializeField] private float refreshInterval = 0.1f;
-    [SerializeField] private Color invisibleColor = new(0.01f, 0.01f, 0.015f);
-    [SerializeField] private Color visitedColor = new(0.07f, 0.08f, 0.1f);
-    [SerializeField] private Color mappedColor = new(0.2f, 0.11f, 0.06f);
+    // Fog tiles are unlit, so the dark dungeon lighting does not change how they read:
+    // unexplored is black, remembered is a dim blue-grey, mapped is a dim brown.
+    [SerializeField] private Color invisibleColor = new(0.005f, 0.005f, 0.008f);
+    [SerializeField] private Color visitedColor = new(0.045f, 0.05f, 0.065f);
+    [SerializeField] private Color mappedColor = new(0.11f, 0.06f, 0.03f);
 
     private readonly struct DoorEdge : IEquatable<DoorEdge>
     {
@@ -338,13 +340,13 @@ public sealed class PrototypeFogOfWar : MonoBehaviour
 
     private static Material CreateMaterial(string materialName, Color color)
     {
-        var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+        var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color");
         var material = new Material(shader)
         {
             name = materialName,
             color = color
         };
-        material.SetFloat("_Smoothness", 0f);
+        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
         return material;
     }
 }

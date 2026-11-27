@@ -10,8 +10,8 @@ using UnityEngine;
 ///   Toxic gas: damages characters inside each tick ((max HP + 5 + 5 x floor) / 40, rounded
 ///     randomly), and where it meets paralytic gas the weaker of the two in that cell is removed.
 ///   Paralytic gas: paralyzes characters inside while they stay in it.
-///   Fire: each burning cell loses 1 per tick and sets anyone in it on fire. It would spread to
-///     flammable cells, but this dungeon has none yet, so it burns where it was seeded.
+///   Fire: each burning cell loses 1 per tick and sets anyone in it on fire. Wooden doors are the
+///     only flammable things: fire on either side of a doorway sets its door alight.
 ///   Freezing: puts out fire in a cell (no frost source exists yet).
 /// </summary>
 public sealed class PrototypeBlobs : MonoBehaviour
@@ -33,6 +33,7 @@ public sealed class PrototypeBlobs : MonoBehaviour
     private ParticleSystem[] emitters;
     private Light fireLight;
     private readonly List<PrototypeEnemy> enemyBuffer = new();
+    private PrototypeDoor[] doors;
 
     public void Initialize(IEnumerable<Vector2Int> walkable, IEnumerable<long> blocked, int floor)
     {
@@ -103,6 +104,7 @@ public sealed class PrototypeBlobs : MonoBehaviour
         EvolveGas((int)Kind.ToxicGas);
         EvolveGas((int)Kind.ParalyticGas);
         EvolveFire();
+        IgniteDoors();
         ToxicCancelsParalytic();
         AffectCharacters();
         EmitVisuals();
@@ -155,6 +157,21 @@ public sealed class PrototypeBlobs : MonoBehaviour
             if (c[i] <= 0) continue;
             c[i]--;
             volume[k] += c[i];
+        }
+    }
+
+    /// <summary>Fire next to a wooden door sets it alight.</summary>
+    private void IgniteDoors()
+    {
+        var k = (int)Kind.Fire;
+        if (volume[k] <= 0) return;
+        doors ??= GetComponentsInChildren<PrototypeDoor>(true);
+        foreach (var door in doors)
+        {
+            if (door == null || door.IsBurning || door.IsBurnt) continue;
+            var a = door.Cell;
+            var b = door.Cell + door.Direction;
+            if ((InGrid(a) && cur[k][Index(a)] > 0) || (InGrid(b) && cur[k][Index(b)] > 0)) door.Ignite();
         }
     }
 

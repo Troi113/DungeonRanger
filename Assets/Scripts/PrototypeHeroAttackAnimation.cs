@@ -4,12 +4,14 @@ using UnityEngine;
 /// Presentation only: melee attack animations for the KayKit Ranger, posed in code because the
 /// free KayKit pack has no combat clips. Runs after the Legacy Animation each frame and bends
 /// the right arm and chest toward a punch, stab, or slash in three beats: a quick wind-up
-/// (arm cocked back, shoulders turned), a snappy strike with a lunge and a weapon trail, and a
+/// (arm cocked back, shoulders turned), a snappy strike with a weapon trail, and a
 /// follow-through. `StrikeDelay` tells combat when the blow lands.
 /// Also holds the equipped melee weapon model in the right hand slot.
 /// Each K press picks one of the weapon's three moves at random (looks only; damage and hit
-/// area are the same for every move), and the ranger steps toward the hit area so the blow
-/// visibly reaches it (the step distance comes from PrototypeCombat):
+/// area are the same for every move). The ranger stays in place; at the strike the arm and the
+/// weapon stretch ("warp") so the fist or weapon tip reaches the end of the hit area (the reach
+/// distance comes from PrototypeCombat). Fists stretch the arm; weapons stretch the arm a
+/// little and the weapon the rest.
 ///   Fists:  jab (left hand), straight, uppercut.
 ///   Dagger: slash, backhand slash, stab.      Sword: slash, stab, backhand slash.
 ///   Spear:  two-handed poke, two-handed slash, one-handed slash.
@@ -25,8 +27,8 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
     private static readonly Move[] SpearMoves = { Move.TwoHandPoke, Move.TwoHandSlash, Move.Slash };
     private static readonly Move[] AxeMoves = { Move.Swing, Move.Stab, Move.Slam };
 
-    // Small step back during the wind-up, in world units.
-    private const float BackStep = 0.2f;
+    // Weapons stretch the arm at most this far (world units); the weapon stretches the rest.
+    private const float MaxArmStretch = 0.5f;
 
     private PrototypePlayerMovement movement;
     private PrototypeInventory inventory;
@@ -45,7 +47,8 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
     private Move move;
     private float elapsed;
     private float duration;
-    private float lunge;
+    private float reach;
+    private float weaponTip;
     private bool attacking;
 
     // Fractions of the attack: wind-up ends, strike lands, then follow-through and recovery.
@@ -62,10 +65,10 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by PrototypeCombat when a melee attack starts. `stepDistance` is how far (world
-    /// units) the ranger steps in at the strike, so the blow reaches the hit area.
+    /// Called by PrototypeCombat when a melee attack starts. `reachDistance` is how far ahead of
+    /// the ranger (world units) the fist or weapon tip should stretch at the strike.
     /// </summary>
-    public bool PlayAttack(string weaponId, float seconds, float stepDistance)
+    public bool PlayAttack(string weaponId, float seconds, float reachDistance)
     {
         if (!FindBones()) return false;
         var moves = weaponId switch
@@ -76,7 +79,8 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
             _ => FistMoves
         };
         move = moves[Random.Range(0, moves.Length)];
-        lunge = Mathf.Max(0f, stepDistance);
+        reach = Mathf.Max(0f, reachDistance);
+        weaponTip = PrototypeItemVisuals.HeldSize(weaponId, out var length, out var grip) ? length * (1f - grip) : 0f;
         duration = Mathf.Clamp(seconds, 0.18f, 0.45f);
         elapsed = 0f;
         attacking = true;
@@ -94,8 +98,8 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
         if (t >= 1f)
         {
             attacking = false;
-            holder.localPosition = Vector3.zero;
-            if (trail != null) trail.emitting = false;
+            if (weaponModel != null) weaponModel.transform.localScale = Vector3.one;
+            if (trail != null) { trail.emitting = false; PlaceTrail(weaponTip); }
             return;
         }
 
@@ -107,27 +111,27 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
         // Three beats: wind-up (0 -> WindupEnd), strike (-> StrikeEnd, eased out), recovery.
         float strike;     // 0 = cocked back, 1 = fully extended
         float weight;     // how strongly the pose overrides the idle/run animation
-        float lungeAmount;
+        float extend;     // 0..1 how far the arm/weapon stretch toward the reach distance
         if (t < WindupEnd)
         {
             var w = t / WindupEnd;
             strike = 0f;
             weight = Mathf.SmoothStep(0f, 1f, w);
-            lungeAmount = -BackStep * weight;
+            extend = 0f;
         }
         else if (t < StrikeEnd)
         {
             var s = (t - WindupEnd) / (StrikeEnd - WindupEnd);
             strike = 1f - (1f - s) * (1f - s) * (1f - s);
             weight = 1f;
-            lungeAmount = Mathf.Lerp(-BackStep, lunge, strike);
+            extend = strike;
         }
         else
         {
             var r = (t - StrikeEnd) / (1f - StrikeEnd);
             strike = 1f;
             weight = 1f - Mathf.SmoothStep(0f, 1f, r);
-            lungeAmount = lunge * weight;
+            extend = weight;
         }
 
         Pose(move, strike, forward, right, out var aim, out var twist);
@@ -155,9 +159,37 @@ public sealed class PrototypeHeroAttackAnimation : MonoBehaviour
                 Aim(lowerArmL, handL.position - lowerArmL.position, grip - lowerArmL.position, weight);
             }
         }
-        holder.localPosition = holder.parent.InverseTransformVector(forward * lungeAmount);
-        holder.localPosition = new Vector3(holder.localPosition.x, 0f, holder.localPosition.z);
+        Stretch(leftLead && handL != null ? handL : hand, aim, forward, extend);
         if (trail != null) trail.emitting = t >= WindupEnd && t < StrikeEnd + 0.1f;
+    }
+
+    /// <summary>
+    /// Warps the striking hand (the skinned forearm stretches with it) and the weapon so the tip
+    /// reaches `reach` ahead of the ranger, scaled by `extend`.
+    /// </summary>
+    private void Stretch(Transform strikingHand, Vector3 aim, Vector3 forward, float extend)
+    {
+        var direction = aim.sqrMagnitude > 0.0001f ? aim.normalized : forward;
+        var hasWeapon = weaponModel != null && strikingHand == hand && !IsFist(move);
+        if (weaponModel != null) weaponModel.transform.localScale = Vector3.one;
+        // The weapon's tip length in world units (the hero model is scaled).
+        var tipLength = hasWeapon ? weaponTip * weaponModel.transform.lossyScale.y : 0f;
+        var tip = hasWeapon ? weaponModel.transform.position + weaponModel.transform.up * tipLength : strikingHand.position;
+        var along = Vector3.Dot(direction, forward);
+        // How much farther the tip must go, measured along the facing direction.
+        var missing = reach - Vector3.Dot(tip - transform.position, forward);
+        if (missing <= 0f || along < 0.2f || extend <= 0f) return;
+        var travel = missing / along;
+        var armTravel = hasWeapon ? Mathf.Min(travel, MaxArmStretch) : travel;
+        strikingHand.position += direction * armTravel * extend;
+        var stretch = 1f;
+        if (hasWeapon && tipLength > 0.01f)
+        {
+            stretch = 1f + (travel - armTravel) / tipLength * extend;
+            weaponModel.transform.localScale = new Vector3(1f, stretch, 1f);
+        }
+        if (trail != null)
+            trail.transform.position = hasWeapon ? weaponModel.transform.position + weaponModel.transform.up * tipLength * stretch : strikingHand.position;
     }
 
     private static bool IsFist(Move m) => m == Move.Jab || m == Move.Straight || m == Move.Uppercut;

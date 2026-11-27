@@ -93,10 +93,19 @@ public static class PrototypeUITheme
     public static Texture2D Chainmail => Icon(1, 24);
     public static Texture2D Exclamation => Icon(3, 50);
 
-    /// <summary>Approximate icon for each prototype item id; null when none fits.</summary>
+    /// <summary>
+    /// Icon for an item: a picture of the same 3D model (or block) the item uses on the map, from
+    /// PrototypeItemIcons. The bow (never on the map) and the first frame before an icon is
+    /// rendered fall back to the pack's pixel icons.
+    /// </summary>
     public static Texture2D ItemIcon(string itemId)
     {
         if (string.IsNullOrEmpty(itemId)) return null;
+        if (itemId != "ranger_bow")
+        {
+            var rendered = PrototypeItemIcons.Get(itemId);
+            if (rendered != null) return rendered;
+        }
         if (PrototypeScrolls.IsScroll(itemId)) return Icon(3, 32);
         return itemId switch
         {

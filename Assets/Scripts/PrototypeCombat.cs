@@ -156,7 +156,7 @@ public sealed class PrototypeCombat : MonoBehaviour
         // The Ranger model winds up and strikes; the blow lands at the strike moment.
         // The old box swing is only a fallback when the model is missing.
         var attackAnimation = GetComponent<PrototypeHeroAttackAnimation>();
-        if (attackAnimation != null && attackAnimation.PlayAttack(weapon.Id, weapon.Cooldown * 0.85f, MeleeStepDistance(weapon, facing, depth)))
+        if (attackAnimation != null && attackAnimation.PlayAttack(weapon.Id, weapon.Cooldown * 0.85f, MeleeReachDistance(weapon, facing, depth)))
         {
             StartCoroutine(StrikeAfter(attackAnimation.StrikeDelay, weapon, facing));
             return;
@@ -166,15 +166,12 @@ public sealed class PrototypeCombat : MonoBehaviour
     }
 
     /// <summary>
-    /// How far the ranger visibly steps in so the fist or weapon tip reaches the hit area: to its
-    /// far edge, or to the nearest enemy in it, never through a wall or closed door. Looks only.
+    /// How far ahead the attack animation stretches the fist or weapon tip: to the far edge of the
+    /// hit area, or to the nearest enemy in it, never through a wall or closed door. Looks only.
     /// </summary>
-    private float MeleeStepDistance(PrototypeMeleeWeapons.WeaponData weapon, Vector3 facing, float depth)
+    private float MeleeReachDistance(PrototypeMeleeWeapons.WeaponData weapon, Vector3 facing, float depth)
     {
-        const float armReach = 0.7f;
-        var weaponReach = armReach + (PrototypeItemVisuals.HeldSize(weapon.Id, out var length, out var grip) ? length * (1f - grip) : 0.1f);
-        var step = depth - weaponReach;
-
+        var reach = depth;
         var side = new Vector3(facing.z, 0f, -facing.x);
         var halfWidth = PrototypeLevelGenerator.TileSize * 0.5f;
         foreach (var enemy in FindObjectsByType<PrototypeEnemy>(FindObjectsInactive.Exclude))
@@ -185,13 +182,13 @@ public sealed class PrototypeCombat : MonoBehaviour
             offset.y = 0f;
             var ahead = Vector3.Dot(offset, facing);
             if (ahead < 0f || ahead > depth || Mathf.Abs(Vector3.Dot(offset, side)) > halfWidth) continue;
-            step = Mathf.Min(step, ahead - weaponReach * 0.8f);
+            reach = Mathf.Min(reach, ahead + 0.3f);
         }
 
         foreach (var hit in Physics.RaycastAll(transform.position, facing, depth, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
             if (hit.collider.name.StartsWith("Wall_") || hit.collider.name == "Door_Panel")
-                step = Mathf.Min(step, hit.distance - 0.8f);
-        return Mathf.Max(0.25f, step);
+                reach = Mathf.Min(reach, hit.distance - 0.2f);
+        return Mathf.Max(0f, reach);
     }
 
     /// <summary>Attacking reveals an invisible ranger (Pixel Dungeon rule).</summary>

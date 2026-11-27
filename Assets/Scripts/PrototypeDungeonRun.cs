@@ -370,6 +370,10 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
             });
         }
 
+        var doors = state.Root != null ? state.Root.GetComponentsInChildren<PrototypeDoor>(true) : System.Array.Empty<PrototypeDoor>();
+        for (var i = 0; i < doors.Length; i++)
+            if (doors[i].IsBurnt || doors[i].IsBurning) save.BurntDoors.Add(i);
+
         for (var i = 0; i < state.Traps.Length; i++)
         {
             if (state.Traps[i].IsActivated) save.ActivatedTraps.Add(i);
@@ -462,6 +466,13 @@ public sealed class PrototypeDungeonRun : MonoBehaviour
 
         for (var i = 0; i < state.Traps.Length; i++)
             state.Traps[i].RestoreState(saved.ActivatedTraps.Contains(i), saved.RevealedTraps.Contains(i));
+
+        if (saved.BurntDoors != null && saved.BurntDoors.Count > 0 && state.Root != null)
+        {
+            var doors = state.Root.GetComponentsInChildren<PrototypeDoor>(true);
+            foreach (var index in saved.BurntDoors)
+                if (index >= 0 && index < doors.Length) doors[index].RestoreBurnt();
+        }
 
         if (saved.ChestOpened && state.Chest != null) state.Chest.RestoreOpened();
 

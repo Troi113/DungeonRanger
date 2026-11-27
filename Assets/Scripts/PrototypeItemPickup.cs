@@ -87,8 +87,9 @@ public sealed class PrototypeItemPickup : PrototypeInteractable
             }
         }
 
-        // A soft pulsing yellow glow marks every drop.
-        PrototypeGlowPulse.Add(itemObject, null, DropGlow, 0f, 1.6f, 3.5f, new Vector3(0f, 1.2f, 0f));
+        // A soft pulsing yellow glow marks every drop; weapons glow a little brighter.
+        var isWeapon = slot == PrototypeEquipmentSlot.Weapon;
+        PrototypeGlowPulse.Add(itemObject, null, DropGlow, 0f, isWeapon ? 2.4f : 1.6f, isWeapon ? 4.2f : 3.5f, new Vector3(0f, 1.2f, 0f));
 
         var pickup = itemObject.AddComponent<PrototypeItemPickup>();
         pickup.Initialize(id, label, slot);

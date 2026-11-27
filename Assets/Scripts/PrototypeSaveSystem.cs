@@ -73,6 +73,7 @@ public sealed class PrototypeFloorSave
     public List<PrototypeEnemySave> Enemies = new();
     public List<int> ActivatedTraps = new();
     public List<int> RevealedTraps = new();
+    public List<int> BurntDoors = new();
     public bool ChestOpened;
     public List<int> VisitedCells = new();
     public List<int> MappedCells = new();

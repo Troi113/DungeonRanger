@@ -10,8 +10,8 @@ public sealed class PrototypeEnemy : MonoBehaviour
     [SerializeField] private int health = 3;
     [SerializeField] private Color sleepingColor = new(0.18f, 0.22f, 0.3f);
     [SerializeField] private Color awakeColor = new(0.85f, 0.12f, 0.1f);
-    [SerializeField] private float patrolSpeed = 7f; // 2x the original 3.5
-    [SerializeField] private float chaseSpeed = 9f; // 2x the original 4.5
+    [SerializeField] private float patrolSpeed = 6.125f; // 1.75x the original 3.5
+    [SerializeField] private float chaseSpeed = 7.875f; // 1.75x the original 4.5
     [SerializeField] private int sightRangeCells = 8;
     [SerializeField] private float repathInterval = 0.35f;
     [SerializeField] private float attackRange = 2.4f;

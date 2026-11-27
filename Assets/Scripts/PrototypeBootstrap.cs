@@ -47,6 +47,8 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         ui.Initialize(player.gameObject);
         SetupCamera(root, true);
         SetupLighting();
+        // Dark dungeon lighting with a lantern on the ranger (after SetupLighting).
+        root.gameObject.AddComponent<PrototypeDungeonLighting>().Apply(player.transform);
     }
 
     private void BuildScene(Transform root, bool fullLevel)
@@ -191,7 +193,10 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
     private static void SetupLighting()
     {
-        var light = FindAnyObjectByType<Light>();
+        // The directional light specifically (torches and glows are point lights).
+        Light light = null;
+        foreach (var candidate in FindObjectsByType<Light>(FindObjectsInactive.Exclude))
+            if (candidate.type == LightType.Directional) { light = candidate; break; }
         if (light == null)
         {
             var lightObject = new GameObject("Directional Light");

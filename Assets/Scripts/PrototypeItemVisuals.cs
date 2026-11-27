@@ -53,14 +53,21 @@ public static class PrototypeItemVisuals
     }
 
     /// <summary>A weapon model held in the hand: upright along the hand's +Y, grip at the origin.</summary>
+    /// The returned object's origin is the grip, so scaling its Y stretches the weapon from the hand.
     public static GameObject CreateHeld(string itemId, Transform hand)
     {
         if (!HeldSize(itemId, out var length, out var grip)) return null;
-        var holder = Create(itemId, hand, length);
-        if (holder == null) return null;
+        var pivot = new GameObject($"Held_{itemId}");
+        pivot.transform.SetParent(hand, false);
+        var holder = Create(itemId, pivot.transform, length);
+        if (holder == null)
+        {
+            Object.Destroy(pivot);
+            return null;
+        }
         holder.transform.localPosition = Vector3.down * (grip * length);
         holder.transform.localRotation = Quaternion.identity;
-        return holder;
+        return pivot;
     }
 
     /// <summary>Longest side of the model on the floor and in flight.</summary>
